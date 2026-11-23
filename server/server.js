@@ -608,7 +608,7 @@ app.post('/api/newsroom/gate', (req, res) => {
 });
 app.use('/newsroom', (req, res, next) => {
   const p = req.path === '/' || req.path === '' ? '/index.html' : req.path;
-  if (!/^\/index\.html$/.test(p)) return next();          // aset bersama dilayani static di bawah
+  if (!/^\/(index\.html|cms\.js)$/.test(p)) return next();   // aset bersama dilayani static di bawah
   const cookieToken = (req.headers.cookie || '').split(';').map(c => c.trim()).find(c => c.startsWith('mbc_gate='));
   const authHeader = req.headers.authorization || '';
   const qt = (req.query && typeof req.query.t === 'string') ? req.query.t : '';
@@ -619,8 +619,14 @@ app.use('/newsroom', (req, res, next) => {
       const payload = jwt.verify(token, EFFECTIVE_SECRET);
       /* RBAC tingkat halaman: modul editorial hanya untuk editorial & direksi.
          Peran lain (keuangan, penjualan) diarahkan ke ruang kerjanya di /workspace/. */
-      if (['editorial', 'direksi'].includes(payload.role)) return next();
-      return next();   // peran lain tetap masuk; menu & API dibatasi RBAC
+      /* Setelah token sah: sajikan berkas CMS dari server/newsroom (bukan dari folder statis) */
+      const berkasCms = { '/index.html': 'index.html', '/cms.js': 'cms.js' }[p];
+      if (berkasCms) {
+        res.setHeader('Cache-Control', 'no-store');
+        res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+        return res.sendFile(path.join(NEWSROOM_DIR, berkasCms), err => { if (err) res.status(500).end('CMS tidak tersedia'); });
+      }
+      return next();
     } catch (_) {}
   }
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
