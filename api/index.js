@@ -42,6 +42,28 @@ function kirimGerbang(req, res) {
   }
 }
 
+
+/* Sajikan berkas CMS (index.html & cms.js) HANYA setelah token sah.
+   Berkas ini tinggal di server/newsroom/ sehingga tidak pernah bisa diambil dari CDN. */
+function sajikanCms(jalur, req, res) {
+  const fs = require('fs');
+  const path = require('path');
+  const peta = {
+    '': 'index.html', '/': 'index.html', '/index.html': 'index.html',
+    '/cms.js': 'cms.js'
+  };
+  const nama = peta[jalur];
+  if (!nama) return false;
+  const berkas = path.join(__dirname, '..', 'server', 'newsroom', nama);
+  if (!fs.existsSync(berkas)) { res.statusCode = 404; res.end('tidak ada'); return true; }
+  res.statusCode = 200;
+  res.setHeader('Content-Type', nama.endsWith('.js') ? 'application/javascript; charset=utf-8' : 'text/html; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+  fs.createReadStream(berkas).pipe(res);
+  return true;
+}
+
 let app;
 try {
   app = require('../server/server.js');
@@ -57,7 +79,11 @@ try {
 if (app) {
   module.exports = (req, res) => {
     const jalur = (req.url || '').split('?')[0];
-    if (NEWSROOM_REGEX.test(jalur) && !punyaTokenSah(req)) return kirimGerbang(req, res);
+    if (NEWSROOM_REGEX.test(jalur) || jalur === '/newsroom/cms.js') {
+      if (!punyaTokenSah(req)) return kirimGerbang(req, res);
+      const sub = jalur.replace(/^\/newsroom/, '').replace(/^\/$/, '/');
+      if (sajikanCms(sub, req, res)) return;
+    }
     return app(req, res);
   };
 }
