@@ -43,24 +43,40 @@ function kirimGerbang(req, res) {
 }
 
 
-/* Sajikan berkas CMS (index.html & cms.js) HANYA setelah token sah.
-   Berkas ini tinggal di server/newsroom/ sehingga tidak pernah bisa diambil dari CDN. */
-function sajikanCms(jalur, req, res) {
+/* Sajikan CMS HANYA setelah token sah.
+   index.html disajikan dengan cms.js DI-INLINE, sehingga tidak ada berkas JS terpisah
+   yang bisa diambil langsung (dan tidak bergantung pada includeFiles di bundle function). */
+let _cmsCache = null;
+function bacaCms() {
+  if (_cmsCache !== null) return _cmsCache;
   const fs = require('fs');
   const path = require('path');
-  const peta = {
-    '': 'index.html', '/': 'index.html', '/index.html': 'index.html',
-    '/cms.js': 'cms.js'
-  };
-  const nama = peta[jalur];
-  if (!nama) return false;
-  const berkas = path.join(__dirname, '..', 'server', 'newsroom', nama);
-  if (!fs.existsSync(berkas)) { res.statusCode = 404; res.end('tidak ada'); return true; }
+  try {
+    const dir = path.join(__dirname, '..', 'server', 'newsroom');
+    const html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
+    let js = '';
+    try { js = fs.readFileSync(path.join(dir, 'cms.js'), 'utf8'); } catch (_) {}
+    _cmsCache = js ? html.replace(/<script src="cms\.js"><\/script>/g, '<script>\n' + js + '\n</script>') : html;
+  } catch (e) {
+    _cmsCache = null;
+  }
+  return _cmsCache;
+}
+
+function sajikanCms(jalur, req, res) {
+  if (!['', '/', '/index.html'].includes(jalur)) return false;
+  const isi = bacaCms();
+  if (!isi) {
+    res.statusCode = 500;
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+    res.end('Berkas CMS tidak ditemukan di bundel function.');
+    return true;
+  }
   res.statusCode = 200;
-  res.setHeader('Content-Type', nama.endsWith('.js') ? 'application/javascript; charset=utf-8' : 'text/html; charset=utf-8');
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-  fs.createReadStream(berkas).pipe(res);
+  res.end(isi);
   return true;
 }
 
@@ -79,7 +95,7 @@ try {
 if (app) {
   module.exports = (req, res) => {
     const jalur = (req.url || '').split('?')[0];
-    if (NEWSROOM_REGEX.test(jalur) || jalur === '/newsroom/cms.js') {
+    if (NEWSROOM_REGEX.test(jalur)) {
       if (!punyaTokenSah(req)) return kirimGerbang(req, res);
       const sub = jalur.replace(/^\/newsroom/, '').replace(/^\/$/, '/');
       if (sajikanCms(sub, req, res)) return;
