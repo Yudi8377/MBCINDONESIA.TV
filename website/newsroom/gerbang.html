@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
+<title>Akses Terbatas — Newsroom Internal MBC INDONESIA</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Halaman gerbang Newsroom internal MBC INDONESIA. Area terbatas untuk staf redaksi.">
+<link rel="icon" href="../icons/icon.svg">
+<style>
+  :root{--red:#e63329;--red2:#ff5245;--gold:#f2c14e;--bg:#05080f;--muted:#94a0b8;--line:rgba(255,255,255,.09)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{min-height:100vh;display:grid;place-items:center;background:radial-gradient(1200px 600px at 50% -10%,#16203a 0%,#05080f 60%);color:#eef1f8;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;padding:1.5rem}
+  .card{width:min(520px,100%);background:rgba(13,19,34,.92);border:1px solid var(--line);border-radius:18px;padding:2.2rem 1.8rem;box-shadow:0 30px 80px rgba(0,0,0,.55)}
+  .lock{width:56px;height:56px;margin:0 auto 1rem;border-radius:16px;display:grid;place-items:center;background:rgba(230,51,41,.12);border:1px solid rgba(230,51,41,.35)}
+  h1{font-size:1.22rem;margin-bottom:.45rem;letter-spacing:-.01em;text-align:center}
+  .sub{color:var(--muted);font-size:.86rem;line-height:1.6;margin-bottom:1.2rem;text-align:center}
+  .badge{display:block;width:fit-content;margin:0 auto 1rem;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);border:1px solid rgba(242,193,78,.35);background:rgba(242,193,78,.1);border-radius:999px;padding:.28rem .7rem}
+  label{display:block;font-size:.74rem;color:var(--muted);margin:.6rem 0 .25rem;letter-spacing:.04em;text-transform:uppercase}
+  input{width:100%;background:#0a1120;border:1px solid var(--line);border-radius:9px;padding:.62rem .75rem;color:#fff;font-size:.88rem;font-family:inherit}
+  input:focus{outline:2px solid rgba(255,82,69,.5);outline-offset:1px;border-color:var(--red)}
+  button{width:100%;margin-top:1rem;background:linear-gradient(135deg,var(--red2),var(--red));color:#fff;font-weight:700;font-size:.88rem;padding:.72rem;border:0;border-radius:10px;cursor:pointer;font-family:inherit}
+  button:disabled{opacity:.6;cursor:progress}
+  .msg{font-size:.78rem;margin-top:.7rem;min-height:1.1rem;text-align:center}
+  .fine{font-size:.7rem;color:#5f6b85;margin-top:1.2rem;border-top:1px solid var(--line);padding-top:.8rem;text-align:center;line-height:1.6}
+  .fine a{color:var(--muted);display:inline-flex;align-items:center;min-height:34px;padding:.15rem .1rem}
+  .roles{margin-top:1rem;border:1px solid var(--line);border-radius:10px;padding:.6rem .75rem;background:rgba(255,255,255,.02)}
+  .roles summary{cursor:pointer;font-size:.78rem;color:var(--gold);font-weight:700;list-style:none;min-height:40px;display:flex;align-items:center}
+  .roles summary::-webkit-details-marker{display:none}
+  .roles summary::before{content:'▸ ';color:var(--muted)}
+  .roles[open] summary::before{content:'▾ '}
+  .roles ul{margin:.55rem 0 .2rem 1rem;display:grid;gap:.35rem;font-size:.74rem;color:#c9d1e3;line-height:1.5}
+  .roles p{font-size:.72rem;color:var(--muted);margin-top:.35rem;line-height:1.5}
+  @media(max-width:420px){.card{padding:1.6rem 1.15rem}h1{font-size:1.08rem}.sub{font-size:.82rem}}
+</style>
+</head>
+<body>
+  <main class="card">
+    <div class="lock" aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ff5245" stroke-width="1.7">
+        <rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.6"/>
+      </svg>
+    </div>
+    <span class="badge">Area Internal · Karyawan</span>
+    <h1>Newsroom MBC INDONESIA</h1>
+    <p class="sub">Dapur produksi, CMS editorial, dan operasi perusahaan. Masuk dengan akun perusahaan Anda — menu yang tampil menyesuaikan peran. Semua aktivitas tercatat pada jejak audit.</p>
+
+    <form id="gateForm" autocomplete="on" novalidate>
+      <label for="gEmail">Email perusahaan</label>
+      <input id="gEmail" type="email" autocomplete="username" placeholder="nama@mbcindonesia.tv" required>
+      <label for="gPass">Kata sandi</label>
+      <input id="gPass" type="password" autocomplete="current-password" placeholder="••••••••" required>
+      <button type="submit" id="gBtn">Masuk ke Newsroom</button>
+      <p class="msg" id="gMsg" role="status" aria-live="polite"></p>
+    </form>
+
+    <details class="roles">
+      <summary>Peran &amp; hak akses (RBAC)</summary>
+      <ul>
+        <li><b>Direktur Utama</b> — seluruh modul + persetujuan akhir</li>
+        <li><b>Produser Redaksi</b> — Meja Redaksi, CMS artikel, kalender, temuan AI, moderasi, media, produksi, analitik</li>
+        <li><b>Manager Keuangan</b> — keuangan &amp; pajak, master data, laporan BI, analitik konten, audit</li>
+        <li><b>Account Executive</b> — CRM &amp; pipeline, iklan &amp; sponsorship, media, audit</li>
+      </ul>
+      <p>Akun yang tidak memiliki izin akan ditolak oleh server (HTTP 403), bukan hanya disembunyikan menunya.</p>
+    </details>
+
+    <div class="fine">
+      Lupa kata sandi atau belum punya akses? Hubungi Kepala Redaksi / IT MBC Indonesia.<br>
+      <a href="../index.html">← Kembali ke MBCINDONESIA.TV</a> · UU PDP No. 27/2022
+    </div>
+  </main>
+
+<script>
+'use strict';
+const form = document.getElementById('gateForm');
+const msg = document.getElementById('gMsg');
+const btn = document.getElementById('gBtn');
+const say = (t, kind) => { msg.textContent = t; msg.style.color = kind === 'ok' ? '#2fd27a' : '#ff8a80'; };
+
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const email = document.getElementById('gEmail').value.trim();
+  const password = document.getElementById('gPass').value;
+  if (!email || !password) return say('Email dan kata sandi wajib diisi.');
+  btn.disabled = true; say('Memverifikasi…', 'ok');
+  try {
+    const r = await fetch('/api/newsroom/gate', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) { btn.disabled = false; return say(d.error || 'Akses ditolak.'); }
+    // token dipakai newsroom untuk memanggil API; cookie mbc_gate sudah dipasang server
+    localStorage.setItem('mbc_token', d.token);
+    localStorage.setItem('mbc_session', JSON.stringify({ email: d.user.email, name: d.user.name, role: d.user.role, roleLabel: d.user.roleLabel }));
+    say('Berhasil. Membuka newsroom…', 'ok');
+    /* Bawa token di alamat untuk navigasi pertama (beberapa peramban ponsel/in-app
+       tidak menyimpan cookie pada permintaan GET pertama). Newsroom langsung
+       membersihkan alamat ini setelah dimuat. */
+    location.href = './index.html?t=' + encodeURIComponent(d.token);
+  } catch (_) {
+    btn.disabled = false;
+    say('Tidak dapat menghubungi server. Periksa koneksi Anda.');
+  }
+});
+</script>
+</body>
+</html>

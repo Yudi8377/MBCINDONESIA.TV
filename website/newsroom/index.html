@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
+<title>Newsroom MBC INDONESIA — CMS &amp; Operasi Redaksi</title>
+<meta name="description" content="Newsroom internal MBC Indonesia Group: CMS editorial, dashboard Direksi, CRM, produksi, iklan, keuangan, master data, laporan BI, dan audit trail.">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0d1322">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<style>
+:root{
+  --bg:#080d1a; --panel:#0f1626; --panel2:#141d33; --panel3:#1a2542;
+  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
+  --text:#e9edf6; --muted:#8b97b3; --red:#e63329; --red2:#ff5a4e; --gold:#f2c14e; --green:#2fd27a; --blue:#4f8cff;
+  --radius:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;font-size:14px}
+button{font-family:inherit}
+.hidden{display:none !important}
+
+/* ===== LOGIN ===== */
+#loginScreen{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr}
+.login-art{background:url('../assets/img/hero.jpg') center/cover;position:relative;display:flex;align-items:flex-end;padding:2.4rem}
+.login-art::after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(4,7,14,.92),rgba(4,7,14,.15) 60%)}
+.login-art-inner{position:relative;z-index:1;max-width:480px}
+.login-art h1{font-size:2rem;line-height:1.15;margin:.6rem 0 .4rem}
+.login-form-wrap{display:flex;align-items:center;justify-content:center;padding:2rem}
+.login-card{width:min(420px,100%);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:1.8rem;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.login-card h2{font-size:1.3rem;margin-bottom:.2rem}
+.login-card p.sub{color:var(--muted);font-size:.8rem;margin-bottom:1.1rem}
+.field{margin-bottom:.7rem}
+.field label{display:block;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.3rem;font-weight:700}
+.field input{width:100%;background:#0a1020;border:1px solid var(--line2);border-radius:10px;color:var(--text);padding:.65rem .75rem;outline:0;font-size:.9rem}
+.field input:focus{border-color:var(--red)}
+.btn{display:inline-flex;align-items:center;gap:.45rem;border:0;border-radius:10px;padding:.6rem 1rem;font-weight:700;cursor:pointer;font-size:.82rem;transition:.15s;color:var(--text);background:var(--panel3)}
+.btn:hover{filter:brightness(1.15)}
+.btn-red{background:var(--red);color:#fff}
+.btn-green{background:var(--green);color:#05240f}
+.btn-ghost{background:transparent;border:1px solid var(--line2)}
+.btn-sm{padding:.35rem .65rem;font-size:.72rem;border-radius:8px}
+.btn-block{width:100%;justify-content:center}
+.demo-accounts{margin-top:1rem;border-top:1px solid var(--line);padding-top:.8rem}
+.demo-accounts p{font-size:.68rem;color:var(--muted);margin-bottom:.4rem;letter-spacing:.06em;text-transform:uppercase;font-weight:700}
+.demo-btn{display:flex;justify-content:space-between;width:100%;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:.45rem .6rem;margin-bottom:.35rem;cursor:pointer;color:var(--text);font-size:.76rem}
+.demo-btn:hover{border-color:var(--red)}
+.demo-btn small{color:var(--muted)}
+.login-error{color:#ffb3ad;background:rgba(230,51,41,.12);border:1px solid rgba(230,51,41,.4);border-radius:8px;padding:.45rem .6rem;font-size:.78rem;margin-bottom:.6rem;display:none}
+
+/* ===== APP SHELL ===== */
+#appShell{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+.sidebar{background:#0a101f;border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+.sb-brand{display:flex;align-items:center;gap:.6rem;padding:.9rem 1rem;border-bottom:1px solid var(--line)}
+.sb-logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(140deg,var(--red),#b81d14);display:grid;place-items:center;flex-shrink:0}
+.sb-brand .t1{font-weight:800;font-size:.82rem;letter-spacing:.05em;color:#fff}
+.sb-brand .t2{font-size:.6rem;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+.sb-nav{flex:1;overflow-y:auto;padding:.6rem .6rem 1rem}
+.sb-group{font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);padding:.7rem .5rem .3rem;font-weight:800}
+.nav-item{display:flex;align-items:center;gap:.6rem;width:100%;background:transparent;border:0;color:#c6cde0;text-align:left;padding:.5rem .6rem;border-radius:9px;cursor:pointer;font-size:.82rem;font-weight:600;margin-bottom:.15rem}
+.nav-item:hover{background:var(--panel2);color:#fff}
+.nav-item.active{background:linear-gradient(90deg,rgba(230,51,41,.25),rgba(230,51,41,.05));color:#fff;box-shadow:inset 3px 0 0 var(--red)}
+.nav-item svg{width:17px;height:17px;stroke:currentColor;flex-shrink:0}
+.sb-foot{border-top:1px solid var(--line);padding:.7rem .8rem}
+.user-chip{display:flex;gap:.55rem;align-items:center;margin-bottom:.5rem}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--panel3);display:grid;place-items:center;font-weight:800;color:var(--gold);font-size:.8rem;flex-shrink:0}
+.user-chip .n{font-size:.78rem;font-weight:700;color:#fff}
+.user-chip .r{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+
+.main{display:flex;flex-direction:column;min-width:0}
+.topbar{display:flex;align-items:center;gap:.8rem;padding:.6rem 1.2rem;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:20}
+.topbar h1{font-size:.95rem;font-weight:800;letter-spacing:.02em}
+.topbar .crumb{color:var(--muted);font-size:.7rem}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:.6rem}
+.env-pill{font-size:.62rem;font-weight:800;letter-spacing:.14em;background:rgba(47,210,122,.12);color:var(--green);border:1px solid rgba(47,210,122,.4);border-radius:999px;padding:.25rem .6rem}
+.content{padding:1.1rem 1.2rem 3rem;overflow-x:auto}
+
+/* ===== CARDS & GRIDS ===== */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.7rem;margin-bottom:1rem}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:.75rem .8rem}
+.kpi .lbl{font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.kpi .val{font-size:1.25rem;font-weight:800;margin:.25rem 0 .1rem;font-variant-numeric:tabular-nums}
+.kpi .delta{font-size:.68rem}
+.up{color:var(--green)} .down{color:var(--red2)} .warn{color:var(--gold)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:.9rem 1rem;margin-bottom:1rem}
+.panel h3{font-size:.85rem;letter-spacing:.03em;margin-bottom:.6rem;display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+.two-col{display:grid;grid-template-columns:1.6fr 1fr;gap:1rem}
+.three-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}
+@media(max-width:1100px){.two-col{grid-template-columns:1fr}}
+
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+th{text-align:left;color:var(--muted);font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;padding:.45rem .5rem;border-bottom:1px solid var(--line2)}
+td{padding:.5rem;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:hover td{background:rgba(255,255,255,.02)}
+.pill{display:inline-block;font-size:.62rem;font-weight:800;letter-spacing:.06em;border-radius:999px;padding:.2rem .55rem;text-transform:uppercase}
+.pill-green{background:rgba(47,210,122,.13);color:var(--green);border:1px solid rgba(47,210,122,.4)}
+.pill-gold{background:rgba(242,193,78,.12);color:var(--gold);border:1px solid rgba(242,193,78,.4)}
+.pill-red{background:rgba(230,51,41,.14);color:var(--red2);border:1px solid rgba(230,51,41,.4)}
+.pill-blue{background:rgba(79,140,255,.13);color:var(--blue);border:1px solid rgba(79,140,255,.4)}
+.pill-grey{background:var(--panel3);color:#c6cde0;border:1px solid var(--line2)}
+
+/* progress bar */
+.pbar{height:8px;background:#0a1020;border-radius:99px;overflow:hidden}
+.pbar>div{height:100%;background:linear-gradient(90deg,var(--red),var(--red2));border-radius:99px}
+
+/* ===== KANBAN ===== */
+.kanban{display:grid;grid-template-columns:repeat(5,minmax(210px,1fr));gap:.6rem;overflow-x:auto}
+.kb-col{background:#0b1222;border:1px solid var(--line);border-radius:12px;padding:.5rem;min-height:280px}
+.kb-col h4{font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;margin-bottom:.45rem;padding:0 .2rem}
+.kb-card{background:var(--panel2);border:1px solid var(--line2);border-radius:10px;padding:.55rem .6rem;margin-bottom:.45rem;cursor:grab;font-size:.76rem}
+.kb-card:active{cursor:grabbing}
+.kb-card b{font-size:.76rem;display:block}
+.kb-card small{color:var(--muted);font-size:.66rem;display:block;margin:.15rem 0 .3rem}
+.kb-val{color:var(--gold);font-weight:800;font-size:.74rem}
+.kb-card .del{float:right;background:none;border:0;color:var(--muted);cursor:pointer;font-size:.8rem}
+.kb-card .del:hover{color:var(--red2)}
+.kb-col.drag-over{outline:2px dashed var(--red);outline-offset:-2px}
+.kb-total{font-size:.68rem;color:var(--gold);text-align:right;padding:.3rem .2rem 0;font-variant-numeric:tabular-nums}
+
+/* stage stepper */
+.stage{display:flex;gap:.3rem;margin:.45rem 0;flex-wrap:wrap}
+.stage span{font-size:.58rem;padding:.18rem .4rem;border-radius:6px;background:#0a1020;color:var(--muted);border:1px solid var(--line)}
+.stage span.done{background:rgba(47,210,122,.12);color:var(--green);border-color:rgba(47,210,122,.4)}
+.stage span.now{background:rgba(242,193,78,.14);color:var(--gold);border-color:rgba(242,193,78,.45);font-weight:800}
+
+/* ===== MODAL & TOAST ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(3,6,12,.7);display:grid;place-items:center;z-index:100;padding:1rem}
+.modal{background:var(--panel);border:1px solid var(--line2);border-radius:16px;width:min(460px,100%);padding:1.3rem;max-height:90vh;overflow:auto}
+.modal h3{margin-bottom:.7rem}
+.toast{position:fixed;bottom:1.2rem;left:50%;transform:translate(-50%,16px);background:#141c30;border:1px solid var(--red);padding:.55rem 1rem;border-radius:10px;font-size:.8rem;opacity:0;pointer-events:none;transition:.25s;z-index:200}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ===== AI ASSISTANT ===== */
+#aiFab{position:fixed;right:1.2rem;bottom:1.4rem;z-index:150;width:56px;height:56px;border-radius:50%;background:linear-gradient(140deg,var(--red),#b81d14);border:0;cursor:pointer;box-shadow:0 10px 30px rgba(230,51,41,.45);display:grid;place-items:center}
+#aiPanel{position:fixed;right:1.2rem;bottom:5rem;z-index:150;width:min(360px,calc(100vw - 2rem));background:var(--panel);border:1px solid var(--line2);border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.6);display:none;flex-direction:column;overflow:hidden}
+#aiPanel.open{display:flex}
+#aiBody{height:300px;overflow-y:auto;padding:.7rem;display:flex;flex-direction:column;gap:.45rem;font-size:.8rem}
+.ai-msg{padding:.45rem .6rem;border-radius:10px;max-width:85%}
+.ai-msg.bot{background:var(--panel2);border:1px solid var(--line)}
+.ai-msg.user{background:rgba(79,140,255,.18);border:1px solid rgba(79,140,255,.35);align-self:flex-end}
+.ai-head{padding:.55rem .75rem;background:var(--panel2);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-size:.78rem;font-weight:700}
+.ai-note{font-size:.6rem;color:var(--muted);padding:.3rem .7rem;border-top:1px solid var(--line)}
+#aiForm{display:flex;border-top:1px solid var(--line)}
+#aiForm input{flex:1;background:transparent;border:0;outline:0;color:var(--text);padding:.6rem .75rem}
+
+/* donut */
+.donut{width:150px;height:150px;border-radius:50%;position:relative;margin:0 auto}
+.donut::after{content:"";position:absolute;inset:34px;background:var(--panel);border-radius:50%}
+.legend{display:flex;flex-direction:column;gap:.28rem;font-size:.72rem;margin-top:.5rem}
+.legend span{display:flex;align-items:center;gap:.4rem}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+/* tabs */
+.tabs{display:flex;gap:.3rem;flex-wrap:wrap;margin-bottom:.6rem}
+.tab{background:var(--panel2);border:1px solid var(--line);color:#c6cde0;border-radius:8px;padding:.4rem .75rem;font-size:.74rem;cursor:pointer;font-weight:600}
+.tab.active{background:var(--red);border-color:var(--red);color:#fff}
+
+.audit-item{display:flex;gap:.6rem;padding:.4rem .2rem;border-bottom:1px solid var(--line);font-size:.76rem}
+.audit-item time{color:var(--muted);font-size:.66rem;min-width:105px;font-variant-numeric:tabular-nums}
+
+.alert-item{display:flex;gap:.5rem;align-items:flex-start;font-size:.78rem;padding:.45rem .5rem;border-radius:9px;background:rgba(242,193,78,.06);border:1px solid rgba(242,193,78,.25);margin-bottom:.4rem}
+.alert-item.red{background:rgba(230,51,41,.07);border-color:rgba(230,51,41,.3)}
+.alert-item.blue{background:rgba(79,140,255,.07);border-color:rgba(79,140,255,.3)}
+
+@media(max-width:900px){
+  #appShell{grid-template-columns:1fr}
+  .sidebar{position:fixed;left:-260px;z-index:90;width:248px;transition:.25s}
+  .sidebar.open{left:0}
+  #loginScreen{grid-template-columns:1fr}
+  .login-art{display:none}
+  .kanban{grid-template-columns:repeat(5,240px)}
+}
+
+/* ===== Polish: a11y & kenyamanan ===== */
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:4px}
+.skip-link{position:absolute;left:-999px;top:0;background:var(--red);color:#fff;padding:.5rem 1rem;z-index:300;border-radius:0 0 10px 0;font-weight:700}
+.skip-link:focus{left:0}
+#viewRoot ::-webkit-scrollbar,.sb-nav::-webkit-scrollbar,.ep-list::-webkit-scrollbar{width:9px;height:9px}
+#viewRoot ::-webkit-scrollbar-thumb,.sb-nav::-webkit-scrollbar-thumb{background:#26304f;border-radius:99px}
+.panel{transition:border-color .2s}
+.panel:hover{border-color:rgba(255,255,255,.16)}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+@media print{.sidebar,.topbar,#aiFab,#aiPanel,.toast,.modal-overlay{display:none!important}.main{display:block}.content{padding:0}}
+
+/* ===== RESPONSIF: ponsel, tablet, iOS ===== */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{overflow-x:hidden;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+input,select,textarea{font-size:16px}   /* iOS: cegah zoom otomatis */
+.sb-backdrop{display:none;position:fixed;inset:0;background:rgba(3,6,12,.6);z-index:85;backdrop-filter:blur(2px)}
+.sb-backdrop.show{display:block}
+
+@media(max-width:1024px){
+  .kpis{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+  .three-col{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .topbar .hide-sm{display:none}
+}
+@media(max-width:900px){
+  .sidebar{box-shadow:0 30px 80px rgba(0,0,0,.6);height:100dvh;max-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}
+  .topbar{padding:.55rem .8rem;flex-wrap:nowrap;gap:.55rem}
+  .topbar h1{font-size:.86rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:52vw}
+  .topbar .crumb{display:none}
+  .topbar-right{gap:.35rem}
+  .topbar-right .env-pill:not(#connPill){display:none}
+  #connPill{font-size:.56rem;letter-spacing:.06em;padding:.22rem .45rem;white-space:nowrap;max-width:44vw;overflow:hidden;text-overflow:ellipsis}
+  .content{padding:.85rem .8rem 4.5rem;overflow-x:hidden}
+  .panel,.kpi{border-radius:12px}
+  .panel,.content>div{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .panel table{min-width:540px}
+  .panel canvas,.panel svg{max-width:100%}
+  .two-col,.three-col{grid-template-columns:1fr}
+  .kpi .val{font-size:1.1rem}
+  .modal{width:100%;max-height:92dvh;border-radius:14px 14px 0 0;align-self:flex-end}
+  .modal-overlay{place-items:end center;padding:0}
+  .tabs{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;padding-bottom:.2rem}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{flex:0 0 auto}
+  #aiFab{width:52px;height:52px;right:.9rem;bottom:calc(.9rem + env(safe-area-inset-bottom))}
+  #aiPanel{right:.5rem;left:.5rem;width:auto;bottom:calc(4.6rem + env(safe-area-inset-bottom))}
+  #aiBody{height:min(42dvh,300px)}
+  .toast{left:.6rem;right:.6rem;transform:translateY(16px);text-align:center}
+  .toast.show{transform:translateY(0)}
+  .donut{width:126px;height:126px}
+  .donut::after{inset:28px}
+}
+@media(max-width:640px){
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:.55rem}
+  .content{padding:.7rem .65rem 5rem}
+  .topbar h1{max-width:46vw}
+  .login-form-wrap{padding:1rem}
+  .login-card{padding:1.25rem}
+  .login-card h2{font-size:1.12rem}
+  .demo-btn{font-size:.74rem;padding:.5rem .55rem}
+  .modal h3{font-size:.95rem}
+  table{font-size:.74rem}
+  th,td{padding:.42rem .38rem}
+  .audit-item{flex-direction:column;gap:.1rem}
+  .audit-item time{min-width:0}
+  .stage span{font-size:.55rem}
+}
+@media(max-width:400px){
+  .kpis{grid-template-columns:1fr}
+  .topbar h1{max-width:40vw}
+}
+@media (pointer:coarse){
+  .nav-item{min-height:44px}
+  .btn{padding:.6rem .8rem;min-height:40px}
+  .btn-sm{min-height:36px}
+  .tab{min-height:38px;display:inline-flex;align-items:center}
+  .demo-btn{min-height:44px}
+}
+
+</style>
+</head>
+<body>
+
+<!-- ══════════ LOGIN SCREEN ══════════ -->
+<section id="loginScreen" aria-label="Masuk ke Newsroom">
+  <div class="login-art"><div class="login-art-inner">
+    <span class="pill pill-gold">Internal — MBC Indonesia Group</span>
+    <h1>Ruang kendali operasional <span style="color:var(--red2)">MBC INDONESIA</span>.</h1>
+    <p style="color:#c9d1e3;font-size:.88rem">Dasbor Direksi · CRM &amp; Pipeline · Produksi &amp; Studio · Iklan &amp; Sponsorship · Keuangan · Master Data · Laporan BI · Audit Trail — sesuai Blueprint Strategis MBCINDONESIA.TV §7–8.</p>
+  </div></div>
+  <div class="login-form-wrap"><form class="login-card" id="loginForm">
+    <div class="sb-logo" style="margin-bottom:.7rem"><svg width="22" height="22" viewBox="0 0 32 32" fill="none"><path d="M7 23V9l6 7 3-4 3 4 6-7v14" stroke="#fff" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="26.4" cy="7.2" r="2.4" fill="#ffd166"/></svg></div>
+    <h2>Newsroom <span style="color:var(--red2)">MBC INDONESIA</span></h2>
+    <p class="sub">Masuk dengan akun perusahaan. Akses dibatasi per peran (RBAC) &amp; tercatat di audit trail.</p>
+    <div class="login-error" id="loginError">Email atau kata sandi salah.</div>
+    <div class="field"><label for="fEmail">Email</label><input id="fEmail" type="email" autocomplete="username" required placeholder="nama@mbcindonesia.tv"></div>
+    <div class="field"><label for="fPass">Kata Sandi</label><input id="fPass" type="password" autocomplete="current-password" required placeholder="••••••••"></div>
+    <button class="btn btn-red btn-block" type="submit" style="margin-top:.3rem">Masuk Aman</button>
+    <div class="demo-accounts">
+      <p>Akun Demo (klik untuk isi otomatis)</p>
+      <button type="button" class="demo-btn" data-email="direktur@mbcindonesia.tv" data-pass="demo123"><span>Direktur Utama — Akses penuh</span><small>direktur@mbcindonesia.tv</small></button>
+      <button type="button" class="demo-btn" data-email="finance@mbcindonesia.tv" data-pass="demo123"><span>Manager Keuangan — Keuangan &amp; Laporan</span><small>finance@mbcindonesia.tv</small></button>
+      <button type="button" class="demo-btn" data-email="sales@mbcindonesia.tv" data-pass="demo123"><span>Account Executive — CRM &amp; Iklan</span><small>sales@mbcindonesia.tv</small></button>
+      <button type="button" class="demo-btn" data-email="redaksi@mbcindonesia.tv" data-pass="demo123"><span>Produser Redaksi — Produksi &amp; Studio</span><small>redaksi@mbcindonesia.tv</small></button>
+      <p style="margin-top:.5rem;text-transform:none;letter-spacing:0;font-weight:400">Kata sandi semua akun demo: <b style="color:#fff">demo123</b></p>
+    </div>
+  </form></div>
+</section>
+
+<!-- ══════════ APP SHELL ══════════ -->
+<section id="appShell" class="hidden" aria-label="Newsroom">
+  <a class="skip-link" href="#viewRoot">Lompat ke konten</a>
+  <div class="sb-backdrop" id="sbBackdrop"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-brand">
+      <div class="sb-logo"><svg width="22" height="22" viewBox="0 0 32 32" fill="none"><path d="M7 23V9l6 7 3-4 3 4 6-7v14" stroke="#fff" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="26.4" cy="7.2" r="2.4" fill="#ffd166"/></svg></div>
+      <div><div class="t1">MBC INDONESIA</div><div class="t2">Newsroom Internal</div></div>
+    </div>
+    <nav class="sb-nav" id="sideNav" aria-label="Menu utama"></nav>
+    <div class="sb-foot">
+      <div class="user-chip"><div class="avatar" id="userAvatar">DU</div><div><div class="n" id="userName">—</div><div class="r" id="userRole">—</div></div></div>
+      <button class="btn btn-ghost btn-sm btn-block" id="logoutBtn">Keluar</button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="btn btn-ghost btn-sm" id="menuToggle" aria-label="Menu">☰</button>
+      <div><div class="crumb">MBC Indonesia Group / Newsroom</div><h1 id="viewTitle">Dasbor Direksi</h1></div>
+      <div class="topbar-right"><span class="env-pill" id="connPill" style="color:var(--gold);border-color:rgba(242,193,78,.4);background:rgba(242,193,78,.12)">MEMERIKSA…</span><span class="env-pill">PRODUKSI · ID</span><a class="btn btn-ghost btn-sm hide-sm" href="../index.html" target="_blank" rel="noopener">Lihat Situs Publik ↗</a></div>
+    </div>
+    <main class="content" id="viewRoot"></main>
+  </div>
+</section>
+
+<!-- AI Assistant -->
+<button id="aiFab" aria-label="Tanya asisten AI internal"><svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 2a3 3 0 0 1 3 3v1h3a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3V5a3 3 0 0 1 3-3Z" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/><circle cx="9.5" cy="12" r=".5" fill="#fff"/><circle cx="14.5" cy="12" r=".5" fill="#fff"/><path d="M9.5 16h5" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+<div id="aiPanel" role="dialog" aria-label="Asisten AI Internal">
+  <div class="ai-head"><span>🤖 Asisten Internal (Demo)</span><button class="btn btn-ghost btn-sm" id="aiClose">✕</button></div>
+  <div id="aiBody"><div class="ai-msg bot">Halo! Saya asisten internal berbasis aturan (bukan pengambil keputusan). Tanya: <b>pendapatan</b>, <b>pipeline</b>, <b>piutang</b>, <b>produksi</b>, <b>kpi</b>, atau <b>bantuan</b>.</div></div>
+  <form id="aiForm"><input id="aiInput" placeholder="Tanya soal data perusahaan…" autocomplete="off"><button class="btn btn-red" type="submit" style="border-radius:0">Kirim</button></form>
+  <div class="ai-note">Blueprint §6.5 — AI tidak menyetujui pembayaran/payroll/akses tanpa otorisasi manusia.</div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal-overlay hidden" id="modalOverlay"><div class="modal" id="modalBox"></div></div>
+
+<script>
+'use strict';
+/* ════════════════════════════════════════════════════════════
+   MBC INDONESIA NEWSROOM — API (server) + fallback lokal
+   Online → PostgreSQL via /api/* (RBAC di server) · Offline → localStorage
+   ════════════════════════════════════════════════════════════ */
+const API_TOKEN_KEY = 'mbc_token';
+/* Token dari halaman gerbang (?t=…) — dipakai sekali lalu alamat dibersihkan
+   agar token tidak tertinggal di riwayat peramban / riwayat aplikasi. */
+(function takeGateToken(){
+  try {
+    const url = new URL(location.href);
+    const t = url.searchParams.get('t');
+    if (t) {
+      localStorage.setItem(API_TOKEN_KEY, t);
+      url.searchParams.delete('t');
+      history.replaceState(null, '', url.pathname + (url.searchParams.toString() ? '?' + url.searchParams : '') + url.hash);
+    }
+  } catch (_) {}
+})();
+const api = {
+  online: false,
+  token: localStorage.getItem(API_TOKEN_KEY) || null,
+  async req(path, opts) {
+    const o = opts || {};
+    const headers = { 'Content-Type': 'application/json' };
+    if (this.token) headers['Authorization'] = 'Bearer ' + this.token;
+    const res = await fetch(path, { method: o.method || 'GET', headers, body: o.body ? JSON.stringify(o.body) : undefined });
+    if (res.status === 401) {
+      localStorage.removeItem(API_TOKEN_KEY); localStorage.removeItem('mbc_session');
+      try { location.reload(); } catch (_) {}
+      throw new Error('Sesi berakhir, silakan masuk kembali');
+    }
+    let data = null; try { data = await res.json(); } catch (_) {}
+    if (!res.ok) throw new Error((data && data.error) || ('HTTP ' + res.status));
+    this.online = true;
+    return data;
+  },
+  async probe() {
+    try { const r = await fetch('/api/health'); this.online = !!(r && r.ok); } catch (_) { this.online = false; }
+    updateConnPill();
+  }
+};
+function updateConnPill() {
+  const el = document.getElementById('connPill'); if (!el) return;
+  const small = window.innerWidth <= 480;
+  if (api.online) {
+    el.textContent = small ? '● ONLINE' : 'API ONLINE · PostgreSQL';
+    el.title = 'Terhubung ke server & PostgreSQL';
+    el.style.color = 'var(--green)'; el.style.borderColor = 'rgba(47,210,122,.4)'; el.style.background = 'rgba(47,210,122,.12)';
+  } else {
+    el.textContent = small ? '● LOKAL' : 'MODE OFFLINE · data lokal';
+    el.title = 'Server tidak terjangkau — data lokal (localStorage)';
+    el.style.color = 'var(--gold)'; el.style.borderColor = 'rgba(242,193,78,.4)'; el.style.background = 'rgba(242,193,78,.12)';
+  }
+}
+window.addEventListener('resize', updateConnPill);
+const fmtRp = jt => jt >= 1000 ? 'Rp ' + (jt/1000).toLocaleString('id-ID',{maximumFractionDigits:2}) + ' M' : 'Rp ' + jt.toLocaleString('id-ID') + ' jt';
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const toast = msg => { const t=$('#toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600); };
+const nowStr = () => { const d=new Date(); const p=n=>String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; };
+
+/* ---------- Audit Trail ---------- */
+const AUDIT_KEY='mbc_audit';
+function audit(action){
+  const s = session();
+  if (api.online) { api.req('/api/audit', { method: 'POST', body: { action } }).catch(() => {}); return; }
+  const log = JSON.parse(localStorage.getItem(AUDIT_KEY) || '[{"t":"Approval INV/2026/0112 dialihkan ke Direksi","who":"System","at":"2026-11-20 17:40"},{"t":"Login — Manager Keuangan","who":"Dewi Anggraini","at":"2026-11-21 07:58"},{"t":"Upload bukti tayang: Bank Jatim — Ruang Bisnis","who":"Rangga Saputra","at":"2026-11-21 09:12"}]');
+  log.unshift({t:action, who: s?s.name:'System', at: nowStr()});
+  localStorage.setItem(AUDIT_KEY, JSON.stringify(log.slice(0,150)));
+}
+/* Muat ulang seluruh state dari server → localStorage (mirror untuk view & offline) */
+async function refreshState(){
+  if (!api.token) return false;
+  try {
+    const st = await api.req('/api/state');
+    if (st.crm) localStorage.setItem(CRM_KEY, JSON.stringify(st.crm));
+    if (st.produksi) localStorage.setItem(PROD_KEY, JSON.stringify(st.produksi));
+    if (st.campaigns) localStorage.setItem(CAMP_KEY, JSON.stringify(st.campaigns));
+    if (st.slots) localStorage.setItem('mbc_slots', JSON.stringify(st.slots.map(s=>({slot:s.slot, harga:s.price, st:s.status, id:s.id}))));
+    if (st.piutang) localStorage.setItem('mbc_piutang', JSON.stringify(st.piutang));
+    if (st.approvals) localStorage.setItem(APPROVAL_KEY, JSON.stringify(st.approvals));
+    if (st.master) { const m={}; for (const [k,v] of Object.entries(st.master)) m[k]={cols:v.cols, rows:v.rows, ids:v.ids}; localStorage.setItem(MASTER_KEY, JSON.stringify(m)); }
+    if (st.audit) localStorage.setItem('mbc_audit_server', JSON.stringify(st.audit));
+    if (st.summary) localStorage.setItem('mbc_summary', JSON.stringify(st.summary));
+    return true;
+  } catch (_) { return false; }
+}
+
+/* ---------- Sesi & RBAC ---------- */
+const SESSION_KEY='mbc_session';
+const session = () => JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+const USERS = {
+  'direktur@mbcindonesia.tv': {pass:'demo123', name:'Andika Pratama', role:'direksi', roleLabel:'Direktur Utama'},
+  'finance@mbcindonesia.tv':  {pass:'demo123', name:'Dewi Anggraini', role:'finance', roleLabel:'Manager Keuangan'},
+  'sales@mbcindonesia.tv':    {pass:'demo123', name:'Rangga Saputra', role:'sales',   roleLabel:'Account Executive'},
+  'redaksi@mbcindonesia.tv':  {pass:'demo123', name:'Sinta Maharani', role:'editorial', roleLabel:'Produser Redaksi'}
+};
+const NAV = [
+  {id:'desk', label:'Meja Redaksi', group:'EDITORIAL', roles:['direksi','editorial'],
+   icon:'<path d="M3 5h18v3H3zM4 10h16M4 14h16M4 18h10" stroke-width="1.7" fill="none" stroke-linecap="round"/>'},
+  {id:'articles', label:'Artikel (CMS)', group:'EDITORIAL', roles:['direksi','editorial'],
+   icon:'<path d="M5 3h9l5 5v13H5z" stroke-width="1.7" fill="none" stroke-linejoin="round"/><path d="M14 3v5h5M8 12h8M8 16h8" stroke-width="1.7" fill="none" stroke-linecap="round"/>'},
+  {id:'calendar', label:'Kalender Editorial', group:'EDITORIAL', roles:['direksi','editorial'],
+   icon:'<rect x="3" y="5" width="18" height="16" rx="2" stroke-width="1.7" fill="none"/><path d="M3 10h18M8 3v4M16 3v4" stroke-width="1.7" stroke-linecap="round"/>'},
+  {id:'findings', label:'Temuan AI', group:'EDITORIAL', roles:['direksi','editorial'],
+   icon:'<path d="M12 3l2.6 5.6 6.4.8-4.7 4.3 1.3 6.3L12 17l-5.6 3 1.3-6.3L3 9.4l6.4-.8z" stroke-width="1.6" fill="none" stroke-linejoin="round"/>'},
+  {id:'moderation', label:'Moderasi Komentar', group:'EDITORIAL', roles:['direksi','editorial'],
+   icon:'<path d="M4 5h16v10H9l-5 4z" stroke-width="1.7" fill="none" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke-width="1.6" stroke-linecap="round"/>'},
+  {id:'media', label:'Media Library', group:'OPERASIONAL', roles:['direksi','editorial','sales'],
+   icon:'<rect x="3" y="5" width="18" height="14" rx="2" stroke-width="1.7" fill="none"/><circle cx="8.5" cy="10" r="1.6" stroke-width="1.5" fill="none"/><path d="M4 17l5-4 3 2 3-3 4 5" stroke-width="1.6" fill="none" stroke-linejoin="round"/>'},
+  {id:'content-analytics', label:'Analitik Konten', group:'PERUSAHAAN', roles:['direksi','editorial','finance'],
+   icon:'<path d="M4 19V9m5 10V5m5 14v-7m5 7V8" stroke-width="1.8" stroke-linecap="round"/>'},
+  {id:'ai-studio', label:'Studio AI', group:'EDITORIAL', roles:['direksi','editorial'],
+   icon:'<circle cx="12" cy="12" r="3.2" stroke-width="1.7" fill="none"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" stroke-width="1.6" stroke-linecap="round"/>'},
+  {id:'dashboard', label:'Dasbor Direksi', group:'UTAMA', roles:['direksi','finance','sales','editorial'],
+   icon:'<path d="M3 13h8V3H3zM13 21h8V11h-8zM13 3v6h8V3zM3 21h8v-6H3z" stroke-width="1.7" stroke-linejoin="round" fill="none"/>'},
+  {id:'crm', label:'CRM & Pipeline', group:'KOMERSIAL', roles:['direksi','sales'],
+   icon:'<circle cx="9" cy="8" r="3.2" stroke-width="1.7" fill="none"/><path d="M3.5 20c.6-3.6 2.8-5.4 5.5-5.4s4.9 1.8 5.5 5.4M16 4.5a3.2 3.2 0 0 1 0 7M18.6 14.9c1.5.8 2.3 2.6 2.6 5.1" stroke-width="1.7" fill="none" stroke-linecap="round"/>'},
+  {id:'ads', label:'Iklan & Sponsorship', group:'KOMERSIAL', roles:['direksi','sales'],
+   icon:'<path d="M3 11v3a1 1 0 0 0 1 1h2l4 4V6l-4 4H4a1 1 0 0 0-1 1Z" stroke-width="1.7" fill="none" stroke-linejoin="round"/><path d="M14 9a4 4 0 0 1 0 6M17 6.5a7.5 7.5 0 0 1 0 11" stroke-width="1.7" fill="none" stroke-linecap="round"/>'},
+  {id:'produksi', label:'Produksi & Studio', group:'OPERASIONAL', roles:['direksi','editorial'],
+   icon:'<path d="M3 8h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3z" stroke-width="1.7" fill="none"/><path d="M3 12h16M7 8V6m5 2V6m5 2V6" stroke-width="1.7" stroke-linecap="round"/>'},
+  {id:'keuangan', label:'Keuangan & Pajak', group:'PERUSAHAAN', roles:['direksi','finance'],
+   icon:'<rect x="3" y="6" width="18" height="13" rx="2" stroke-width="1.7" fill="none"/><path d="M3 10h18M7 15h4" stroke-width="1.7" stroke-linecap="round"/>'},
+  {id:'master', label:'Master Data', group:'PERUSAHAAN', roles:['direksi','finance'],
+   icon:'<ellipse cx="12" cy="6" rx="8" ry="3" stroke-width="1.7" fill="none"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" stroke-width="1.7" fill="none"/>'},
+  {id:'laporan', label:'Laporan & BI', group:'PERUSAHAAN', roles:['direksi','finance'],
+   icon:'<path d="M4 20V10m6 10V4m6 16v-8m4 8H2" stroke-width="1.8" stroke-linecap="round"/>'},
+  {id:'audit', label:'Audit Trail', group:'TATA KELOLA', roles:['direksi','finance','sales','editorial'],
+   icon:'<path d="M12 3l8 3v6c0 4.5-3.2 7.6-8 9-4.8-1.4-8-4.5-8-9V6z" stroke-width="1.7" fill="none" stroke-linejoin="round"/><path d="M9.5 12l2 2 3.5-4" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>'},
+  {id:'pengaturan', label:'Pengaturan', group:'TATA KELOLA', roles:['direksi','finance','sales','editorial'],
+   icon:'<circle cx="12" cy="12" r="3.2" stroke-width="1.7" fill="none"/><path d="M19.4 15a8 8 0 0 0 .1-6l2-1.5-2-3.4-2.3 1a8 8 0 0 0-5.2-3L11.6 0h-4l-.4 2.6a8 8 0 0 0-5.2 3l-2.3-1-2 3.4 2 1.5a8 8 0 0 0 .1 6l-2 1.5 2 3.4 2.3-1a8 8 0 0 0 5.2 3l.4 2.6h4l.4-2.6a8 8 0 0 0 5.2-3l2.3 1 2-3.4z" stroke-width="1.4" fill="none" stroke-linejoin="round" transform="scale(0.82) translate(1.5 1.5)"/>'}
+];
+const VIEW_TITLES = {desk:'Meja Redaksi', articles:'Artikel — CMS Editorial', calendar:'Kalender Editorial', findings:'Temuan AI', moderation:'Moderasi Komentar', media:'Media Library', 'content-analytics':'Analitik Konten', 'ai-studio':'Studio Multi-Agent AI', dashboard:'Dasbor Direksi', crm:'CRM & Pipeline Penjualan', ads:'Iklan & Sponsorship', produksi:'Produksi & Studio', keuangan:'Keuangan, Akuntansi & Pajak', master:'Master Data', laporan:'Laporan & BI', audit:'Audit Trail', pengaturan:'Pengaturan'};
+let currentView='dashboard';   // ditimpa setelah login bila peran = editorial
+
+function renderNav(){
+  const s = session(); if(!s) return;
+  const groups = {};
+  NAV.filter(n=>n.roles.includes(s.role)).forEach(n=>{ (groups[n.group]=groups[n.group]||[]).push(n); });
+  $('#sideNav').innerHTML = Object.entries(groups).map(([g,items]) =>
+    `<div class="sb-group">${g}</div>` + items.map(n=>`<button class="nav-item${n.id===currentView?' active':''}" data-view="${n.id}"><svg viewBox="0 0 24 24">${n.icon}</svg>${n.label}</button>`).join('')
+  ).join('');
+}
+function navTo(view){
+  currentView=view; $('#viewTitle').textContent = VIEW_TITLES[view]||view;
+  renderNav();
+  try { renderView(); }
+  catch(err){
+    console.error('[newsroom] gagal merender view', view, err);
+    const root = $('#viewRoot');
+    if (root) root.innerHTML = `<div class="panel"><h3>Modul belum siap</h3>
+      <p class="muted" style="font-size:.82rem">Tampilan <b>${esc(view)}</b> gagal dimuat: ${esc(err.message)}.
+      Muat ulang halaman; bila tetap gagal, hubungi admin dan sertakan pesan di atas.</p></div>`;
+    toast('Gagal memuat modul: ' + view);
+  }
+  setDrawer(false);
+}
+$('#sideNav').addEventListener('click', e=>{ const b=e.target.closest('[data-view]'); if(b){ navTo(b.dataset.view); if(window.innerWidth<=900) setDrawer(false); } });
+const sbBackdrop = document.getElementById('sbBackdrop');
+function setDrawer(open){
+  $('#sidebar').classList.toggle('open', open);
+  if (sbBackdrop) sbBackdrop.classList.toggle('show', open);
+  document.body.style.overflow = open ? 'hidden' : '';
+}
+$('#menuToggle').addEventListener('click', ()=>setDrawer(!$('#sidebar').classList.contains('open')));
+if (sbBackdrop) sbBackdrop.addEventListener('click', ()=>setDrawer(false));
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') setDrawer(false); });
+window.addEventListener('resize', ()=>{ if(window.innerWidth>900) setDrawer(false); });
+$('#logoutBtn').addEventListener('click', ()=>{ audit('Logout — '+session().name); localStorage.removeItem(SESSION_KEY); localStorage.removeItem(API_TOKEN_KEY); location.reload(); });
+
+/* ---------- Login ---------- */
+$('#loginForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const errBox = $('#loginError'); errBox.style.display='none';
+  const email=$('#fEmail').value.trim().toLowerCase(), pass=$('#fPass').value;
+  // 1) Jalur utama: autentikasi server (bcrypt + JWT, RBAC di API)
+  try {
+    const res = await fetch('/api/auth/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email, password:pass}) });
+    const data = await res.json().catch(()=>null);
+    if (res.ok && data && data.token) {
+      api.token = data.token; api.online = true;
+      localStorage.setItem(API_TOKEN_KEY, data.token);
+      localStorage.setItem(SESSION_KEY, JSON.stringify(data.user));
+      await refreshState();
+      updateConnPill();
+      boot();
+      return;
+    }
+    if (res.status === 401 || res.status === 429) { errBox.textContent = (data && data.error) || 'Email atau kata sandi salah.'; errBox.style.display='block'; return; }
+  } catch (_) { /* server tidak terjangkau → mode demo lokal */ }
+  // 2) Fallback demo lokal (offline)
+  const u=USERS[email];
+  if(!u || u.pass!==pass){ errBox.textContent='Email atau kata sandi salah.'; errBox.style.display='block'; return; }
+  api.online=false; api.token=null; localStorage.removeItem(API_TOKEN_KEY);
+  localStorage.setItem(SESSION_KEY, JSON.stringify({email, name:u.name, role:u.role, roleLabel:u.roleLabel}));
+  audit('Login (mode offline) — '+u.name+' ('+u.roleLabel+')');
+  boot();
+});
+$('#loginScreen').addEventListener('click', e=>{
+  const b=e.target.closest('.demo-btn'); if(!b) return;
+  $('#fEmail').value=b.dataset.email; $('#fPass').value=b.dataset.pass; $('#loginError').style.display='none';
+});
+
+function boot(){
+  const s=session();
+  api.probe();
+  $('#loginScreen').classList.toggle('hidden', !!s);
+  $('#appShell').classList.toggle('hidden', !s);
+  if(!s) return;
+  $('#userName').textContent=s.name; $('#userRole').textContent=s.roleLabel;
+  $('#userAvatar').textContent=s.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const allowed=NAV.filter(n=>n.roles.includes(s.role)).map(n=>n.id);
+  // Redaksi mendarat di Meja Redaksi (bukan dasbor direksi) saat sesi baru dimulai
+  if(s.role==='editorial' && (!allowed.includes(currentView) || currentView==='dashboard')) currentView='desk';
+  if(!allowed.includes(currentView)) currentView = allowed.includes('dashboard') ? 'dashboard' : allowed[0];
+  /* Judul dasbor menyesuaikan peran — bukan "Dasbor Direksi" untuk semua orang */
+  VIEW_TITLES.dashboard = s.role === 'direksi' ? 'Dasbor Direksi' : 'Dasbor Ringkas';
+  navTo(currentView);
+}
+
+/* ---------- Data contoh ---------- */
+const REV_M=[['Jun',312],['Jul',355],['Agu',298],['Sep',402],['Okt',438],['Nov',486]];
+const REV_SRC=[['Jasa Produksi',46,'#e63329'],['Sponsorship',22,'#f2c14e'],['Iklan',18,'#4f8cff'],['Distribusi Konten',8,'#2fd27a'],['Lainnya',6,'#8b97b3']];
+const CRM_SEED={
+  prospek:[{co:'PT Sumber Rejeki Abadi',deal:'Video company profile 60 detik',val:45},{co:'Klinik Sehat Keluarga',deal:'Paket konten korporat bulanan',val:18},{co:'Pemkot Kediri',deal:'Dokumentasi HUT Kota 2027',val:120}],
+  penawaran:[{co:'CV Karya Mandiri',deal:'3 episode podcast sponsor',val:27},{co:'Koperasi Tani Makmur',deal:'Iklan digital + 15" TV',val:15}],
+  negosiasi:[{co:'PT Bank Jatim Tbk',deal:'Sponsorship Ruang Bisnis Q1 2027',val:150}],
+  kontrak:[{co:'PT Indofood CBP',deal:'Branded content Dapur Rempah (4 eps)',val:85},{co:'Telkomsel',deal:'Paket iklan cross-channel Des',val:200}],
+  selesai:[{co:'Pemkot Kediri',deal:'Liputan HUT RI ke-81',val:60}]};
+const CRM_COLS=[['prospek','Prospek'],['penawaran','Penawaran'],['negosiasi','Negosiasi'],['kontrak','Kontrak'],['selesai','Selesai']];
+const CRM_KEY='mbc_crm';
+const crmData = () => JSON.parse(localStorage.getItem(CRM_KEY) || JSON.stringify(CRM_SEED));
+const saveCrm = d => localStorage.setItem(CRM_KEY, JSON.stringify(d));
+
+const STAGES=['Brief','Naskah','Produksi','Editing','Review Klien','Tayang'];
+const PROD_SEED=[
+  {n:'Video Company Profile PT SRA',c:'PT Sumber Rejeki Abadi',stage:2,prog:62,due:'05 Des 2026',bud:45},
+  {n:'Dokumenter “Kopi Kediri” Ep 3',c:'Produksi Internal MBC',stage:3,prog:71,due:'28 Nov 2026',bud:120},
+  {n:'Iklan Telkomsel — 3 spot 15"',c:'Telkomsel',stage:4,prog:88,due:'25 Nov 2026',bud:200},
+  {n:'Podcast Bicara Petang Ep 102–105',c:'Internal — Divisi Podcast',stage:1,prog:30,due:'01 Des 2026',bud:12},
+  {n:'Branded Content Dapur Rempah',c:'PT Indofood CBP',stage:3,prog:64,due:'10 Des 2026',bud:85},
+  {n:'Liputan HUT Kota Kediri 2027',c:'Pemkot Kediri',stage:0,prog:8,due:'20 Jan 2027',bud:120}
+];
+const PROD_KEY='mbc_produksi';
+const prodData = () => JSON.parse(localStorage.getItem(PROD_KEY) || JSON.stringify(PROD_SEED));
+const saveProd = d => localStorage.setItem(PROD_KEY, JSON.stringify(d));
+
+const SLOTS=[
+  {slot:'Kabar Nusantara Pagi · 06.30 (15")', harga:'Rp 8 jt / tayang', st:'Tersedia'},
+  {slot:'Ruang Bisnis · 19.30 (30")', harga:'Rp 18 jt / tayang', st:'Terjual'},
+  {slot:'Dapur Rempah · Minggu 10.15 (15")', harga:'Rp 12 jt / tayang', st:'Tersedia'},
+  {slot:'Panggung Musik · Minggu 20.45 (30")', harga:'Rp 15 jt / tayang', st:'Terjual'},
+  {slot:'Sponsor Bicara Petang (per bulan)', harga:'Rp 25 jt / bln', st:'Tersedia'}
+];
+const CAMP_KEY='mbc_campaigns';
+const CAMP_SEED=[
+  {co:'Telkomsel', pkg:'Cross-channel — Desember', total:24, done:18},
+  {co:'Indofood CBP', pkg:'Dapur Rempah — 4 episode', total:8, done:5},
+  {co:'Bank Jatim', pkg:'Ruang Bisnis Q4 — selesai', total:12, done:12}
+];
+const campData = () => JSON.parse(localStorage.getItem(CAMP_KEY) || JSON.stringify(CAMP_SEED));
+const saveCamp = d => localStorage.setItem(CAMP_KEY, JSON.stringify(d));
+
+const PIUTANG=[
+  {inv:'INV/2026/0112', co:'PT Indofood CBP', amt:85, due:'15 Okt 2026', aging:'60+ hari'},
+  {inv:'INV/2026/0128', co:'Telkomsel', amt:200, due:'10 Nov 2026', aging:'1–30 hari'},
+  {inv:'INV/2026/0131', co:'CV Karya Mandiri', amt:27, due:'18 Nov 2026', aging:'1–30 hari'},
+  {inv:'INV/2026/0136', co:'Pemkot Kediri', amt:60, due:'30 Nov 2026', aging:'Lancar'}
+];
+const APPROVAL_KEY='mbc_approvals';
+const APPROVAL_SEED=[
+  {id:'PBJ-2026-031', d:'Sewa kamera Sony FX6 + lensa — 3 hari shoot', amt:18.5},
+  {id:'PBJ-2026-034', d:'Honor koresponden Jawa Timur — November 2026', amt:22.3},
+  {id:'PBJ-2026-037', d:'Lisensi musik Dapur Rempah Ep 9', amt:7.5}
+];
+const apprData = () => JSON.parse(localStorage.getItem(APPROVAL_KEY) || JSON.stringify(APPROVAL_SEED));
+const saveAppr = d => localStorage.setItem(APPROVAL_KEY, JSON.stringify(d));
+
+const MASTER={
+  klien:{cols:['Nama','Tipe','Kota'], rows:[['PT Indofood CBP Sukses Makmur','Klien Produksi','Jakarta'],['Telkomsel','Pengiklan','Jakarta'],['Pemkot Kediri','Institusi','Kediri'],['PT Bank Jatim Tbk','Sponsor','Surabaya'],['CV Karya Mandiri','Klien UMKM','Kediri'],['Koperasi Tani Makmur','Klien UMKM','Nganjuk']]},
+  vendor:{cols:['Nama Vendor','Layanan'], rows:[['PT Sewa Alat Studio Nusantara','Sewa alat produksi'],['CV Cahaya Lensa','Fotografi & drone'],['PT Multi Media Transcoding','Transcoding & storage'],['Studio Grafis Laras','Motion graphic & grafis'],['PT Asuransi Jasindo','Asuransi alat & kru']]},
+  produk:{cols:['Layanan','Harga','Margin'], rows:[['Jasa Video Profile (60 dtk)','Rp 35–60 jt','45%'],['Produksi Podcast (per episode)','Rp 9–15 jt','50%'],['Slot Iklan 15" (per tayang)','Rp 8 jt','70%'],['Sponsorship Program (per bulan)','Rp 25–80 jt','55%'],['Dokumenter Khusus (per episode)','Rp 80–150 jt','40%'],['Retainer Kelola Kanal (per bulan)','Rp 20–45 jt','50%']]}
+};
+const MASTER_KEY='mbc_master';
+const masterData = () => JSON.parse(localStorage.getItem(MASTER_KEY) || JSON.stringify(MASTER));
+const saveMaster = d => localStorage.setItem(MASTER_KEY, JSON.stringify(d));
+
+/* ---------- Modal ---------- */
+const overlay=$('#modalOverlay'), box=$('#modalBox');
+function openModal(html){ box.innerHTML=html; overlay.classList.remove('hidden'); }
+function closeModal(){ overlay.classList.add('hidden'); }
+overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
+
+/* ══════════ VIEWS ══════════ */
+function renderView(){
+  const root=$('#viewRoot');
+  const views={desk:viewDesk, articles:viewArticles, calendar:viewCalendar, findings:viewFindings, moderation:viewModeration, media:viewMedia, 'content-analytics':viewContentAnalytics, 'ai-studio':viewAIStudio, dashboard:viewDashboard, crm:viewCrm, ads:viewAds, produksi:viewProduksi, keuangan:viewKeuangan, master:viewMaster, laporan:viewLaporan, audit:viewAudit, pengaturan:viewPengaturan};
+  (views[currentView]||viewDashboard)(root);
+}
+
+/* ---- Dasbor Direksi ---- */
+function viewDashboard(root){
+  const maxRev=Math.max(...REV_M.map(m=>m[1]));
+  const bars=REV_M.map(([m,v])=>{
+    const h=Math.round(v/maxRev*130);
+    return `<g><rect x="0" y="${140-h}" width="44" height="${h}" rx="5" fill="url(#grad)"/><text x="22" y="136" fill="#8b97b3" font-size="10" text-anchor="middle">${m}</text><text x="22" y="${132-h}" fill="#e9edf6" font-size="10" font-weight="700" text-anchor="middle">${v}</text></g>`;
+  });
+  let acc=0;
+  const donutStops=REV_SRC.map(([n,v,c])=>{ const s=`${c} ${acc}% ${acc+v}%`; acc+=v; return s; }).join(',');
+  const summary = JSON.parse(localStorage.getItem('mbc_summary')||'null');
+  const summaryHtml = summary ? `<div class="panel" style="display:flex;gap:1.4rem;flex-wrap:wrap;align-items:center;padding:.55rem 1rem;margin-bottom:.8rem;border-color:rgba(47,210,122,.35)"><span class="pill pill-green">🟢 Live dari PostgreSQL</span><span class="muted" style="font-size:.78rem">Pipeline aktif: <b style="color:var(--gold)">${fmtRp(summary.pipeline_jt)}</b></span><span class="muted" style="font-size:.78rem">Persetujuan menunggu: <b style="color:#fff">${summary.pending_approvals}</b></span><span class="muted" style="font-size:.68rem">dihitung langsung dari tabel crm_deals &amp; approvals</span></div>` : '';
+  root.innerHTML= summaryHtml + `
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">Pendapatan Nov 2026</div><div class="val">Rp 486 jt</div><div class="delta up">▲ +11,0% vs Okt (Rp 438 jt)</div></div>
+    <div class="kpi"><div class="lbl">Pipeline Aktif</div><div class="val">Rp 692 jt</div><div class="delta up">▲ 9 penawaran berjalan</div></div>
+    <div class="kpi"><div class="lbl">Kontrak Baru (Nov)</div><div class="val">9</div><div class="delta up">▲ konversi 38%</div></div>
+    <div class="kpi"><div class="lbl">Margin Kontribusi</div><div class="val">34%</div><div class="delta warn">● target 40% — perlu review biaya</div></div>
+    <div class="kpi"><div class="lbl">Umur Piutang</div><div class="val">24 hari</div><div class="delta down">▲ 2 invoice &gt; 60 hari</div></div>
+    <div class="kpi"><div class="lbl">Retensi Klien</div><div class="val">87%</div><div class="delta up">▲ target 85% tercapai</div></div>
+  </div>
+
+  <div class="two-col">
+    <div class="panel"><h3>Pendapatan 6 Bulan Terakhir <span class="muted" style="font-size:.68rem;font-weight:400">Rp juta · sumber: sistem akuntansi</span></h3>
+      <svg viewBox="0 0 ${bars.length*66} 150" style="width:100%;max-height:220px" role="img" aria-label="Grafik batang pendapatan">
+        <defs><linearGradient id="grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff5a4e"/><stop offset="1" stop-color="#b81d14"/></linearGradient></defs>
+        ${bars.map((b,i)=>`<g transform="translate(${i*66+8},0)">${b}</g>`).join('')}
+      </svg>
+    </div>
+    <div class="panel"><h3>Sumber Pendapatan (YTD)</h3>
+      <div class="donut" style="background:conic-gradient(${donutStops})" role="img" aria-label="Donut chart sumber pendapatan"></div>
+      <div class="legend">${REV_SRC.map(([n,v,c])=>`<span><i style="background:${c}"></i>${n} — <b>${v}%</b></span>`).join('')}</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="panel"><h3>Target vs Realisasi Layanan (Nov 2026)</h3>
+      ${[['Jasa Produksi Video',486,550],['Sponsorship Program',232,250],['Slot Iklan Terjual',148,200],['Distribusi Konten',88,100]].map(([n,a,t])=>`
+        <div style="margin-bottom:.55rem"><div style="display:flex;justify-content:space-between;font-size:.76rem;margin-bottom:.25rem"><span>${n}</span><span class="muted">${fmtRp(a)} / ${fmtRp(t)}</span></div><div class="pbar"><div style="width:${Math.min(100,Math.round(a/t*100))}%"></div></div></div>`).join('')}
+    </div>
+    <div class="panel"><h3>Peringatan &amp; Tindak Lanjut</h3>
+      <div class="alert-item red"><span>⚠️</span><div><b>Piutang &gt; 60 hari</b> — INV/2026/0112 (Indofood CBP, Rp 85 jt). Escalation ke Direksi &amp; penahanan jadwal tayang branded content.</div></div>
+      <div class="alert-item"><span>⏳</span><div><b>Hak siar Jejak Nusantara Ep 1–6</b> berakhir 31 Des 2026 — perpanjang lisensi musik &amp; footage sebelum tayang ulang Januari.</div></div>
+      <div class="alert-item blue"><span>📋</span><div><b>3 kampanye Desember</b> menunggu bukti tayang diunggah: Telkomsel (6 tayang), Indofood (2 episode), Koperasi Tani (1 tayang).</div></div>
+      <div class="alert-item"><span>✅</span><div><b>Gerbang Fase 3 → 4</b>: Direksi menyetujui peluncuran ERP (akuntansi + payroll) target Januari 2027. Lihat roadmap 18 bulan (Blueprint §10).</div></div>
+    </div>
+  </div>`;
+}
+
+/* ---- CRM & Pipeline (kanban + drag&drop) ---- */
+function viewCrm(root){
+  const d=crmData();
+  root.innerHTML=`
+  <div class="panel" style="display:flex;justify-content:space-between;align-items:center;gap:.8rem;flex-wrap:wrap">
+    <div><h3 style="margin:0">Pipeline Penjualan <span class="muted" style="font-size:.7rem;font-weight:400">· seret kartu antar kolom · sinkron ke PostgreSQL saat online</span></h3>
+    <div class="muted" style="font-size:.72rem;margin-top:.2rem">Total pipeline: <b id="crmTotal" style="color:var(--gold)"></b> · ${CRM_COLS.reduce((a,[k])=>a+d[k].length,0)} peluang</div></div>
+    <button class="btn btn-red" id="addDealBtn">+ Tambah Prospek</button>
+  </div>
+  <div class="kanban" id="kanban">
+    ${CRM_COLS.map(([key,label])=>`
+      <div class="kb-col" data-col="${key}">
+        <h4>${label}<span class="kb-count">${d[key].length}</span></h4>
+        <div class="kb-cards">
+          ${d[key].map((it,i)=>`<div class="kb-card" draggable="true" data-col="${key}" data-i="${i}" data-id="${it.id||''}">
+            <button class="del" data-col="${key}" data-i="${i}" data-id="${it.id||''}" title="Hapus">✕</button>
+            <b>${esc(it.co)}</b><small>${esc(it.deal)}</small><span class="kb-val">${fmtRp(it.val)}</span></div>`).join('')}
+        </div>
+        <div class="kb-total">Σ ${fmtRp(d[key].reduce((a,x)=>a+x.val,0))}</div>
+      </div>`).join('')}
+  </div>`;
+  $('#crmTotal').textContent = fmtRp(CRM_COLS.reduce((a,[k])=>a+d[k].reduce((x,y)=>x+y.val,0),0));
+
+  // Drag & drop
+  let dragSrc=null;
+  $$('.kb-card',root).forEach(card=>{
+    card.addEventListener('dragstart',()=>{ dragSrc={col:card.dataset.col,i:+card.dataset.i}; });
+  });
+  $$('.kb-col',root).forEach(col=>{
+    col.addEventListener('dragover',e=>{ e.preventDefault(); col.classList.add('drag-over'); });
+    col.addEventListener('dragleave',()=>col.classList.remove('drag-over'));
+    col.addEventListener('drop',e=>{
+      e.preventDefault(); col.classList.remove('drag-over');
+      if(!dragSrc) return;
+      const data=crmData(); const target=col.dataset.col;
+      const [item]=data[dragSrc.col].splice(dragSrc.i,1);
+      data[target].push(item); saveCrm(data);
+      (async ()=>{
+        if (api.online && item.id) {
+          try { await api.req('/api/crm/deals/'+item.id+'/stage', {method:'PATCH', body:{stage:target}}); await refreshState(); }
+          catch(err){ toast('Gagal sinkron ke server: '+err.message); }
+        } else {
+          audit(`Pipeline: “${item.co}” dipindah ${dragSrc.col} → ${target}`);
+        }
+        viewCrm(root); toast('Pipeline diperbarui.');
+      })();
+    });
+  });
+  root.onclick =e=>{
+    const del=e.target.closest('.del');
+    if(del){ (async ()=>{
+      const data=crmData(); const [item]=data[del.dataset.col].splice(+del.dataset.i,1); saveCrm(data);
+      if (api.online && del.dataset.id) { try { await api.req('/api/crm/deals/'+del.dataset.id, {method:'DELETE'}); await refreshState(); } catch(err){ toast('Terhapus lokal; gagal di server'); } }
+      else audit(`Pipeline: prospek “${item?item.co:''}” dihapus`);
+      viewCrm(root);
+    })(); return; }
+    if(e.target.closest('#addDealBtn')){
+      openModal(`<h3>Tambah Prospek Baru</h3>
+        <div class="field"><label>Nama Klien / Institusi</label><input id="ndCo" placeholder="PT …"></div>
+        <div class="field"><label>Kebutuhan</label><input id="ndDeal" placeholder="Mis. video profile, sponsorship…"></div>
+        <div class="field"><label>Nilai Estimasi (Rp juta)</label><input id="ndVal" type="number" min="1" placeholder="50"></div>
+        <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.6rem"><button class="btn btn-ghost" id="ndCancel">Batal</button><button class="btn btn-red" id="ndSave">Simpan Prospek</button></div>`);
+      $('#ndCancel').onclick=closeModal;
+      $('#ndSave').onclick=async ()=>{
+        const co=$('#ndCo').value.trim(), deal=$('#ndDeal').value.trim(), val=+$('#ndVal').value;
+        if(!co||!deal||!val){ toast('Lengkapi semua kolom.'); return; }
+        if (api.online) {
+          try { await api.req('/api/crm/deals', {method:'POST', body:{company:co, deal, value:val}}); await refreshState(); }
+          catch(err){ toast('Gagal simpan ke server: '+err.message); return; }
+        } else {
+          const data=crmData(); data.prospek.unshift({co,deal,val}); saveCrm(data);
+          audit(`CRM: prospek baru “${co}” ditambahkan (${fmtRp(val)})`);
+        }
+        closeModal(); viewCrm(root); toast('Prospek tersimpan.');
+      };
+    }
+  };
+}
+
+/* ---- Iklan & Sponsorship ---- */
+function viewAds(root){
+  const camps=campData();
+  const slots=JSON.parse(localStorage.getItem('mbc_slots')||'null') || SLOTS;
+  root.innerHTML=`
+  <div class="two-col">
+    <div class="panel"><h3>Inventaris Slot Iklan <span class="muted" style="font-size:.68rem;font-weight:400">Rate card Nov 2026</span></h3>
+      <table><thead><tr><th>Slot</th><th>Harga</th><th>Status</th></tr></thead><tbody>
+        ${slots.map(s=>`<tr><td>${esc(s.slot)}</td><td>${s.harga}</td><td><span class="pill ${s.st==='Terjual'?'pill-red':'pill-green'}">${s.st}</span></td></tr>`).join('')}
+      </tbody></table>
+      <p class="muted" style="font-size:.68rem;margin-top:.5rem">Penjualan slot &amp; kewenangan editorial dipisah (Blueprint §7.7–7.8). Konten berbayar wajib berlabel “Berbayar”.</p>
+    </div>
+    <div class="panel"><h3>Kampanye Aktif &amp; Bukti Tayang</h3>
+      ${camps.map((c,i)=>`<div style="border:1px solid var(--line);border-radius:12px;padding:.6rem .7rem;margin-bottom:.55rem;background:var(--panel2)">
+        <div style="display:flex;justify-content:space-between;gap:.5rem;align-items:baseline"><b>${esc(c.co)}</b><span class="muted" style="font-size:.68rem">${esc(c.pkg)}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:.7rem;margin:.35rem 0 .2rem"><span>Pemenuhan kontrak</span><span class="muted">${c.done}/${c.total} tayang</span></div>
+        <div class="pbar"><div style="width:${Math.round(c.done/c.total*100)}%"></div></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.4rem"><span class="pill ${c.done>=c.total?'pill-green':'pill-gold'}">${c.done>=c.total?'Selesai — siap invoice':'Berjalan'}</span>
+        <button class="btn btn-ghost btn-sm" data-bukti="${i}">📎 Unggah Bukti Tayang</button></div></div>`).join('')}
+    </div>
+  </div>
+  <div class="panel"><h3>Sponsorship &amp; Branded Content — Kalender Q4 2026</h3>
+    <table><thead><tr><th>Program</th><th>Mitra</th><th>Periode</th><th>Nilai</th><th>Label Berbayar</th><th>Status</th></tr></thead><tbody>
+      <tr><td>Dapur Rempah Ep 7–9</td><td>PT Indofood CBP</td><td>Okt–Des 2026</td><td>Rp 85 jt</td><td><span class="pill pill-green">Terpasang</span></td><td><span class="pill pill-gold">Editing</span></td></tr>
+      <tr><td>Ruang Bisnis — segmen khusus</td><td>Bank Jatim</td><td>Nov 2026</td><td>Rp 60 jt</td><td><span class="pill pill-green">Terpasang</span></td><td><span class="pill pill-green">Tayang</span></td></tr>
+      <tr><td>Panggung Musik — title sponsor</td><td>(Tersedia)</td><td>Des 2026</td><td>Rp 40 jt</td><td>—</td><td><span class="pill pill-blue">Penawaran</span></td></tr>
+    </tbody></table>
+  </div>`;
+  root.onclick =e=>{
+    const b=e.target.closest('[data-bukti]'); if(!b) return;
+    (async ()=>{
+      const camps2=campData(); const c=camps2[+b.dataset.bukti]; if(!c) return;
+      if (api.online && c.id) {
+        try { const r=await api.req('/api/ads/campaigns/'+c.id+'/proof', {method:'POST'}); await refreshState(); toast(`Bukti tayang tercatat (${r.done}/${r.total}).`); viewAds(root); }
+        catch(err){ toast('Gagal di server: '+err.message); }
+        return;
+      }
+      if(c.done<c.total){ c.done++; saveCamp(camps2); audit(`Bukti tayang diunggah: ${c.co} (${c.done}/${c.total})`); toast('Bukti tayang tercatat.'); viewAds(root); }
+      else toast('Kontrak sudah terpenuhi 100%.');
+    })();
+  };
+}
+
+/* ---- Produksi & Studio ---- */
+function viewProduksi(root){
+  const list=prodData();
+  root.innerHTML=`
+  <div class="panel" style="display:flex;justify-content:space-between;align-items:center;gap:.8rem;flex-wrap:wrap">
+    <div><h3 style="margin:0">Board Produksi <span class="muted" style="font-size:.7rem;font-weight:400">· brief → naskah → produksi → editing → review → tayang</span></h3>
+    <div class="muted" style="font-size:.72rem;margin-top:.2rem">${list.length} proyek aktif · progres rata-rata ${Math.round(list.reduce((a,p)=>a+p.prog,0)/list.length)}%</div></div>
+    <button class="btn btn-red" id="addProjBtn">+ Proyek Baru</button>
+  </div>
+  <div class="three-col">
+    ${list.map((p,i)=>`<div class="panel" style="margin:0" data-pid="${p.id||''}">
+      <div style="display:flex;justify-content:space-between;gap:.5rem"><b style="font-size:.85rem">${esc(p.n)}</b><span class="pill pill-grey">${fmtRp(p.bud)}</span></div>
+      <div class="muted" style="font-size:.7rem;margin:.2rem 0">${esc(p.c)} · deadline ${esc(p.due)}</div>
+      <div class="stage">${STAGES.map((s,si)=>`<span class="${si<p.stage?'done':si===p.stage?'now':''}">${s}</span>`).join('')}</div>
+      <div class="pbar"><div style="width:${p.prog}%"></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.45rem"><span class="muted" style="font-size:.7rem">${p.prog}% selesai</span>
+      <button class="btn btn-ghost btn-sm" data-advance="${i}" data-id="${p.id||''}" ${p.stage>=STAGES.length-1?'disabled':''}>Maju Tahap →</button></div>
+    </div>`).join('')}
+  </div>`;
+  root.onclick =e=>{
+    const adv=e.target.closest('[data-advance]');
+    if(adv){ (async ()=>{
+      const l2=prodData(); const p=l2[+adv.dataset.advance]; if(!p) return;
+      if (api.online && adv.dataset.id) {
+        try { const r=await api.req('/api/produksi/projects/'+adv.dataset.id+'/advance', {method:'POST'}); await refreshState(); toast('Maju ke tahap: '+r.stageName); viewProduksi(root); return; }
+        catch(err){ toast('Gagal di server: '+err.message); return; }
+      }
+      if(p.stage<STAGES.length-1){ p.stage++; p.prog=Math.min(100, p.prog+14); saveProd(l2); audit(`Produksi: “${p.n}” maju ke tahap ${STAGES[p.stage]}`); viewProduksi(root); toast('Tahap diperbarui & dicatat di audit trail.'); }
+    })(); return; }
+    if(e.target.closest('#addProjBtn')){
+      openModal(`<h3>Proyek Produksi Baru</h3>
+        <div class="field"><label>Nama Proyek</label><input id="npN" placeholder="Mis. Video profil…"></div>
+        <div class="field"><label>Klien</label><input id="npC" placeholder="PT …"></div>
+        <div class="field"><label>Anggaran (Rp juta)</label><input id="npB" type="number" min="1" placeholder="50"></div>
+        <div class="field"><label>Deadline</label><input id="npD" placeholder="31 Des 2026"></div>
+        <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.6rem"><button class="btn btn-ghost" id="npCancel">Batal</button><button class="btn btn-red" id="npSave">Buat Proyek</button></div>`);
+      $('#npCancel').onclick=closeModal;
+      $('#npSave').onclick=async ()=>{
+        const n=$('#npN').value.trim(),c=$('#npC').value.trim(),bud=+$('#npB').value,due=$('#npD').value.trim()||'—';
+        if(!n||!c||!bud){ toast('Lengkapi kolom wajib.'); return; }
+        if (api.online) {
+          try { await api.req('/api/produksi/projects', {method:'POST', body:{name:n, client:c, budget:bud, due}}); await refreshState(); }
+          catch(err){ toast('Gagal di server: '+err.message); return; }
+        } else {
+          const l2=prodData(); l2.unshift({n,c,stage:0,prog:2,due,bud}); saveProd(l2);
+          audit(`Produksi: proyek “${n}” dibuat untuk ${c}`);
+        }
+        closeModal(); viewProduksi(root); toast('Proyek dibuat.');
+      };
+    }
+  };
+}
+
+/* ---- Keuangan ---- */
+function viewKeuangan(root){
+  const appr=apprData();
+  const piutang=JSON.parse(localStorage.getItem('mbc_piutang')||'null') || PIUTANG;
+  const agingSum=a=>piutang.filter(p=>p.aging===a).reduce((s,p)=>s+p.amt,0);
+  root.innerHTML=`
+  <div class="kpis">
+    <div class="kpi"><div class="lbl">Pendapatan YTD</div><div class="val">Rp 2,29 M</div><div class="delta up">▲ 6 bulan berjalan</div></div>
+    <div class="kpi"><div class="lbl">Beban YTD</div><div class="val">Rp 1,51 M</div><div class="delta warn">● serapan 66% anggaran</div></div>
+    <div class="kpi"><div class="lbl">Laba Bersih YTD</div><div class="val">Rp 781 jt</div><div class="delta up">▲ margin 34%</div></div>
+    <div class="kpi"><div class="lbl">Kas &amp; Bank</div><div class="val">Rp 913 jt</div><div class="delta up">▲ runway 7,2 bulan</div></div>
+  </div>
+
+  <div class="two-col">
+    <div class="panel"><h3>Piutang Usaha &amp; Umur <span class="muted" style="font-size:.68rem;font-weight:400">Aging report</span></h3>
+      <table><thead><tr><th>Invoice</th><th>Klien</th><th>Jatuh Tempo</th><th>Jumlah</th><th>Umur</th><th></th></tr></thead><tbody>
+        ${piutang.map(p=>`<tr><td>${p.inv}</td><td>${esc(p.co)}</td><td>${p.due}</td><td style="font-variant-numeric:tabular-nums">${fmtRp(p.amt)}</td><td><span class="pill ${p.aging==='60+ hari'?'pill-red':p.aging==='Lancar'?'pill-green':'pill-gold'}">${p.aging}</span></td><td><button class="btn btn-ghost btn-sm" data-remind="${p.inv}">Kirim Reminder</button></td></tr>`).join('')}
+      </tbody><tfoot><tr><td colspan="3" style="font-weight:800">Total Piutang</td><td colspan="3" style="font-weight:800">${fmtRp(piutang.reduce((a,p)=>a+p.amt,0))} · 1–30: ${fmtRp(agingSum('1–30 hari'))} · 60+: ${fmtRp(agingSum('60+ hari'))}</td></tr></tfoot></table>
+      <button class="btn btn-ghost btn-sm" id="csvAr" style="margin-top:.6rem">⬇ Unduh CSV Piutang</button>
+    </div>
+    <div class="panel"><h3>Persetujuan Pembayaran <span class="muted" style="font-size:.68rem;font-weight:400">segregation of duties · hanya Direksi/Finance</span></h3>
+      <div id="apprList">
+      ${appr.length===0?'<p class="muted">Tidak ada pengajuan menunggu persetujuan. ✅</p>':appr.map(a=>`
+        <div style="border:1px solid var(--line);border-radius:12px;padding:.55rem .65rem;margin-bottom:.5rem;background:var(--panel2)">
+          <div style="display:flex;justify-content:space-between;gap:.5rem"><b style="font-size:.78rem">${a.id}</b><b style="color:var(--gold)">${fmtRp(a.amt)}</b></div>
+          <p style="font-size:.74rem;margin:.25rem 0 .4rem">${esc(a.d)}</p>
+          <div style="display:flex;gap:.4rem"><button class="btn btn-green btn-sm" data-appr="${a.id}" data-act="approve">✓ Setujui</button><button class="btn btn-ghost btn-sm" data-appr="${a.id}" data-act="reject">✕ Tolak</button></div>
+        </div>`).join('')}
+      </div>
+      <div class="panel" style="background:var(--panel2);margin:0"><h3 style="font-size:.75rem">Jurnal Terakhir</h3>
+        <p style="font-size:.72rem;color:var(--muted)">21/11 · <b>JV-2211-048</b> — Pengakuan pendapatan INV/2026/0136 · Rp 60 jt · <span style="color:var(--green)">Posted ✓</span></p>
+        <p style="font-size:.72rem;color:var(--muted)">20/11 · <b>JV-2211-047</b> — Beban produksi Dokumenter Kopi Kediri · Rp 18,2 jt · <span style="color:var(--green)">Posted ✓</span></p>
+        <p style="font-size:.72rem;color:var(--muted)">19/11 · <b>JV-2211-046</b> — Koreksi: pergeseran pusat biaya Iklan Telkomsel · Rp 0 · <span style="color:var(--gold)">Menunggu review</span></p>
+      </div>
+    </div>
+  </div>`;
+  root.onclick =e=>{
+    const rem=e.target.closest('[data-remind]');
+    if(rem){ (async ()=>{
+      if (api.online) { try { await api.req('/api/keuangan/piutang/'+encodeURIComponent(rem.dataset.remind)+'/remind', {method:'POST'}); toast('Reminder terkirim & tercatat di server.'); } catch(err){ toast('Gagal di server: '+err.message); } }
+      else { audit(`Reminder piutang dikirim: ${rem.dataset.remind}`); toast('Reminder terkirim ke email klien & tercatat.'); }
+    })(); return; }
+    const ap=e.target.closest('[data-appr]');
+    if(ap){ (async ()=>{
+      if (api.online) {
+        try { await api.req('/api/keuangan/approvals/'+encodeURIComponent(ap.dataset.appr), {method:'POST', body:{action: ap.dataset.act}}); await refreshState(); }
+        catch(err){ toast('Gagal di server: '+err.message); return; }
+      } else {
+        const d=apprData().filter(x=>x.id!==ap.dataset.appr); saveAppr(d);
+        audit(`Persetujuan ${ap.dataset.appr}: ${ap.dataset.act==='approve'?'DISETUJUI':'DITOLAK'} oleh ${session().name}`);
+      }
+      viewKeuangan(root); toast(ap.dataset.act==='approve'?'Pembayaran disetujui & dicatat.':'Pengajuan ditolak.');
+    })(); return; }
+    if(e.target.closest('#csvAr')){
+      const csv='Invoice,Klien,Jatuh Tempo,Jumlah (Rp jt),Umur\n'+piutang.map(p=>[p.inv,p.co,p.due,p.amt,p.aging].join(',')).join('\n');
+      const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='piutang-mbcindonesia.csv'; a.click(); URL.revokeObjectURL(a.href);
+      audit('Ekspor CSV piutang diunduh'); toast('CSV piutang diunduh.');
+    }
+  };
+}
+
+/* ---- Master Data ---- */
+let masterTab='klien';
+function viewMaster(root){
+  const m=masterData();
+  const t=m[masterTab];
+  root.innerHTML=`
+  <div class="panel"><h3>Master Data Terpusat <span class="muted" style="font-size:.68rem;font-weight:400">Blueprint §7.2 — ada penanggung jawab &amp; jejak perubahan</span></h3>
+    <div class="tabs">${Object.keys(m).map(k=>`<button class="tab${k===masterTab?' active':''}" data-tab="${k}">${{klien:'Klien & Mitra',vendor:'Vendor',produk:'Produk & Harga'}[k]}</button>`).join('')}</div>
+    <div style="display:flex;gap:.5rem;margin-bottom:.5rem"><input id="masterFilter" placeholder="Filter…" style="background:#0a1020;border:1px solid var(--line2);color:var(--text);border-radius:9px;padding:.45rem .6rem;outline:0;min-width:200px"></div>
+    <table><thead><tr>${t.cols.map(c=>`<th>${c}</th>`).join('')}<th></th></tr></thead><tbody id="masterRows">
+      ${t.rows.map((r,i)=>`<tr data-row="${i}">${r.map(c=>`<td>${esc(c)}</td>`).join('')}<td><button class="btn btn-ghost btn-sm" data-delrow="${i}" data-id="${(t.ids||[])[i]||''}">Hapus</button></td></tr>`).join('')}
+    </tbody></table>
+    <form id="masterAdd" style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem">
+      ${t.cols.map((c,i)=>`<input name="f${i}" placeholder="${c}" required style="background:#0a1020;border:1px solid var(--line2);color:var(--text);border-radius:9px;padding:.45rem .6rem;outline:0;flex:1;min-width:130px">`).join('')}
+      <button class="btn btn-red btn-sm" type="submit">+ Tambah</button>
+    </form>
+  </div>`;
+  const filter=$('#masterFilter');
+  filter.addEventListener('input',()=>{ const q=filter.value.toLowerCase(); $$('#masterRows tr').forEach(tr=>tr.style.display=tr.textContent.toLowerCase().includes(q)?'':'none'); });
+  root.onclick =e=>{
+    const tab=e.target.closest('[data-tab]'); if(tab){ masterTab=tab.dataset.tab; viewMaster(root); return; }
+    const del=e.target.closest('[data-delrow]'); if(del){ (async ()=>{
+      const d=masterData(); const idx=+del.dataset.delrow; const delId=del.dataset.id;
+      if (api.online && delId) {
+        try { await api.req('/api/master/'+masterTab+'/'+delId, {method:'DELETE'}); await refreshState(); viewMaster(root); toast('Baris dihapus.'); return; }
+        catch(err){ toast('Gagal di server: '+err.message); return; }
+      }
+      const [row]=d[masterTab].rows.splice(idx,1); if(d[masterTab].ids) d[masterTab].ids.splice(idx,1); saveMaster(d);
+      audit(`Master Data (${masterTab}): “${row[0]}” dihapus`); viewMaster(root); toast('Baris dihapus.');
+    })(); }
+  };
+  $('#masterAdd').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const vals=[...e.target.elements].filter(el=>el.name && el.name.startsWith('f')).map(el=>el.value.trim());
+    if (api.online) {
+      try { await api.req('/api/master/'+masterTab, {method:'POST', body:{c1:vals[0], c2:vals[1]||'', c3:vals[2]||''}}); await refreshState(); viewMaster(root); toast('Data tersimpan di server.'); return; }
+      catch(err){ toast('Gagal di server: '+err.message); return; }
+    }
+    const d=masterData(); d[masterTab].rows.unshift(vals); saveMaster(d);
+    audit(`Master Data (${masterTab}): “${vals[0]}” ditambahkan`); viewMaster(root); toast('Data tersimpan & tercatat.');
+  });
+}
+
+/* ---- Laporan & BI ---- */
+function viewLaporan(root){
+  const kpiRows=[
+    ['Bisnis','Pendapatan / bulan','Rp 486 jt','▲ +11,0%','up'],
+    ['Bisnis','Nilai kontrak rata-rata','Rp 54 jt','▲ +6%','up'],
+    ['Produksi','Ketepatan jadwal','82%','● target 90%','warn'],
+    ['Produksi','Utilisasi kru & alat','74%','▲ +9 pts','up'],
+    ['Editorial','Pemenuhan standar mutu','96%','▲ baik','up'],
+    ['Audiens','Pengguna aktif bulanan','184 rb','▲ +23%','up'],
+    ['Audiens','Waktu tonton / sesi','11,4 mnt','▲ +1,2 mnt','up'],
+    ['Komersial','Pemenuhan kampanye','91%','▲ 41/45 tayang','up'],
+    ['Keuangan','Arus kas operasi','Rp 132 jt','● positif 3 bln beruntun','up'],
+    ['SDM','Akurasi payroll','99,1%','▲ audit internal','up'],
+    ['Teknologi','Ketersediaan layanan','99,4%','▲ SLA 99%','up'],
+    ['Keamanan','Insiden terbuka','0','▲ audit RBAC lulus','up'],
+    ['AI','Biaya per tugas (avg)','Rp 1.240','● 312 tugas, 4 dibatalkan','warn']
+  ];
+  root.innerHTML=`
+  <div class="panel"><h3>Kartu Skor KPI Direksi <span class="muted" style="font-size:.68rem;font-weight:400">Blueprint §13 — definisi metrik konsisten antarunit</span>
+    <button class="btn btn-ghost btn-sm" id="csvKpi">⬇ Unduh CSV</button></h3>
+    <table><thead><tr><th>Area</th><th>Indikator</th><th>Nilai</th><th>Tren</th></tr></thead><tbody>
+      ${kpiRows.map(([a,i,v,t,c])=>`<tr><td><span class="pill pill-grey">${a}</span></td><td>${i}</td><td style="font-variant-numeric:tabular-nums"><b>${v}</b></td><td class="${c==='up'?'up':c==='warn'?'warn':'down'}">${t}</td></tr>`).join('')}
+    </tbody></table>
+    <p class="muted" style="font-size:.68rem;margin-top:.6rem">Angka demonstrasi untuk pembahasan prinsip. Target numerik final ditetapkan setelah baseline pengukuran &amp; kapasitas tim disepakati (Blueprint §13). Angka pendapatan riil berasal dari sistem akuntansi setelah Fase 4.</p>
+  </div>`;
+  $('#csvKpi').addEventListener('click', async ()=>{
+    if (api.online && api.token) {
+      try {
+        const res = await fetch('/api/laporan/kpi.csv', { headers: { Authorization: 'Bearer ' + api.token } });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const blob = await res.blob(); const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = 'kpi-mbcindonesia.csv'; a.click(); URL.revokeObjectURL(a.href);
+        toast('CSV KPI diunduh dari server.'); return;
+      } catch (err) { toast('Gagal unduh dari server: ' + err.message); return; }
+    }
+    const csv='Area,Indikator,Nilai,Tren\n'+kpiRows.map(r=>r.slice(0,4).join(',')).join('\n');
+    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='kpi-mbcindonesia.csv'; a.click(); URL.revokeObjectURL(a.href); audit('Ekspor CSV KPI diunduh'); toast('CSV KPI diunduh (lokal).');
+  });
+}
+
+/* ---- Audit Trail ---- */
+function viewAudit(root){
+  const serverLog=JSON.parse(localStorage.getItem('mbc_audit_server')||'null');
+  const online = api.online && Array.isArray(serverLog);
+  const log = online ? serverLog : JSON.parse(localStorage.getItem(AUDIT_KEY)||'[]');
+  root.innerHTML=`
+  <div class="panel"><h3>Audit Trail <span class="pill ${online?'pill-green':'pill-gold'}" style="margin-left:.4rem">${online?'Server · PostgreSQL':'Lokal · offline'}</span> <span class="muted" style="font-size:.68rem;font-weight:400">siapa · kapan · apa — append-only, 150 entri terakhir</span></h3>
+    ${log.length===0?'<p class="muted">Belum ada aktivitas tercatat.</p>':log.map(l=>`<div class="audit-item"><time>${esc(l.at)}</time><div><b>${esc(l.t)}</b><br><span class="muted" style="font-size:.66rem">oleh ${esc(l.who)}</span></div></div>`).join('')}
+  </div>`;
+}
+
+/* ---- Pengaturan ---- */
+function viewPengaturan(root){
+  const s=session();
+  root.innerHTML=`
+  <div class="two-col">
+    <div class="panel"><h3>Keamanan Akun</h3>
+      <p class="muted" style="font-size:.76rem;margin-bottom:.6rem">Ganti kata sandi demo (<code>demo123</code>) sebelum sistem dipakai produksi. Minimal 10 karakter; kata sandi demo ditolak server.</p>
+      <form id="pwForm" autocomplete="off">
+        <div class="field"><label for="pwCur">Kata sandi saat ini</label><input id="pwCur" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+        <div class="field"><label for="pwNew">Kata sandi baru</label><input id="pwNew" type="password" autocomplete="new-password" placeholder="minimal 10 karakter"></div>
+        <div class="field"><label for="pwNew2">Ulangi kata sandi baru</label><input id="pwNew2" type="password" autocomplete="new-password" placeholder="ulangi"></div>
+        <button class="btn btn-red" type="submit">Perbarui Kata Sandi</button>
+        <p class="muted" id="pwMsg" style="font-size:.76rem;margin-top:.5rem" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+    <div class="panel"><h3>Profil &amp; Sesi</h3>
+      <table><tbody>
+        <tr><td class="muted">Nama</td><td><b>${esc(s.name)}</b></td></tr>
+        <tr><td class="muted">Email</td><td>${esc(s.email)}</td></tr>
+        <tr><td class="muted">Peran</td><td><span class="pill pill-blue">${esc(s.roleLabel)}</span></td></tr>
+        <tr><td class="muted">Lingkungan</td><td>Produksi (ID) · pdp-compliant</td></tr>
+        <tr><td class="muted">Autentikasi</td><td>Kata sandi + sesi lokal (demo) · SSO grup menyusul setelah model identitas ditetapkan (Blueprint §4)</td></tr>
+      </tbody></table>
+      <label style="display:flex;align-items:center;gap:.5rem;margin-top:.7rem;font-size:.8rem;cursor:pointer"><input type="checkbox" id="twofa"> Aktifkan 2FA (simulasi — kode dikirim ke email @mbcindonesia.tv)</label>
+    </div>
+    <div class="panel"><h3>Data Demo &amp; Versi</h3>
+      <p class="muted" style="font-size:.78rem">Seluruh data pada workspace ini adalah <b>contoh</b> yang tersimpan di browser (localStorage). Tidak ada koneksi database produksi. Reset mengembalikan mirror lokal (pipeline CRM, proyek, kampanye, approval, master data, audit) ke kondisi awal. <b>Database server tidak terpengaruh</b> — untuk reset server, redaksi/operator menjalankan <code>node seed.js</code>.</p>
+      <button class="btn btn-ghost" id="resetDemo" style="margin:.6rem 0">↺ Reset Seluruh Data Demo</button>
+      <div class="panel" style="background:var(--panel2);margin:0"><b style="font-size:.78rem">MBC INDONESIA Newsroom v1.1</b>
+        <p class="muted" style="font-size:.72rem;margin-top:.3rem">Stack target produksi: GitHub · Neon PostgreSQL · deployment preview/produksi terpisah · media storage HLS/CDN · AI provider melalui lapisan integrasi. Lihat Blueprint §9.</p>
+      </div>
+    </div>
+  </div>`;
+  $('#twofa').addEventListener('change',e=>{ audit('2FA '+(e.target.checked?'diaktifkan':'dinonaktifkan')+' (simulasi)'); toast('Preferensi 2FA tersimpan.'); });
+  const pwForm = $('#pwForm');
+  if (pwForm) pwForm.addEventListener('submit', async e => {
+    e.preventDefault();
+    const msg = $('#pwMsg'); const cur = $('#pwCur').value; const nw = $('#pwNew').value; const nw2 = $('#pwNew2').value;
+    const say = (t, ok) => { msg.textContent = t; msg.style.color = ok ? 'var(--green)' : 'var(--red2)'; };
+    if (nw.length < 10) return say('Kata sandi baru minimal 10 karakter.', false);
+    if (nw !== nw2) return say('Ulangan kata sandi tidak sama.', false);
+    if (!api.online) return say('Ganti kata sandi memerlukan koneksi ke server (mode offline tidak menyimpan akun).', false);
+    try {
+      const r = await api.req('/api/auth/password', { method: 'POST', body: { current: cur, next: nw } });
+      say(r.message || 'Kata sandi diperbarui.', true);
+      pwForm.reset(); toast('Kata sandi berhasil diperbarui.');
+    } catch (err) { say(err.message || 'Gagal memperbarui kata sandi.', false); }
+  });
+  $('#resetDemo').addEventListener('click',()=>{
+    ['mbc_crm','mbc_produksi','mbc_campaigns','mbc_approvals','mbc_master','mbc_audit','mbc_newsletter','mbc_chat_log'].forEach(k=>localStorage.removeItem(k));
+    audit('Data demo di-reset'); toast('Data demo dikembalikan ke kondisi awal.'); setTimeout(()=>location.reload(),700);
+  });
+}
+
+/* ---------- AI Assistant (rule-based demo) ---------- */
+const aiBody=$('#aiBody');
+function aiAdd(text, who){ const d=document.createElement('div'); d.className='ai-msg '+who; d.innerHTML=text; aiBody.appendChild(d); aiBody.scrollTop=aiBody.scrollHeight; }
+function aiAnswer(q){
+  q=q.toLowerCase();
+  if(/pendapatan|revenue/.test(q)) return 'Pendapatan November 2026: <b>Rp 486 jt</b> (▲11% vs Oktober). YTD <b>Rp 2,29 M</b>; sumber terbesar jasa produksi (46%). Detail: menu <b>Laporan &amp; BI</b>.';
+  if(/pipeline|prospek|crm|penawaran/.test(q)) return 'Pipeline aktif <b>Rp 692 jt</b> dengan 9 peluang (3 prospek, 2 penawaran, 1 negosiasi, 2 kontrak, 1 selesai). Deal terbesar menunggu: Bank Jatim — sponsorship Ruang Bisnis (Rp 150 jt).';
+  if(/piutang|tunggak|invoice/.test(q)) return 'Total piutang <b>Rp 372 jt</b>: 1–30 hari Rp 227 jt, &gt;60 hari Rp 85 jt (Indofood CBP — INV/2026/0112). Saran: eskalasi sesuai approval matrix, jangan hapus invoice.';
+  if(/produksi|proyek|tayang/.test(q)) return '6 proyek aktif, progres rata-rata <b>61%</b>. Deadline terdekat: Iklan Telkomsel (25 Nov, tahap Review Klien) dan Dokumenter Kopi Kediri (28 Nov, tahap Editing).';
+  if(/kpi|target|kinerja/.test(q)) return 'KPI ringkas: retensi klien 87%, ketepatan jadwal produksi 82% (target 90%), ketersediaan layanan 99,4%, akurasi payroll 99,1%. Target final pasca-baseline (Blueprint §13).';
+  if(/payroll|gaji/.test(q)) return 'Payroll Fase 4 (bulan 10–13) setelah validasi aturan &amp; pengujian dengan kasus nyata yang disamarkan (Blueprint §7.5 &amp; §16). Saya tidak bisa menjalankan/menyetujui payroll.';
+  if(/bantuan|help|bisa apa/.test(q)) return 'Saya bisa menjawab soal: pendapatan, pipeline, piutang, produksi, kpi/target. Untuk keputusan berisiko (pembayaran, akses, publikasi editorial sensitif) tetap persetujuan manusia berwenang (Blueprint §6.5 &amp; §8).';
+  return 'Maaf, saya belum punya jawaban untuk itu di mode demo. Coba: <b>pendapatan</b>, <b>pipeline</b>, <b>piutang</b>, <b>produksi</b>, <b>kpi</b>, atau <b>bantuan</b>.';
+}
+$('#aiFab').addEventListener('click',()=>$('#aiPanel').classList.toggle('open'));
+$('#aiClose').addEventListener('click',()=>$('#aiPanel').classList.remove('open'));
+$('#aiForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const input=$('#aiInput'); const q=input.value.trim(); if(!q) return;
+  aiAdd(esc(q),'user'); input.value='';
+  setTimeout(()=>{ aiAdd(aiAnswer(q),'bot'); audit('Asisten AI ditanya: “'+q.slice(0,60)+'”'); },350);
+});
+
+/* ---------- Boot ----------
+   Dijalankan SETELAH window.load supaya seluruh view (termasuk modul CMS
+   yang dimuat lewat <script src="cms.js">) sudah terdaftar. */
+if (document.readyState === 'complete') boot();
+else window.addEventListener('load', boot);
+</script>
+<script src="cms.js"></script>
+</body>
+</html>

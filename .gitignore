@@ -1,0 +1,42 @@
+# ---- Secrets & environment (JANGAN pernah commit) ----
+.env
+.env.local
+.env.*.local
+server/.env
+server/.env.local
+*.pem
+*.jks
+*.keystore
+
+# ---- Dependensi ----
+node_modules/
+npm-debug.log*
+yarn-error.log*
+package-lock.json.bak
+
+# ---- Backup database (berisi data) ----
+backups/
+*.sql.gz
+
+# ---- Android build artifacts ----
+android/**/build/
+android/.gradle/
+android/local.properties
+android/app/release/
+*.apk
+*.aab
+*.apk.idsig
+
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# ---- Log & sementara ----
+*.log
+tmp/
+.cache/
+coverage/
+dist/

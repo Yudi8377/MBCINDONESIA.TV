@@ -1,0 +1,10 @@
+<resources>
+    <!-- Splash/launch theme tanpa action bar -->
+    <style name="Theme.MbcIndonesia" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash_background</item>
+        <item name="android:statusBarColor">@color/mbc_navy</item>
+        <item name="android:navigationBarColor">@color/mbc_navy</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+    </style>
+</resources>

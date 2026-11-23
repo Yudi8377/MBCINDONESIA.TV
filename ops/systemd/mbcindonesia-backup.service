@@ -1,0 +1,16 @@
+[Unit]
+Description=Backup harian database MBCINDONESIA.TV (Supabase)
+After=network-online.target
+
+[Service]
+Type=oneshot
+# Kredensial dibaca dari EnvironmentFile (mode 600). Jangan taruh di baris ExecStart.
+EnvironmentFile=/etc/mbcindonesia/backup.env
+WorkingDirectory=/opt/mbcindonesia
+ExecStart=/opt/mbcindonesia/ops/backup.sh
+User=mbc
+Group=mbc
+Nice=10
+IOSchedulingClass=idle
+# Backup harus terbukti berhasil; kalau gagal, unit berstatus failed → bisa diberi alert.
+SuccessExitStatus=0

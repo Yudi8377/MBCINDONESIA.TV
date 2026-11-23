@@ -1,0 +1,52 @@
+# Produksi lokal / VPS: docker compose up -d --build
+# Database: pakai Neon (DATABASE_URL eksternal) ATAU service postgres di bawah.
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: server/Dockerfile
+    image: mbcindonesia-tv:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mbctv
+      POSTGRES_USER: mbc
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ubah-password-ini}
+    volumes:
+      - mbctv_pgdata:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mbc -d mbctv"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  mbctv_pgdata:

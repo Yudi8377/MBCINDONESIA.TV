@@ -1,0 +1,11 @@
+# Build context = root repo. Kecualikan yang tidak perlu / berisi rahasia.
+.git
+.github
+**/node_modules
+**/.env
+**/.env.local
+**/*.log
+backups
+android
+server/scripts/dev-db.sh
+**/.DS_Store

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
+<title>LIVE TV — MBC INDONESIA | MBCINDONESIA.TV</title>
+<meta name="description" content="Saksikan siaran langsung MBC INDONESIA: Kabar Nusantara, program budaya, bisnis dan hiburan — live streaming 24 jam.">
+<meta name="theme-color" content="#e63329">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+<a class="skip-link" href="#liveVideo">Lompat ke siaran langsung</a>
+<header class="site-header"><div class="container">
+  <a class="logo" href="index.html"><span class="logo-badge"><svg viewBox="0 0 32 32" fill="none"><path d="M7 23V9l6 7 3-4 3 4 6-7v14" stroke="#fff" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="26.4" cy="7.2" r="2.4" fill="#ffd166"/></svg></span><span class="logo-text"><span class="l1">MBC<em>INDONESIA</em></span><br><span class="l2">Televisi Digital</span></span></a>
+  <nav class="main-nav"><a href="index.html">Beranda</a><a href="index.html#katalog">Program</a><a href="live.html" class="active">Live TV</a></nav>
+  <a class="btn btn-ghost" href="index.html">← Kembali</a>
+</div></header>
+
+<main class="container live-layout">
+  <div>
+    <div class="live-player">
+      <video id="liveVideo" controls autoplay muted playsinline poster="assets/img/kabar-nusantara.jpg"></video>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.8rem .2rem;flex-wrap:wrap">
+      <div>
+        <span class="badge"><span class="pulse" style="background:#fff"></span> On Air</span>
+        <h1 style="font-size:1.35rem;margin:.4rem 0 .1rem">Kabar Nusantara Petang</h1>
+        <p class="muted" style="font-size:.8rem">Studio A MBC Indonesia, Kediri · <span id="viewerCount">2.418</span> penonton · 1080i · Audio Indonesia</p>
+      </div>
+      <div style="display:flex;gap:.5rem">
+        <button class="btn btn-ghost" id="unmuteBtn">🔇 Aktifkan Suara</button>
+        <button class="btn btn-ghost" id="fullscreenBtn">⛶ Layar Penuh</button>
+      </div>
+    </div>
+    <div class="card" style="padding:.8rem 1rem"><strong style="font-size:.85rem">ℹ️ Mode siaran</strong><p class="muted" style="font-size:.78rem;margin-top:.25rem">Stream demo publik dipakai sebagai contoh pemutaran. Pada produksi penuh, sumber siaran memakai encoder/playout resmi MBC Indonesia melalui CDN dengan DRM/token.</p></div>
+
+    <h2 style="font-size:1rem;margin:1.2rem 0 .4rem">Jadwal Siaran Hari Ini <span class="muted" style="font-weight:400;font-size:.75rem">(WIB)</span></h2>
+    <div class="rundown" id="fullRundown"></div>
+  </div>
+
+  <aside class="chat-box" aria-label="Obrolan langsung">
+    <div class="chat-head"><strong style="font-size:.85rem">💬 Obrolan Langsung</strong><span class="muted" style="font-size:.7rem" id="chatCount">3 online</span></div>
+    <div class="chat-body" id="chatBody" aria-live="polite"></div>
+    <form class="chat-form" id="chatForm"><input id="chatInput" placeholder="Tulis pesan…" autocomplete="off" aria-label="Pesan obrolan"><button class="btn btn-red" type="submit" style="border-radius:0">Kirim</button></form>
+  </aside>
+</main>
+
+<script src="assets/js/site.js"></script>
+<script>
+// ---- Pemutar siaran (video lokal, mulus berulang, tanpa CDN luar) ----
+const video = document.getElementById('liveVideo');
+video.src = 'assets/video/live-24jam.mp4';
+video.loop = true;                 // klip 20 dtk maju + 20 dtk mundur = tidak ada lompatan
+video.preload = 'auto';
+const mulai = () => { video.play().catch(() => {}); };
+mulai();
+video.addEventListener('canplay', mulai, { once: true });
+video.addEventListener('loadeddata', () => { video.classList.add('siap'); });
+/* iOS: autoplay hanya boleh saat muted — tombol unmute menangani sisanya */
+document.getElementById('unmuteBtn').addEventListener('click', e => { video.muted = !video.muted; e.currentTarget.textContent = video.muted ? '🔇 Aktifkan Suara' : '🔊 Suara Aktif'; });
+document.getElementById('fullscreenBtn').addEventListener('click', () => { if (video.requestFullscreen) video.requestFullscreen(); });
+
+// Penonton fluktuatif (simulasi demo)
+let viewers = 2418;
+setInterval(()=>{ viewers = Math.max(1800, Math.min(3200, viewers + Math.round((Math.random()-0.45)*37))); document.getElementById('viewerCount').textContent = viewers.toLocaleString('id-ID'); }, 3000);
+
+// ---- Jadwal siaran ----
+const schedule = [["06.00","Kabar Nusantara Pagi"],["08.00","Dapur Rempah Ulang"],["10.00","Selasar Budaya"],["12.00","Kabar Nusantara Siang"],["13.00","Ruang Bisnis"],["15.00","Kamera Komunitas"],["17.00","Bicara Petang"],["19.00","Kabar Nusantara Petang"],["19.30","Ruang Bisnis Spesial"],["20.15","Selasar Budaya"],["20.45","Panggung Musik"],["22.00","Jejak Nusantara Ulang"],["00.00","MBC Indonesia Malam (Ulang)"]];
+const now = new Date(); const nowMin = now.getHours()*60 + now.getMinutes();
+function toMin(s){ const [h,m]=s.split('.').map(Number); return h*60+m; }
+let currentIdx = 0;
+schedule.forEach(([t],i)=>{ if (toMin(t) <= nowMin) currentIdx = i; });
+document.getElementById('fullRundown').innerHTML = schedule.map(([t,n],i)=>`<div class="rundown-item${i===currentIdx?' now':''}"><time>${t}</time><span>${n}${i===currentIdx?' <em class="accent" style="font-style:normal;font-size:.65rem;font-weight:800">· ON AIR</em>':''}${i<currentIdx?' <span class="muted" style="font-size:.68rem">· selesai</span>':''}</span></div>`).join('');
+
+// ---- Obrolan langsung (simulasi + localStorage) ----
+const chatBody = document.getElementById('chatBody');
+const seed = [["Sinta_RD","Semangat petang MBC! 🇮🇩"],["BimoKediri","Kualitas siaran makin jernih"],["LarasAyu","Dokumenter Bromo kemarin keren banget"]];
+const bots = [["DimasW","Salam dari Malang!"],["RaniPutri","Kabar petang terbaik di TV digital"],["YogaP","Sponsor iklan Kediri mudah dihubungi"],["Nadia_S","Jadwal Panggung Musik jam berapa min?"],["FajarH","Suaranya mantap malam ini"]];
+function addMsg(name, text){
+  const div = document.createElement('div'); div.className='chat-msg';
+  div.innerHTML = '<b>'+name+'</b>: '+String(text).replace(/</g,'&lt;');
+  chatBody.appendChild(div); chatBody.scrollTop = chatBody.scrollHeight;
+}
+seed.forEach(([n,t])=>addMsg(n,t));
+let botIdx = 0;
+setInterval(()=>{ const [n,t] = bots[botIdx++ % bots.length]; addMsg(n,t); document.getElementById('chatCount').textContent = (3 + botIdx) + ' online'; }, 4500);
+document.getElementById('chatForm').addEventListener('submit', e=>{
+  e.preventDefault();
+  const input = document.getElementById('chatInput'); const t = input.value.trim(); if(!t) return;
+  addMsg('Anda', t); input.value='';
+  const saved = JSON.parse(localStorage.getItem('mbc_chat_log')||'[]'); saved.push({t, at: Date.now()}); localStorage.setItem('mbc_chat_log', JSON.stringify(saved.slice(-50)));
+});
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+</script>
+<footer class="site-footer"><div class="container">
+  <div class="footer-bottom" style="border-top:none;margin-top:0">
+    <span>© 2026 MBC Indonesia Group · MBCINDONESIA.TV</span>
+    <span><a href="privasi.html">Kebijakan Privasi</a> · <a href="syarat.html">Syarat &amp; Ketentuan</a> · <a href="sitemap.xml">Sitemap</a> · <a href="mailto:halo@mbcindonesia.tv">Kontak</a></span>
+  </div>
+</div></footer>
+<script src="assets/js/ai-news.js"></script>
+<script src="assets/js/companion.js"></script>
+</body>
+</html>

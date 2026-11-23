@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /newsroom
+Disallow: /api/
+Sitemap: https://mbcindonesia.tv/sitemap.xml

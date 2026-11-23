@@ -1,0 +1,163 @@
+[
+  {
+    "id": "bmkg",
+    "title": "BMKG — Meteorologi, Klimatologi & Geofisika",
+    "type": "organisasi",
+    "topics": [
+      "lingkungan",
+      "cuaca ekstrem",
+      "banjir"
+    ],
+    "note": "Peringatan dini cuaca, data curah hujan, dan analisis iklim per wilayah.",
+    "url": "https://www.bmkg.go.id/"
+  },
+  {
+    "id": "bnpb",
+    "title": "BNPB — Data Informasi Bencana Indonesia",
+    "type": "data",
+    "topics": [
+      "banjir",
+      "mitigasi bencana",
+      "lingkungan"
+    ],
+    "note": "Catatan kejadian bencana, korban, dan kerugian per kabupaten/kota.",
+    "url": "https://bnpb.go.id/"
+  },
+  {
+    "id": "bps",
+    "title": "BPS — Badan Pusat Statistik",
+    "type": "data",
+    "topics": [
+      "ekonomi",
+      "upah minimum",
+      "tenaga kerja",
+      "pendidikan"
+    ],
+    "note": "Inflasi, upah, ketenagakerjaan, indikator pendidikan per provinsi.",
+    "url": "https://www.bps.go.id/"
+  },
+  {
+    "id": "kemnaker",
+    "title": "Kemnaker — Pedoman Upah Minimum",
+    "type": "regulasi",
+    "topics": [
+      "UMK",
+      "upah minimum",
+      "tenaga kerja"
+    ],
+    "note": "Formula penetapan UMK/UMP, PP pengupahan, dan aturan turunannya.",
+    "url": "https://kemnaker.go.id/"
+  },
+  {
+    "id": "ojk",
+    "title": "OJK — Literasi Keuangan",
+    "type": "organisasi",
+    "topics": [
+      "ekonomi",
+      "keuangan"
+    ],
+    "note": "Panduan literasi dan perlindungan konsumen keuangan.",
+    "url": "https://www.ojk.go.id/"
+  },
+  {
+    "id": "kemendikbud",
+    "title": "Kemendikbudristek — Statistik Pendidikan",
+    "type": "data",
+    "topics": [
+      "pendidikan",
+      "literasi digital"
+    ],
+    "note": "Angka partisipasi, rasio dosen, dan program pemerataan pendidikan.",
+    "url": "https://www.kemdikbud.go.id/"
+  },
+  {
+    "id": "pdp",
+    "title": "UU No. 27/2022 — Perlindungan Data Pribadi",
+    "type": "regulasi",
+    "topics": [
+      "privasi",
+      "teknologi",
+      "AI"
+    ],
+    "note": "Dasar hukum pemrosesan data, hak subjek data, dan kewajiban pengendali.",
+    "url": "https://peraturan.bpk.go.id/"
+  },
+  {
+    "id": "kemenkop",
+    "title": "Kementerian Koperasi — Panduan UMKM Ekspor",
+    "type": "regulasi",
+    "topics": [
+      "kopi",
+      "koperasi",
+      "ekspor",
+      "UMKM"
+    ],
+    "note": "Skema sertifikasi, penguatan koperasi, dan fasilitasi ekspor UMKM.",
+    "url": "https://kemenkopukm.go.id/"
+  },
+  {
+    "id": "jurnal-jurnalisme",
+    "title": "Studi: Adopsi AI di Ruang Redaksi Lokal",
+    "type": "akademik",
+    "topics": [
+      "AI",
+      "jurnalisme",
+      "redaksi",
+      "verifikasi"
+    ],
+    "note": "Kajian empiris tentang alur kerja redaksi berbantuan AI dan risiko halusinasi.",
+    "url": ""
+  },
+  {
+    "id": "jurnal-iklim",
+    "title": "Studi: Pola Hujan Ekstrem Jawa Timur",
+    "type": "akademik",
+    "topics": [
+      "lingkungan",
+      "cuaca ekstrem",
+      "banjir",
+      "Jawa Timur"
+    ],
+    "note": "Analisis tren curah hujan ekstrem dan implikasinya bagi kota sedang.",
+    "url": ""
+  },
+  {
+    "id": "ep-nusantara",
+    "title": "Episode: Jejak Nusantara — Sungai Brantas",
+    "type": "episode",
+    "topics": [
+      "dokumenter",
+      "Sungai Brantas",
+      "budaya",
+      "lingkungan"
+    ],
+    "note": "Dokumenter MBC INDONESIA tentang kehidupan warga bantaran Brantas.",
+    "url": "watch.html?id=jejak-nusantara"
+  },
+  {
+    "id": "ep-rempah",
+    "title": "Episode: Dapur Rempah — Kopi Kediri",
+    "type": "episode",
+    "topics": [
+      "kopi",
+      "Kediri",
+      "UMKM",
+      "ekonomi"
+    ],
+    "note": "Laporan perjalanan rantai nilai kopi robusta dari kebun ke pasar.",
+    "url": "watch.html?id=dapur-rempah"
+  },
+  {
+    "id": "ep-petang",
+    "title": "Episode: Bicara Petang — AI & Jurnalisme",
+    "type": "episode",
+    "topics": [
+      "AI",
+      "jurnalisme",
+      "teknologi",
+      "redaksi"
+    ],
+    "note": "Diskusi praktisi soal adopsi AI, transparansi, dan etika editorial.",
+    "url": "watch.html?id=bicara-petang"
+  }
+]

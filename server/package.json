@@ -1,0 +1,22 @@
+{
+  "name": "mbcindonesia-server",
+  "version": "1.4.1",
+  "private": true,
+  "description": "Backend API MBCINDONESIA.TV — Express + PostgreSQL (lokal dev / Neon produksi)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "db:setup": "bash scripts/dev-db.sh",
+    "db:seed": "node seed.js",
+    "smoke": "node scripts/smoke.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.7.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.1"
+  }
+}

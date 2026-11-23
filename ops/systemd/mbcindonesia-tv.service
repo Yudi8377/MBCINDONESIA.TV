@@ -1,0 +1,41 @@
+# /etc/systemd/system/mbcindonesia-tv.service
+# systemctl daemon-reload && systemctl enable --now mbcindonesia-tv
+[Unit]
+Description=MBCINDONESIA.TV — Website + Web App (Node/Express)
+Documentation=https://github.com/USERNAME/mbcindonesia
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mbc
+Group=mbc
+WorkingDirectory=/srv/mbcindonesia/server
+EnvironmentFile=/srv/mbcindonesia/server/.env
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+KillSignal=SIGTERM
+TimeoutStopSec=15
+
+# --- Pengerasan ---
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/srv/mbcindonesia/server
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryMax=768M
+
+# --- Log ke journald (journalctl -u mbcindonesia-tv -f) ---
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mbctv
+
+[Install]
+WantedBy=multi-user.target

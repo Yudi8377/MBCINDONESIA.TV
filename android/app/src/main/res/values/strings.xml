@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">MBC INDONESIA</string>
+    <string name="base_url" translatable="false">https://mbcindonesia.tv/</string>
+    <string name="offline_title">Tidak ada koneksi</string>
+    <string name="offline_body">Periksa jaringan Anda, lalu coba lagi. Siaran MBC INDONESIA membutuhkan koneksi internet.</string>
+    <string name="offline_retry">Coba Lagi</string>
+</resources>

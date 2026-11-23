@@ -1,0 +1,195 @@
+name: CI — MBCINDONESIA.TV
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------
+  # 1. Backend: sintaks, audit dependensi, migrasi schema + seed,
+  #    lalu smoke test API end-to-end terhadap Postgres sungguhan.
+  # ---------------------------------------------------------------
+  backend:
+    name: Backend (Node 20 + PostgreSQL 17)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: mbc
+          POSTGRES_PASSWORD: mbc_dev_password
+          POSTGRES_DB: mbctv_ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U mbc -d mbctv_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://mbc:mbc_dev_password@127.0.0.1:5432/mbctv_ci
+      JWT_SECRET: ci-only-secret-tidak-dipakai-produksi
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - name: Install dependensi
+        working-directory: server
+        run: npm ci
+
+      - name: Cek sintaks semua file server
+        working-directory: server
+        run: |
+          for f in server.js db.js seed.js cms-seed.js agents.js newsroom-api.js scripts/*.js; do node --check "$f"; done
+          echo "✅ sintaks OK"
+
+      - name: Audit keamanan dependensi (gagal bila ada high/critical)
+        working-directory: server
+        run: npm audit --audit-level=high
+
+      - name: Smoke test API end-to-end
+        working-directory: server
+        run: node scripts/smoke.js
+
+  # ---------------------------------------------------------------
+  # 2. Frontend: validasi HTML/CSS/JS statis + PWA + tautan aset.
+  # ---------------------------------------------------------------
+  frontend:
+    name: Frontend statis + PWA
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Audit HTML (judul, meta, h1, alt, tautan mati, sintaks inline)
+        run: node ops/check-html.js
+
+      - name: Uji mesin analisis berita & pemandu AI
+        run: node ops/test-news-engine.js
+
+      - name: Pastikan area internal tidak tertaut dari halaman publik
+        run: |
+          if grep -rlE 'href="(newsroom|workspace)/?' website/*.html website/assets/js/*.js 2>/dev/null | grep -v 'website/newsroom' ; then
+            echo "❌ Halaman publik menautkan area internal"; exit 1
+          fi
+          echo "✅ tidak ada tautan publik ke newsroom" 
+
+      - name: Semua file JS website lolos parse
+        run: |
+          npx --yes acorn@8 --ecma2022 --silent $(find website -name '*.js' -not -path '*/node_modules/*') && echo "✅ JS parse OK"
+
+      - name: Manifest PWA valid & wajib-field lengkap
+        run: |
+          node -e "
+          const m=JSON.parse(require('fs').readFileSync('./website/manifest.webmanifest','utf8'));
+          const need=['name','short_name','start_url','display','icons','theme_color','background_color'];
+          const miss=need.filter(k=>!m[k]);
+          if(miss.length){console.error('manifest kurang:',miss);process.exit(1)}
+          if(!Array.isArray(m.icons)||m.icons.length<1)process.exit(1);
+          console.log('✅ manifest OK —',m.name,'|',m.display,'| ikon:',m.icons.length);
+          "
+
+      - name: Service worker mendaftarkan cache & offline fallback
+        run: |
+          grep -q 'CACHE' website/sw.js || { echo 'sw.js tanpa CACHE'; exit 1; }
+          grep -q '404' website/sw.js || echo '⚠️ sw.js tidak menyebut 404 (offline fallback opsional)'
+          echo "✅ sw.js OK"
+
+      - name: Assetlinks App Links ada & JSON valid
+        run: |
+          node -e "
+          const a=JSON.parse(require('fs').readFileSync('./website/.well-known/assetlinks.json','utf8'));
+          if(!Array.isArray(a)||!a[0].target.package_name)process.exit(1);
+          const fp=a[0].target.sha256_cert_fingerprints[0];
+          if(/GANTI/i.test(fp))console.log('⚠️ fingerprint masih placeholder — isi sebelum rilis Play Store');
+          else console.log('✅ fingerprint terisi');
+          "
+
+      - name: Semua aset yang dirujuk HTML/JS benar-benar ada
+        run: |
+          node -e "
+          const fs=require('fs'),path=require('path');
+          const files=[]; (function walk(d){for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name); e.isDirectory()?walk(p):/\.(html|js|css)$/.test(e.name)&&files.push(p)}})('website');
+          let miss=[];
+          for(const f of files){
+            const t=fs.readFileSync(f,'utf8');
+            const re=/(?:href|src)=\"([^\"#:]+\.(?:css|js|png|jpg|jpeg|svg|webp|json|ico))\"/g; let m;
+            while((m=re.exec(t))){
+              const rel=m[1].replace(/^\.?\//,'');
+              const cand=[path.join('website',rel),path.join(path.dirname(f),rel)];
+              if(!cand.some(c=>fs.existsSync(c))) miss.push(f+' → '+m[1]);
+            }
+          }
+          if(miss.length){console.error('Aset hilang:\n'+miss.join('\n'));process.exit(1)}
+          console.log('✅ semua aset lokal yang dirujuk tersedia');
+          "
+
+  # ---------------------------------------------------------------
+  # 3. Android: bangun APK debug (bukti proyek Kotlin terkompilasi).
+  #    Dilewati otomatis bila folder android/ tidak ada.
+  # ---------------------------------------------------------------
+  android:
+    name: Android (assembleDebug)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # Proyek Kotlin ditulis tanpa gradle wrapper (sandbox tidak punya Gradle/SDK).
+    # Job ini mencoba kompilasi nyata; kegagalan toolchain tidak memblokir rilis web.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+      - name: Bangun APK debug
+        working-directory: android
+        run: gradle wrapper --gradle-version 8.7 && ./gradlew --no-daemon assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mbcindonesia-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------
+  # 4. Build image Docker (bukti Dockerfile valid) — hanya di main.
+  # ---------------------------------------------------------------
+  docker:
+    name: Build image Docker
+    needs: [backend]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build (tanpa push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./server/Dockerfile
+          push: false
+          tags: mbcindonesia-tv:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

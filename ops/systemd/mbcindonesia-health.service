@@ -1,0 +1,10 @@
+[Unit]
+Description=Pemeriksaan kesehatan MBCINDONESIA.TV (setiap 5 menit)
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/mbcindonesia/backup.env
+WorkingDirectory=/opt/mbcindonesia
+ExecStart=/opt/mbcindonesia/ops/cek-status.sh
+User=mbc
+Group=mbc

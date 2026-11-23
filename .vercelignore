@@ -1,0 +1,17 @@
+# Jangan unggah yang tidak diperlukan (menghemat waktu build & ukuran function)
+server/node_modules
+node_modules
+.git
+backups
+docs/screens
+android
+ops
+*.md
+!README.md
+KREDENSIAL-BARU-*.txt
+.env
+.env.*
+server/.env
+server/.env.*
+!server/.env.example
+!server/.env.production.example
