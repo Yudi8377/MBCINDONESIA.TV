@@ -99,7 +99,11 @@ setTimeout(() => { if (!player.dataset.ok && player.paused) tampilkanGagal(); },
 player.poster = p.img;
 function playEpisode(i){
   const [t,d,key] = p.eps[i];
-  mulaiPutar(MBCDATA.videos[key] || cadangan());
+  /* Klip dicari lewat kunci; bila kunci dari API belum punya berkas, pakai klip
+     program ini yang memang tersedia (bukan video program lain). */
+  const url = MBCDATA.videos[key] || cadangan();
+  if (!MBCDATA.videos[key]) console.warn('[MBC] klip untuk "' + t + '" belum tersedia (kunci: ' + key + ') — memakai klip program ini.');
+  mulaiPutar(url);
   document.getElementById('wTitle').textContent = p.title + ' — ' + t;
   const lbl = document.getElementById('wVideoLabel'); if (lbl) lbl.textContent = 'Sedang diputar: ' + p.title + ' · ' + t;
   document.querySelectorAll('.ep').forEach((el,idx)=>el.classList.toggle('active', idx===i));

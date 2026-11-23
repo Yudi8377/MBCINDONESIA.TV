@@ -80,7 +80,19 @@ window.MBCDATA = MBCDATA; // akses dari skrip lain & debugging
     const data = await res.json();
     if (Array.isArray(data.programs) && data.programs.length) {
       MBCDATA.apiOnline = true;
-      MBCDATA.programs = data.programs.map(p => ({ ...p, rating: Number(p.rating) }));
+      /* Jangan buang kunci video yang sudah dipetakan: API boleh mengirim daftar episode,
+         tetapi bila ep[2] kosong/tidak dikenal sementara, pertahankan kunci lokal. */
+      const lokal = new Map(MBCDATA.programs.map(p => [p.id, p]));
+      MBCDATA.programs = data.programs.map(p => {
+        const acuan = lokal.get(p.id);
+        const eps = (p.eps || []).map((e, i) => {
+          const kunci = e[2] || (acuan && acuan.eps[i] ? acuan.eps[i][2] : '');
+          return [e[0], e[1], kunci];
+        });
+        return { ...p, rating: Number(p.rating), eps };
+      });
+      const hilang = MBCDATA.programs.flatMap(p => p.eps.map(e => e[2])).filter(k => k && !MBCDATA.videos[k]);
+      if (hilang.length) console.warn('[MBC] kunci video belum punya berkas lokal:', hilang);
       window.dispatchEvent(new Event('mbc:data-updated'));
     }
   } catch (e) { /* offline/preview statis: pakai data bawaan */ }
