@@ -8,11 +8,7 @@
     "api/index.js": {
       "memory": 1024,
       "maxDuration": 30,
-      "includeFiles": [
-        "server/**",
-        "website/newsroom/gerbang.html",
-        "website/newsroom/index.html"
-      ]
+      "includeFiles": "server/**"
     }
   },
   "rewrites": [
