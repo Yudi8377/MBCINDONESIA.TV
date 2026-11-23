@@ -24,6 +24,7 @@
 <main class="container watch-layout">
   <div>
     <div class="player-shell"><video id="player" controls playsinline preload="metadata" poster="assets/img/hero.jpg"></video></div>
+<p id="wVideoLabel" class="muted" style="font-size:.78rem;margin:.5rem 0 0" aria-live="polite"></p>
 <p id="properr" role="status" style="display:none;margin:.6rem 0 0;padding:.7rem .9rem;border-radius:10px;background:#3a1414;color:#ffd9d9;font-size:.82rem"></p>
     <div class="watch-info">
       <span class="card-cat" id="wCat"></span>
@@ -68,9 +69,15 @@ document.getElementById('wDesc').textContent = p.desc;
 document.getElementById('wHl').textContent = p.hl + ' · © MBC Indonesia Group. Hak tayang konten tercatat di registri MAM.';
 
 const player = document.getElementById('player');
+/* Cadangan cerdas: kalau kunci video tidak dikenal, pakai klip episode pertama
+   dari program yang sama — jangan pernah memutar video program lain. */
+function cadangan() {
+  const daftar = (p.eps || []).map(e => MBCDATA.videos[e[2]]).filter(Boolean);
+  return daftar[0] || MBCDATA.videos.live || '';
+}
 /* Jaring aman: bila atribut src hilang / gagal, selalu jatuhkan ke klip lokal */
 function mulaiPutar(url) {
-  const sumber = url || MBCDATA.videos.bunny;
+  const sumber = url || cadangan();  // cadangan: klip episode pertama program ini
   player.src = sumber;
   player.load();
   player.play().catch(() => {});
@@ -84,7 +91,7 @@ function tampilkanGagal(){
     '<button class="btn btn-ghost" style="padding:.25rem .6rem;font-size:.75rem" onclick="location.reload()">Muat ulang</button>';
 }
 player.addEventListener('error', () => {
-  if (!player.dataset.retry) { player.dataset.retry = '1'; mulaiPutar(MBCDATA.videos.bunny); return; }
+  if (!player.dataset.retry) { player.dataset.retry = '1'; mulaiPutar(cadangan()); return; }
   tampilkanGagal();
 });
 player.addEventListener('playing', () => { player.dataset.ok = '1'; if (properr) properr.style.display = 'none'; });
@@ -92,8 +99,9 @@ setTimeout(() => { if (!player.dataset.ok && player.paused) tampilkanGagal(); },
 player.poster = p.img;
 function playEpisode(i){
   const [t,d,key] = p.eps[i];
-  mulaiPutar(MBCDATA.videos[key] || MBCDATA.videos.bunny);
+  mulaiPutar(MBCDATA.videos[key] || cadangan());
   document.getElementById('wTitle').textContent = p.title + ' — ' + t;
+  const lbl = document.getElementById('wVideoLabel'); if (lbl) lbl.textContent = 'Sedang diputar: ' + p.title + ' · ' + t;
   document.querySelectorAll('.ep').forEach((el,idx)=>el.classList.toggle('active', idx===i));
 }
 document.getElementById('epList').innerHTML = p.eps.map(([t,d],i)=>`
