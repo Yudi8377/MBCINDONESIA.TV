@@ -1,3 +1,31 @@
+## [1.4.14] — 2026-11-23 — GO LIVE Vercel
+
+### Deploy berhasil dari GitHub (bukan unggahan manual)
+- `Yudi8377/MBCINDONESIA.TV` kini berisi kode (push via OAuth Device Flow, tanpa PAT manual).
+- Vercel Git Integration otomatis membangun setiap push ke `main`. Build pertama gagal karena
+  `functions.api/index.js.includeFiles` harus **string**, bukan array → diperbaiki.
+- URL produksi: **https://mbcindonesia-tv.vercel.app** (`READY`, dipromosikan, ssl_verify=0).
+
+### 🔒 Celah keamanan ditemukan & ditutup saat go-live
+Di Vercel, `website/` dilayani CDN sehingga middleware Express terlewati: **CMS `newsroom/index.html`
+(81 KB) dapat diunduh siapa pun tanpa login**. Perbaikan:
+1. `website/newsroom/` kini hanya berisi `gerbang.html` (halaman login publik).
+2. `index.html` + `cms.js` dipindah ke `server/newsroom/` → hanya ada di bundel function, tidak pernah
+   menjadi aset CDN.
+3. `api/index.js`: gerbang eksplisit — verifikasi JWT + peran sebelum menyajikan CMS, dan **`cms.js`
+   di-inline** ke HTML (tidak ada berkas JS terpisah yang bisa diambil langsung).
+4. `vercel.json`: `cleanUrls: false` dihapus (memicu 308 yang melewati rewrite), rewrite `/newsroom*`
+   eksplisit ke `/api/index`.
+5. Diuji: `/newsroom` tanpa token **401** & 7 KB (gerbang); dengan token **200** & 139 KB (CMS lengkap).
+
+### Lain-lain
+- `package.json`: versi 1.4.13, `engines.node 22.x`, devDependency `vercel` dibuang (Vercel mengabaikannya
+  dan memperingatkan di log build).
+- `vercel.json`: `memory` dihapus (diabaikan pada Active CPU billing).
+- `.github/workflows/ci.yml` dikeluarkan dari repo: OAuth App tanpa scope `workflow` tidak boleh
+  menyentuh berkas workflow; deploy ditangani Vercel Git Integration.
+- Server lokal diberi paritas: gerbang `/newsroom` menyajikan `index.html` & `cms.js` dari `server/newsroom/`.
+
 ## [1.4.13] — 2026-11-23
 
 ### Deploy Vercel tanpa Git: temuan penting (dibuktikan, bukan dugaan)
