@@ -573,7 +573,11 @@ require('./newsroom-api')(app, {
 /* ================= PINTU INTERNAL (NEWSROOM) =================
    Newsroom adalah dapur produksi: tidak boleh diakses anonim dan tidak diindeks.
    Middleware ini berjalan SEBELUM static, jadi /newsroom/* anonim → 401 (halaman gerbang). */
-const NEWSROOM_DIR = path.join(__dirname, '..', 'website', 'newsroom');
+/* Berkas CMS sengaja TIDAK berada di folder statis `website/` supaya tidak mungkin
+   terunduh tanpa login (di Vercel, `website/` dilayani CDN dan melewati Express).
+   Semua akses /newsroom/* melewati middleware gerbang di bawah. */
+const NEWSROOM_DIR = path.join(__dirname, 'newsroom');
+const NEWSROOM_GERBANG_DIR = path.join(__dirname, '..', 'website', 'newsroom');
 /* Login newsroom: cookie HttpOnly mbc_gate + token di body (dipakai halaman gerbang) */
 app.post('/api/newsroom/gate', (req, res) => {
   const ip = clientIp(req);
@@ -621,7 +625,7 @@ app.use('/newsroom', (req, res, next) => {
   }
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
   res.setHeader('Cache-Control', 'no-store');
-  return res.status(401).sendFile(path.join(NEWSROOM_DIR, 'gerbang.html'), err => { if (err) res.status(401).type('text/plain').send('Newsroom internal — akses ditolak.'); });
+  return res.status(401).sendFile(path.join(NEWSROOM_GERBANG_DIR, 'gerbang.html'), err => { if (err) res.status(401).type('text/plain').send('Newsroom internal — akses ditolak.'); });
 });
 
 /* ================= STATIC WEBSITE ================= */
