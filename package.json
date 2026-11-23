@@ -1,12 +1,13 @@
 {
   "name": "mbcindonesia-tv",
-  "version": "1.4.6",
+  "version": "1.4.13",
   "private": true,
   "description": "MBCINDONESIA.TV — situs publik + web app newsroom + API (Express) siap Vercel",
   "scripts": {
     "start": "node server/server.js",
     "dev": "node server/server.js",
-    "vercel-build": "echo 'tidak perlu build: aplikasi disajikan apa adanya'"
+    "vercel-build": "echo 'tanpa build: statis via CDN, API via function'",
+    "cek": "node server/cek-koneksi.js"
   },
   "engines": {
     "node": "22.x"
@@ -18,8 +19,5 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "pg": "^8.13.1"
-  },
-  "devDependencies": {
-    "vercel": "^66.6.0"
   }
 }
