@@ -39,6 +39,12 @@ koneksi menganggur ditutup setelah 3 detik, `allowExitOnIdle`, dan kode galat `E
 diperlakukan sebagai galat transien (dicoba ulang) alih-alih 503.
 Hasil di produksi: `db:true` konsisten, latensi `/api/health` turun dari ~1.600 ms ke ~217 ms.
 
+### Perbaikan gerbang Vercel: administrator bisa masuk
+`api/index.js` (gerbang yang menyajikan CMS di Vercel) masih memakai daftar peran **hard-code**
+empat peran lama, sehingga `admin`/`pemred`/`redaktur`/`reporter` ditolak di sana walau tokennya sah
+dan lolos di Express. Kini daftar peran dibaca dari `server/peran.js` (sumber tunggal) dan akun
+berstatus `nonaktif` ditolak juga di gerbang ini.
+
 ### Berkas
 - Baru: `server/peran.js`, `server/newsroom-pengguna.js`, `docs/PERAN-RBAC.md`, `docs/MIGRASI-1.6.1.sql`,
   `ops/uji-rbac.py`, `ops/uji-ui-pengguna.py`.
