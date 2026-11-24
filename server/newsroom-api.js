@@ -404,6 +404,28 @@ module.exports = function mountNewsroom(app, ctx) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
+  /* ---------------- Antrean publik: kiriman kontributor & laporan konten (1.4.16) ---------------- */
+  app.get('/api/newsroom/antrean', requireAuth, async (req, res) => {
+    try {
+      const rows = await q(`SELECT id, severity, title, detail, evidence, status, created_at
+        FROM ai_findings WHERE evidence->>'jenis' IN ('kontributor','laporan')
+        ORDER BY (status='baru') DESC, created_at DESC LIMIT 100`);
+      const kiriman = rows.rows.filter(r => r.evidence && r.evidence.jenis === 'kontributor');
+      const laporan = rows.rows.filter(r => r.evidence && r.evidence.jenis === 'laporan');
+      res.json({ kiriman, laporan });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
+  app.post('/api/newsroom/antrean/:id', requireAuth, async (req, res) => {
+    try {
+      const status = ['baru', 'dibaca', 'diterapkan', 'diabaikan'].includes((req.body || {}).status) ? req.body.status : 'dibaca';
+      const r = await q('UPDATE ai_findings SET status=$1 WHERE id=$2 AND evidence->>\'jenis\' IN (\'kontributor\',\'laporan\') RETURNING id', [status, Number(req.params.id)]);
+      if (!r.rowCount) return res.status(404).json({ error: 'Antrean tidak ditemukan' });
+      await q('INSERT INTO audit_log(action, who) VALUES($1,$2)', ['antrean:' + status, (req.user && req.user.email) || 'operator']);
+      res.json({ ok: true, status });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+  });
+
   /* ---------------- Multi-agent AI ---------------- */
   app.get('/api/newsroom/ai/agents', requireAuth, async (req, res) => {
     try {

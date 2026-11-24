@@ -130,6 +130,54 @@ const MBC_NEWS = (() => {
       tags: ['kopi', 'robusta', 'ekspor', 'koperasi', 'Kediri', 'UMKM', 'pasar Eropa']
     },
     {
+      id: 'n-diaspora-hongkong',
+      title: 'Diaspora Indonesia di Hong Kong Buka Kelas Bahasa untuk Pekerja Migran',
+      kicker: 'Internasional',
+      topic: 'internasional',
+      wilayah: 'internasional',
+      place: 'Hong Kong SAR',
+      date: '2026-11-20',
+      author: 'Koresponden MBC Asia',
+      video: 'bicara-petang',
+      img: 'assets/img/bicara-petang.jpg',
+      deck: 'Komunitas diaspora Indonesia di Hong Kong menggelar kelas bahasa, literasi keuangan, dan pendampingan hukum gratis setiap akhir pekan.',
+      body: [
+        'Sejumlah organisasi diaspora Indonesia di Hong Kong SAR membuka kelas bahasa dan literasi keuangan bagi pekerja migran Indonesia setiap Sabtu dan Minggu. Kegiatan ini diikuti sekitar 180 peserta pada gelaran terakhir.',
+        'Materi kelas mencakup penyusunan anggaran keluarga, pemahaman kontrak kerja, dan jalur pelaporan jika menghadapi masalah ketenagakerjaan. Pengajar berasal dari kalangan diaspora yang berlatar pendidikan hukum dan akuntansi.',
+        'Konsulat Jenderal RI di Hong Kong menyambut baik inisiatif tersebut dan menawarkan kanal pendampingan hukum bagi peserta yang membutuhkan bantuan lanjutan.',
+        'MBC INDONESIA akan menghadirkan laporan lanjutan dari jaringan koresponden Asia pada kanal Internasional serta program Bicara Petang.'
+      ],
+      claims: [
+        'Jumlah peserta 180 orang (sumber: panitia komunitas, perlu konfirmasi tertulis)',
+        'Pendampingan hukum oleh KJRI (perlu konfirmasi siaran pers)'
+      ],
+      tags: ['diaspora', 'pekerja migran', 'Hong Kong', 'literasi keuangan', 'internasional']
+    },
+    {
+      id: 'n-pasar-pahing',
+      title: 'Pasar Pahing Kediri Tambah Zona UMKM Digital dan Layanan Pembayaran Nontunai',
+      kicker: 'Daerah',
+      topic: 'ekonomi',
+      wilayah: 'kediri',
+      place: 'Kediri, Jawa Timur',
+      date: '2026-11-19',
+      author: 'Redaksi Daerah',
+      video: 'kamera-komunitas',
+      img: 'assets/img/kamera-komunitas.jpg',
+      deck: 'Pedagang Pasar Pahing mendapat pendampingan QRIS dan pencatatan stok digital; 240 lapak mengikuti program percontohan.',
+      body: [
+        'Pemerintah Kota Kediri bersama penyedia jasa pembayaran meluncurkan zona UMKM digital di Pasar Pahing. Sebanyak 240 lapak mengikuti program percontohan dengan dukungan QRIS, pencatatan stok sederhana, dan pelatihan foto produk.',
+        'Pedagang menyebut transaksi nontunai mempermudah pembeli muda, meski sebagian masih membutuhkan pendampingan teknis pada pekan pertama. Tim pendamping berjaga setiap hari pasar.',
+        'Dinas perdagangan menargetkan seluruh lapak terhubung sistem pembayaran nontunai pada pertengahan 2027, disertai pemantauan harga bahan pokok harian.',
+        'MBC INDONESIA melalui program Kamera Komunitas akan meliput perkembangan program ini setiap bulan dari pasar-pasar tradisional di Kediri dan sekitarnya.'
+      ],
+      claims: [
+        'Jumlah 240 lapak (sumber: dinas perdagangan, perlu daftar resmi)',
+        'Target 2027 (pernyataan pejabat, perlu dokumen perencanaan)'
+      ],
+      tags: ['Pasar Pahing', 'UMKM', 'QRIS', 'Kediri', 'daerah', 'ekonomi digital']
+    },
+    {
       id: 'n-data-pendidikan',
       title: 'Angka Partisipasi Kuliah di Jawa Timur Naik, Kesiapan Digital Jadi Sorotan',
       kicker: 'Pendidikan',
@@ -325,8 +373,30 @@ const MBC_NEWS = (() => {
   return {
     articles, LIBRARY, SOURCE_TYPES,
     analyze, summarize, sentiment, entities, searchLiteracy, searchArticles, route,
+    /* Pemetaan rubrik (URL: berita.html?rubrik=daerah) ke topik artikel */
+    RUBRIK_TOPIC: {
+      daerah: ['ekonomi', 'lingkungan', 'budaya', 'pendidikan'],
+      nasional: ['ekonomi', 'lingkungan', 'teknologi', 'pendidikan'],
+      internasional: ['internasional'],
+      budaya: ['budaya'],
+      teknologi: ['teknologi'],
+      ekonomi: ['ekonomi'],
+      pendidikan: ['pendidikan']
+    },
+    articlesByRubrik: function (rubrik) {
+      var t = this.RUBRIK_TOPIC[rubrik];
+      if (!t) return this.articles.slice();
+      return this.articles.filter(function (a) { return t.indexOf(a.topic) >= 0; });
+    },
+    articlesByWilayah: function (wilayah) {
+      if (!wilayah) return this.articles.slice();
+      return this.articles.filter(function (a) {
+        if (a.wilayah) return a.wilayah === wilayah;
+        return (a.place || '').toLowerCase().indexOf(wilayah) >= 0;
+      });
+    },
     topics: [...new Set(articles.map(a => a.topic))],
-    topicsLabel: { lingkungan: 'Lingkungan', ekonomi: 'Ekonomi', budaya: 'Budaya', teknologi: 'Teknologi', pendidikan: 'Pendidikan' }
+    topicsLabel: { lingkungan: 'Lingkungan', ekonomi: 'Ekonomi', budaya: 'Budaya', teknologi: 'Teknologi', pendidikan: 'Pendidikan', internasional: 'Internasional' }
   };
 })();
 

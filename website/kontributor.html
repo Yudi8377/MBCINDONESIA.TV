@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
+<title>Kirim Berita — MBC INDONESIA</title>
+<meta name="description" content="Kirim berita, foto kegiatan, atau informasi peristiwa ke redaksi MBC Indonesia. Setiap kiriman masuk antrean moderasi redaksi.">
+<link rel="canonical" href="/kontributor.html">
+<meta name="theme-color" content="#070b14">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="assets/css/site.css">
+<style>
+  .rubrik-warp{max-width:1100px;margin:0 auto;padding:2rem 0 3.5rem}
+  .rubrik-warp h1{font-size:clamp(1.5rem,3.4vw,2.2rem);line-height:1.2;margin:.2rem 0 .5rem}
+  .rubrik-warp .lead{color:var(--muted);font-size:.95rem;max-width:70ch;margin-bottom:1.6rem}
+  .rubrik-grid{display:grid;gap:1.2rem;grid-template-columns:1.15fr .85fr}
+  @media(max-width:900px){.rubrik-grid{grid-template-columns:1fr}}
+  .kartu{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.15rem}
+  .kartu h2{font-size:1.02rem;margin:0 0 .3rem;color:#fff}
+  .kartu p{color:var(--muted);font-size:.86rem;margin:0 0 .8rem}
+  .bidang{display:flex;gap:.4rem;align-items:center;margin-bottom:.55rem}
+  .bidang label{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;min-width:82px}
+  .bidang input,.bidang select,.bidang textarea{flex:1;background:#0a1020;border:1px solid var(--line);border-radius:9px;color:#fff;padding:.55rem .6rem;font-size:.86rem;font-family:inherit;min-height:44px}
+  .bidang textarea{min-height:150px;resize:vertical}
+  .bidang input:focus,.bidang select:focus,.bidang textarea:focus{outline:2px solid var(--red);outline-offset:1px}
+  .petunjuk{font-size:.75rem;color:var(--muted);margin:-.2rem 0 .8rem}
+  .rubrik-list{display:flex;flex-direction:column;gap:.5rem}
+  .rubrik-list a{display:flex;justify-content:space-between;gap:.6rem;padding:.6rem .7rem;border:1px solid var(--line);border-radius:10px;color:#dfe5f1;font-size:.83rem;text-decoration:none}
+  .rubrik-list a:hover{border-color:var(--red);color:#fff}
+  .rubrik-list b{color:var(--red2);font-weight:700;white-space:nowrap}
+  .langkah{counter-reset:l;list-style:none;padding:0;margin:0}
+  .langkah li{counter-increment:l;position:relative;padding-left:1.9rem;margin-bottom:.6rem;font-size:.85rem;color:#cfd6e6}
+  .langkah li::before{content:counter(l);position:absolute;left:0;top:-1px;width:1.35rem;height:1.35rem;border-radius:50%;background:var(--red);color:#fff;font-size:.72rem;font-weight:800;display:grid;place-items:center}
+</style>
+</head>
+<body>
+<a class="skip-link" href="#utama">Lewati ke konten utama</a>
+
+<div class="topbar"><div class="container">
+  <span><strong>MBCINDONESIA.TV</strong> — Televisi Digital MBC Indonesia Group</span>
+  <span class="live-dot"><i class="pulse"></i> <a href="live.html">Siaran Langsung</a></span>
+</div></div>
+
+<header class="site-header"><div class="container">
+  <a class="logo" href="index.html" aria-label="MBC Indonesia — Beranda">
+    <span class="logo-badge" aria-hidden="true">
+      <svg viewBox="0 0 32 32" fill="none"><path d="M7 23V9l6 7 3-4 3 4 6-7v14" stroke="#fff" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="26.4" cy="7.2" r="2.4" fill="#ffd166"/></svg>
+    </span>
+    <span class="logo-text"><span class="l1">MBC<em>INDONESIA</em></span><br><span class="l2">Televisi Digital</span></span>
+  </a>
+  <nav class="main-nav" aria-label="Navigasi utama">
+    <a href="index.html">Beranda</a>
+    <a href="index.html#katalog">Program</a>
+    <a href="live.html">Live TV</a>
+    <a href="berita.html">Berita</a>
+    <a href="rubrik.html" >Rubrik</a>
+    <a href="kontributor.html" class="active">Kirim Berita</a>
+  </nav>
+  <a class="btn btn-red" href="live.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Tonton Live</a>
+  <button class="hamburger" onclick="toggleMobileNav()" aria-label="Buka menu">☰</button>
+</div>
+<nav class="mobile-nav" id="mobileNav">
+  <a href="index.html">Beranda</a><a href="index.html#katalog">Program</a><a href="live.html">Live TV</a>
+  <a href="berita.html">Berita</a><a href="rubrik.html">Rubrik</a><a href="kontributor.html">Kirim Berita</a>
+  <a href="privasi.html">Privasi</a><a href="syarat.html">Syarat</a>
+</nav></header>
+
+<main id="utama" class="container rubrik-warp">
+
+  <span class="kicker" style="color:var(--red2);font-weight:800;letter-spacing:.14em;font-size:.7rem;text-transform:uppercase">MBC News · Kontributor</span>
+  <h1>Kirim Berita ke Redaksi MBC Indonesia</h1>
+  <p class="lead">Warga, jurnalis daerah, dan komunitas dapat mengirim berita, foto kegiatan, atau informasi peristiwa.
+  Setiap kiriman masuk <strong>antrean moderasi</strong> redaksi — tidak langsung tayang. Kami utamakan kiriman dari
+  Jawa Timur, Jawa, dan daerah lain di Indonesia, serta liputan bertema internasional dari diaspora.</p>
+
+  <div class="rubrik-grid">
+    <section class="kartu">
+      <h2>Formulir kiriman</h2>
+      <p>Isi data sebenar-benarnya. Redaksi dapat meminta verifikasi tambahan lewat email.</p>
+      <form data-form-kontributor novalidate>
+        <div class="bidang"><label for="k-nama">Nama</label><input id="k-nama" name="nama" required maxlength="80" autocomplete="name" placeholder="Nama lengkap"></div>
+        <div class="bidang"><label for="k-email">Email</label><input id="k-email" name="email" type="email" required maxlength="254" autocomplete="email" placeholder="nama@contoh.com"></div>
+        <div class="bidang"><label for="k-judul">Judul</label><input id="k-judul" name="judul" required minlength="12" maxlength="180" placeholder="Contoh: Pasar Pahing Kediri Ramai Jelang Akhir Tahun"></div>
+        <div class="bidang"><label for="k-kategori">Rubrik</label>
+          <select id="k-kategori" name="kategori">
+            <option value="daerah">Daerah</option><option value="nasional">Nasional</option>
+            <option value="internasional">Internasional</option><option value="politik">Politik</option>
+            <option value="ekonomi">Ekonomi</option><option value="hukum">Hukum</option>
+            <option value="sosial">Sosial</option><option value="budaya">Budaya</option>
+            <option value="teknologi">Teknologi</option><option value="opini">Opini</option>
+          </select></div>
+        <div class="bidang"><label for="k-wilayah">Wilayah</label>
+          <select id="k-wilayah" name="wilayah">
+            <option value="kediri">Kediri</option><option value="bojonegoro">Bojonegoro</option>
+            <option value="surabaya">Surabaya</option><option value="malang">Malang</option>
+            <option value="jatim">Jawa Timur lainnya</option><option value="nasional">Nasional</option>
+            <option value="internasional">Internasional</option>
+          </select></div>
+        <div class="bidang"><label for="k-tautan">Tautan</label><input id="k-tautan" name="tautan" maxlength="300" placeholder="Tautan foto/video pendukung (opsional)"></div>
+        <div class="bidang" style="align-items:flex-start"><label for="k-isi">Isi</label><textarea id="k-isi" name="isi" required minlength="120" maxlength="20000" placeholder="Tulis berita: apa, siapa, kapan, di mana, mengapa, bagaimana. Sertakan sumber/konfirmasi."></textarea></div>
+        <p class="petunjuk">Minimal 120 karakter. Dengan mengirim, Anda menyatakan bahan ini milik Anda atau Anda berhak menyebarkannya, dan menyetujui <a href="syarat.html" style="color:var(--red2)">Syarat &amp; Ketentuan</a> serta <a href="privasi.html" style="color:var(--red2)">Kebijakan Privasi</a>.</p>
+        <p data-pesan hidden style="font-size:.85rem;margin:.3rem 0 .5rem"></p>
+        <button type="submit" class="btn btn-red">Kirim ke Redaksi</button>
+      </form>
+    </section>
+
+    <aside style="display:flex;flex-direction:column;gap:1rem">
+      <div class="kartu">
+        <h2>Alur kiriman</h2>
+        <ol class="langkah">
+          <li>Anda mengirim lewat formulir ini.</li>
+          <li>Kiriman masuk antrean moderasi redaksi (CMS internal).</li>
+          <li>Redaksi memverifikasi fakta &amp; sumber.</li>
+          <li>Bila lolos, berita disunting dan tayang dengan kredit penulis.</li>
+          <li>Bila perlu perbaikan, redaksi menghubungi lewat email.</li>
+        </ol>
+      </div>
+      <div class="kartu">
+        <h2>Yang kami utamakan</h2>
+        <p style="margin-bottom:.4rem">Peristiwa yang bisa diverifikasi, data resmi, kesaksian langsung, dan liputan daerah yang jarang terangkat media nasional.</p>
+        <p style="margin:0">Hindari: ujaran kebencian, tuduhan tanpa bukti, konten hasil salin-tempel, dan materi berhak cipta tanpa izin.</p>
+      </div>
+      <div class="kartu">
+        <h2>Butuh jalur cepat?</h2>
+        <p style="margin:0">Untuk peristiwa mendesak, kirim juga ringkasan ke redaksi lewat menu <a href="berita.html" style="color:var(--red2)">Berita</a>. Jangan lampirkan data pribadi orang lain tanpa izin.</p>
+      </div>
+    </aside>
+  </div>
+
+</main>
+
+<footer class="site-footer"><div class="container">
+  <div class="footer-bottom" style="border-top:none;margin-top:0">
+    <span>© 2026 MBC Indonesia Group · MBCINDONESIA.TV</span>
+    <span><a href="privasi.html">Kebijakan Privasi</a> · <a href="syarat.html">Syarat &amp; Ketentuan</a> · <a href="rubrik.html">Rubrik</a> · <a href="kontributor.html">Kirim Berita</a> · <a href="sitemap.xml">Sitemap</a></span>
+  </div>
+</div></footer>
+<script src="assets/js/site.js"></script>
+<script src="assets/js/analitik.js"></script>
+<script src="assets/js/aksi-publik.js"></script>
+</body>
+</html>

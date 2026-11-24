@@ -39,6 +39,8 @@
     <a href="live.html">Live TV</a>
     <a href="watch.html?id=jejak-nusantara">Dokumenter</a>
     <a href="watch.html?id=bicara-petang">Podcast</a>
+    <a href="rubrik.html">Rubrik</a>
+    <a href="kontributor.html">Kirim Berita</a>
   </nav>
   <label class="search-box" data-search>
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="#94a0b8" stroke-width="2"/><path d="m20 20-3.8-3.8" stroke="#94a0b8" stroke-width="2" stroke-linecap="round"/></svg>
@@ -124,6 +126,26 @@
     </div>
     <a class="btn btn-ghost" href="berita.html" style="font-size:.8rem">Semua berita →</a>
   </div>
+  <!-- Angka nyata dari analitik server (bukan angka karangan) -->
+  <div class="statistik-nyata" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.7rem;margin:0 0 1rem">
+    <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.8rem .95rem">
+      <b data-statistik="pengunjung" style="font-size:1.35rem;color:#fff">—</b>
+      <div class="muted" style="font-size:.72rem">pengunjung · 7 hari</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.8rem .95rem">
+      <b data-statistik="tayangan" style="font-size:1.35rem;color:#fff">—</b>
+      <div class="muted" style="font-size:.72rem">tayangan halaman · 7 hari</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.8rem .95rem">
+      <b data-statistik="video" style="font-size:1.35rem;color:#fff">—</b>
+      <div class="muted" style="font-size:.72rem">pemutaran video · 7 hari</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.8rem .95rem">
+      <b style="font-size:1.35rem;color:#fff">26</b>
+      <div class="muted" style="font-size:.72rem">episode siap tonton</div>
+    </div>
+  </div>
+
   <div id="homeNews" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:.8rem"></div>
 </section>
 
@@ -219,5 +241,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catc
 </script>
 
 <script src="assets/js/companion.js"></script>
+<script src="assets/js/analitik.js"></script>
+<script src="assets/js/aksi-publik.js"></script>
 </body>
 </html>

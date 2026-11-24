@@ -753,6 +753,76 @@ async function viewModeration(root) {
   });
 }
 
+
+/* ══════════════ 7b. KIRIMAN KONTRIBUTOR & LAPORAN KONTEN (1.4.16) ══════════════ */
+async function viewAntrean(root) {
+  root.innerHTML = `<div class="cms-empty">Memuat antrean publik…</div>`;
+  let d;
+  try { d = await NR.get('/antrean'); } catch (e) { root.innerHTML = `<div class="cms-empty">${esc(e.message)}</div>`; return; }
+  const kirim = d.kiriman || [], lapor = d.laporan || [];
+  const baruK = kirim.filter(x => x.status === 'baru').length;
+  const baruL = lapor.filter(x => x.status === 'baru').length;
+  root.innerHTML = `
+  <div class="cms-kpi">
+    <div><b style="color:${baruK ? '#f2c14e' : '#2fd27a'}">${baruK}</b><span>Kiriman baru</span></div>
+    <div><b>${kirim.length}</b><span>Total kiriman</span></div>
+    <div><b style="color:${baruL ? '#ff8a80' : '#2fd27a'}">${baruL}</b><span>Laporan baru</span></div>
+    <div><b>${lapor.length}</b><span>Total laporan</span></div>
+  </div>
+
+  <div class="cms-panel">
+    <div class="cms-panel-head"><h3>Kiriman berita kontributor</h3><span class="cms-sub">masuk lewat kontributor.html</span></div>
+    <div class="cms-list">
+      ${kirim.length ? kirim.map(x => `
+        <div class="cms-item">
+          <div style="display:flex;justify-content:space-between;gap:.6rem;flex-wrap:wrap">
+            <div style="flex:1;min-width:220px">
+              <b>${esc(x.title.replace('Kiriman kontributor: ', ''))}</b>
+              <div class="cms-sub">${esc((x.evidence && x.evidence.nama) || '')} · ${esc((x.evidence && x.evidence.email) || '')}
+                · ${esc((x.evidence && x.evidence.kategori) || '')}/${esc((x.evidence && x.evidence.wilayah) || '')}
+                · ${window.mbcCmsDt ? '' : ''}${new Date(x.created_at).toLocaleString('id-ID')}</div>
+              <div style="margin-top:.3rem;font-size:.82rem;color:#cfd6e6;white-space:pre-wrap;max-height:9rem;overflow:auto">${esc((x.detail || '').slice(0, 1200))}</div>
+              ${x.evidence && x.evidence.tautan ? `<div class="cms-sub">🔗 ${esc(x.evidence.tautan)}</div>` : ''}
+            </div>
+            <div style="display:flex;gap:.25rem;align-items:flex-start;flex-wrap:wrap">
+              ${pill(x.status, x.status === 'baru' ? '#f2c14e' : '#2fd27a')}
+              <button class="cms-btn ghost" data-act="diterapkan" data-id="${x.id}">Terima</button>
+              <button class="cms-btn ghost" data-act="diabaikan" data-id="${x.id}" style="color:#ff8a80">Tolak</button>
+            </div>
+          </div>
+        </div>`).join('') : '<div class="cms-empty">Belum ada kiriman kontributor.</div>'}
+    </div>
+  </div>
+
+  <div class="cms-panel">
+    <div class="cms-panel-head"><h3>Laporan konten dari publik</h3><span class="cms-sub">tombol ⚑ di situs publik</span></div>
+    <div class="cms-list">
+      ${lapor.length ? lapor.map(x => `
+        <div class="cms-item">
+          <div style="display:flex;justify-content:space-between;gap:.6rem;flex-wrap:wrap">
+            <div style="flex:1;min-width:220px">
+              <b>${esc(x.title)}</b>
+              <div class="cms-sub">${esc((x.evidence && x.evidence.email) || 'tanpa email')} · ${new Date(x.created_at).toLocaleString('id-ID')}
+                ${x.evidence && x.evidence.halaman ? ' · dari ' + esc(x.evidence.halaman) : ''}</div>
+              <div style="margin-top:.3rem;font-size:.82rem;color:#cfd6e6">${esc(x.detail || '')}</div>
+            </div>
+            <div style="display:flex;gap:.25rem;align-items:flex-start;flex-wrap:wrap">
+              ${pill(x.status, x.status === 'baru' ? '#f2c14e' : '#2fd27a')}
+              <button class="cms-btn ghost" data-act="diterapkan" data-id="${x.id}">Tindak lanjut</button>
+              <button class="cms-btn ghost" data-act="diabaikan" data-id="${x.id}" style="color:#ff8a80">Abaikan</button>
+            </div>
+          </div>
+        </div>`).join('') : '<div class="cms-empty">Belum ada laporan konten.</div>'}
+    </div>
+  </div>`;
+
+  root.addEventListener('click', async e => {
+    const b = e.target.closest('[data-act]'); if (!b) return;
+    try { await NR.post('/antrean/' + b.dataset.id, { status: b.dataset.act }); toast('Antrean → ' + b.dataset.act); navTo('antrean'); }
+    catch (err) { toast(err.message); }
+  });
+}
+
 /* ══════════════ 8. ANALITIK KONTEN ══════════════ */
 async function viewContentAnalytics(root) {
   root.innerHTML = `<div class="cms-empty">Menghitung analitik…</div>`;
@@ -847,7 +917,7 @@ async function viewAIStudio(root) {
 if (typeof window !== 'undefined') {
   Object.assign(window, {
     NR, STATUS_LABEL, STATUS_COLOR, FLOW_MAP,
-    viewDesk, viewArticles, viewCalendar, viewFindings, viewModeration,
+    viewDesk, viewArticles, viewCalendar, viewFindings, viewModeration, viewAntrean,
     viewMedia, viewContentAnalytics, viewAIStudio,
     openEditor, openTaskModal, runAgentQuick
   });

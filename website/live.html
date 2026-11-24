@@ -16,7 +16,7 @@
 <a class="skip-link" href="#liveVideo">Lompat ke siaran langsung</a>
 <header class="site-header"><div class="container">
   <a class="logo" href="index.html"><span class="logo-badge"><svg viewBox="0 0 32 32" fill="none"><path d="M7 23V9l6 7 3-4 3 4 6-7v14" stroke="#fff" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="26.4" cy="7.2" r="2.4" fill="#ffd166"/></svg></span><span class="logo-text"><span class="l1">MBC<em>INDONESIA</em></span><br><span class="l2">Televisi Digital</span></span></a>
-  <nav class="main-nav"><a href="index.html">Beranda</a><a href="index.html#katalog">Program</a><a href="live.html" class="active">Live TV</a></nav>
+  <nav class="main-nav"><a href="index.html">Beranda</a><a href="index.html#katalog">Program</a><a href="live.html" class="active">Live TV</a><a href="berita.html">Berita</a><a href="rubrik.html">Rubrik</a><a href="kontributor.html">Kirim Berita</a></nav>
   <a class="btn btn-ghost" href="index.html">← Kembali</a>
 </div></header>
 
@@ -29,7 +29,7 @@
       <div>
         <span class="badge"><span class="pulse" style="background:#fff"></span> On Air</span>
         <h1 style="font-size:1.35rem;margin:.4rem 0 .1rem">Kabar Nusantara Petang</h1>
-        <p class="muted" style="font-size:.8rem">Studio A MBC Indonesia, Kediri · <span id="viewerCount">2.418</span> penonton · 1080i · Audio Indonesia</p>
+        <p class="muted" style="font-size:.8rem">Studio A MBC Indonesia, Kediri · <span id="viewerCount">—</span> <span id="viewerLabel">penonton (menghubungkan…)</span> · 1080i · Audio Indonesia</p>
       </div>
       <div style="display:flex;gap:.5rem">
         <button class="btn btn-ghost" id="unmuteBtn">🔇 Aktifkan Suara</button>
@@ -64,9 +64,9 @@ video.addEventListener('loadeddata', () => { video.classList.add('siap'); });
 document.getElementById('unmuteBtn').addEventListener('click', e => { video.muted = !video.muted; e.currentTarget.textContent = video.muted ? '🔇 Aktifkan Suara' : '🔊 Suara Aktif'; });
 document.getElementById('fullscreenBtn').addEventListener('click', () => { if (video.requestFullscreen) video.requestFullscreen(); });
 
-// Penonton fluktuatif (simulasi demo)
-let viewers = 2418;
-setInterval(()=>{ viewers = Math.max(1800, Math.min(3200, viewers + Math.round((Math.random()-0.45)*37))); document.getElementById('viewerCount').textContent = viewers.toLocaleString('id-ID'); }, 3000);
+/* Penonton nyata: angka berasal dari heartbeat /api/live/heartbeat (aksi-publik.js).
+   Tidak ada lagi simulasi angka karangan; sebelum data tiba, tampil "—” dan penanda "menghubungkan". */
+document.getElementById('viewerCount').textContent = '—';
 
 // ---- Jadwal siaran ----
 const schedule = [["06.00","Kabar Nusantara Pagi"],["08.00","Dapur Rempah Ulang"],["10.00","Selasar Budaya"],["12.00","Kabar Nusantara Siang"],["13.00","Ruang Bisnis"],["15.00","Kamera Komunitas"],["17.00","Bicara Petang"],["19.00","Kabar Nusantara Petang"],["19.30","Ruang Bisnis Spesial"],["20.15","Selasar Budaya"],["20.45","Panggung Musik"],["22.00","Jejak Nusantara Ulang"],["00.00","MBC Indonesia Malam (Ulang)"]];
@@ -104,5 +104,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catc
 </div></footer>
 <script src="assets/js/ai-news.js"></script>
 <script src="assets/js/companion.js"></script>
+<script src="assets/js/analitik.js"></script>
+<script src="assets/js/aksi-publik.js"></script>
 </body>
 </html>

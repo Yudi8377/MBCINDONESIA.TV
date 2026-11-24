@@ -85,6 +85,8 @@
     <a href="live.html">Live TV</a>
     <a href="watch.html?id=jejak-nusantara">Dokumenter</a>
     <a href="watch.html?id=bicara-petang">Podcast</a>
+    <a href="rubrik.html">Rubrik</a>
+    <a href="kontributor.html">Kirim Berita</a>
   </nav>
   <a class="btn btn-red" href="live.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Tonton Live</a>
   <button class="hamburger" onclick="toggleMobileNav()" aria-label="Buka menu">☰</button>
@@ -149,7 +151,11 @@ if (!N) {
 }
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let activeTopic = 'semua';
-let activeId = new URLSearchParams(location.search).get('artikel') || (N ? N.articles[0].id : '');
+/* Dukungan rubrik & wilayah dari URL: berita.html?rubrik=internasional / ?wilayah=kediri */
+const PARAMS = new URLSearchParams(location.search);
+let activeRubrik = (PARAMS.get('rubrik') || '').toLowerCase();
+let activeWilayah = (PARAMS.get('wilayah') || '').toLowerCase();
+let activeId = PARAMS.get('artikel') || (N ? N.articles[0].id : '');
 /* sinkronkan URL agar pemandu AI tahu berita mana yang sedang dibaca */
 try { if (!new URLSearchParams(location.search).get('artikel')) history.replaceState(null, '', '?artikel=' + activeId); } catch (_) {}
 
@@ -158,6 +164,32 @@ if (N) {
 $('#topicChips').innerHTML = ['semua', ...N.topics].map(t =>
   `<button class="chip${t === activeTopic ? ' active' : ''}" data-topic="${t}">${t === 'semua' ? 'Semua' : N.topicsLabel[t] || t}</button>`
 ).join('');
+/* sinkronkan URL bila filter rubrik/wilayah dipakai, agar mudah dibagikan */
+(function sinkronUrl(){
+  try {
+    const u = new URL(location.href);
+    if (activeRubrik) u.searchParams.set('rubrik', activeRubrik); else u.searchParams.delete('rubrik');
+    if (activeWilayah) u.searchParams.set('wilayah', activeWilayah); else u.searchParams.delete('wilayah');
+    history.replaceState(null, '', u.pathname + '?' + u.searchParams.toString());
+  } catch (_) {}
+})();
+
+/* penanda rubrik/wilayah aktif, dengan tombol untuk menghapus filter */
+window.tandaiFilterAktif = function(){
+  if (!activeRubrik && !activeWilayah) return;
+  const host = document.getElementById('topicChips');
+  if (!host || host.querySelector('.chip-filter')) return;
+  const label = activeRubrik ? ('Rubrik: ' + activeRubrik) : ('Wilayah: ' + activeWilayah);
+  const btn = document.createElement('a');
+  btn.href = 'berita.html';
+  btn.className = 'chip chip-filter active';
+  btn.style.cssText = 'text-decoration:none;display:inline-flex;gap:.35rem;align-items:center';
+  btn.innerHTML = esc(label) + ' <span aria-hidden="true">✕</span>';
+  btn.title = 'Hapus filter dan tampilkan semua berita';
+  host.prepend(btn);
+};
+window.tandaiFilterAktif();
+
 $('#topicChips').addEventListener('click', e => {
   const b = e.target.closest('[data-topic]'); if (!b) return;
   activeTopic = b.dataset.topic;
@@ -168,6 +200,8 @@ $('#topicChips').addEventListener('click', e => {
 function filtered() {
   const q = $('#q').value.trim();
   let list = N.articles;
+  if (activeRubrik && N.articlesByRubrik) list = N.articlesByRubrik(activeRubrik);
+  if (activeWilayah && N.articlesByWilayah) list = N.articlesByWilayah(activeWilayah);
   if (activeTopic !== 'semua') list = list.filter(a => a.topic === activeTopic);
   if (q) {
     const hits = N.searchArticles(q, 20).map(h => h.id);
@@ -279,6 +313,7 @@ renderList(); renderReader();
     chipHost.innerHTML = ['semua', ...N.topics].map(t =>
       `<button class="chip${t === activeTopic ? ' active' : ''}" data-topic="${t}">${t === 'semua' ? 'Semua' : N.topicsLabel[t] || t}</button>`
     ).join('') + (extra.length ? ` <span class="chip" style="cursor:default;color:#2fd27a;border-color:rgba(47,210,122,.4)">✓ ${extra.length} dari CMS</span>` : '');
+    if (window.tandaiFilterAktif) window.tandaiFilterAktif();
     chipHost.onclick = e => {
       const b = e.target.closest('[data-topic]'); if (!b) return;
       activeTopic = b.dataset.topic;
@@ -292,5 +327,7 @@ renderList(); renderReader();
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 <script src="assets/js/companion.js"></script>
+<script src="assets/js/analitik.js"></script>
+<script src="assets/js/aksi-publik.js"></script>
 </body>
 </html>

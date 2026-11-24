@@ -46,6 +46,8 @@ app.use(compression());
    - diekspos lewat /api/status agar monitor/opsi alerting bisa membacanya */
 const METRIK = { total: 0, err5xx: 0, lambat: 0, mulai: Date.now(), terakhir_error: null };
 const RESPONSE_LAMBAT_MS = Number(process.env.RESPONSE_LAMBAT_MS || 1500);
+/* Batas kiriman publik bisa dilonggarkan saat pengujian lokal (di produksi tetap ketat) */
+const BATAS_KIRIM = Number(process.env.BATAS_KIRIM_JAM || 3);
 app.use((req, res, next) => {
   const t0 = Date.now();
   METRIK.total++;
@@ -653,6 +655,131 @@ if (WEBSITE_ADA) app.use(express.static(WEBSITE_DIR, {
     if (/assets[\/]img[\/]/.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=604800');
   }
 }));
+/* =====================================================================
+   1.4.16 — Tahap I-b: ANALITIK NYATA · KONTRIBUTOR · PELAPORAN KONTEN
+   Memakai tabel yang sudah ada (audit_log, ai_findings) karena akun
+   aplikasi tidak berhak DDL. Rancangan tabel khusus ada di
+   docs/MIGRASI-1.4.16.sql untuk dijalankan pengelola DB.
+   ===================================================================== */
+
+const halAman = v => String(v || '').replace(/[^a-zA-Z0-9._/-]/g, '').slice(0, 120);
+
+/* ---------- 1. Kumpulkan analitik (tayangan, baca, putar video) ---------- */
+app.post('/api/analytics/collect', async (req, res) => {
+  try {
+    if (!rateLimit('an:' + clientIp(req), 150, 60_000)) return res.status(429).json({ error: 'Terlalu banyak permintaan' });
+    const b = req.body || {};
+    const halaman = halAman(b.page);
+    if (!halaman) return res.status(204).end();
+    const jenis = ['view', 'read', 'video', 'share'].includes(b.type) ? b.type : 'view';
+    const sid = halAman(b.sid) || ('ip' + require('crypto').createHash('sha1').update(clientIp(req)).digest('hex').slice(0, 12));
+    const ua = req.headers['user-agent'] || '';
+    const perangkat = /Android/i.test(ua) ? 'android' : /iPhone|iPad/i.test(ua) ? 'ios' : /Mobile/i.test(ua) ? 'mobile' : 'desktop';
+    await pool.query('INSERT INTO audit_log(action, who) VALUES($1,$2)', [`${jenis}:${halaman}:${perangkat}`, sid]);
+    res.status(204).end();
+  } catch (e) { res.status(204).end(); }  /* analitik tidak boleh mengganggu pengunjung */
+});
+
+/* ---------- 2. Ringkasan trafik 7 hari (menggantikan angka ilustratif) ---------- */
+app.get('/api/analytics/summary', async (req, res) => {
+  try {
+    const r = await pool.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE action LIKE 'view:%')::int AS tayangan,
+        COUNT(DISTINCT who) FILTER (WHERE action LIKE 'view:%')::int AS pengunjung,
+        COUNT(*) FILTER (WHERE action LIKE 'video:%')::int AS putar_video,
+        COUNT(*) FILTER (WHERE action LIKE 'read:%')::int AS baca_selesai
+      FROM audit_log WHERE created_at > now() - interval '7 days'`);
+    const harian = await pool.query(`
+      SELECT to_char(date_trunc('day', created_at),'YYYY-MM-DD') hari,
+             COUNT(*) FILTER (WHERE action LIKE 'view:%')::int tayangan
+      FROM audit_log WHERE created_at > now() - interval '7 days' GROUP BY 1 ORDER BY 1`);
+    const perangkat = await pool.query(`
+      SELECT split_part(action,':',3) perangkat, COUNT(*)::int n
+      FROM audit_log WHERE action LIKE 'view:%' AND created_at > now() - interval '7 days'
+      GROUP BY 1 ORDER BY n DESC`);
+    const halamanTeratas = await pool.query(`
+      SELECT split_part(action,':',2) halaman, COUNT(*)::int n
+      FROM audit_log WHERE action LIKE 'view:%' AND created_at > now() - interval '7 days'
+      GROUP BY 1 ORDER BY n DESC LIMIT 8`);
+    res.json({ ok: true, ...r.rows[0], harian: harian.rows, perangkat: perangkat.rows, teratas: halamanTeratas.rows, sumber: 'audit_log' });
+  } catch (e) { res.status(503).json({ ok: false, error: e.message }); }
+});
+
+/* ---------- 3. Penonton live nyata (heartbeat 30 dtk, jendela 90 dtk) ---------- */
+app.post('/api/live/heartbeat', async (req, res) => {
+  try {
+    const sid = halAman((req.body || {}).sid);
+    if (!sid) return res.status(400).json({ error: 'sid wajib' });
+    await pool.query('INSERT INTO audit_log(action, who) VALUES($1,$2)', ['live:heartbeat', sid]);
+    const r = await pool.query(`SELECT COUNT(DISTINCT who)::int n FROM audit_log
+      WHERE action='live:heartbeat' AND created_at > now() - interval '90 seconds'`);
+    res.json({ ok: true, penonton: r.rows[0].n });
+  } catch (e) { res.status(503).json({ ok: false, error: 'Data penonton belum siap' }); }
+});
+
+/* ---------- 4. Pengiriman berita oleh kontributor publik (B-07) ---------- */
+const KATEGORI_SAH = ['nasional', 'internasional', 'politik', 'ekonomi', 'hukum', 'sosial', 'budaya', 'teknologi', 'daerah', 'opini'];
+const WILAYAH_SAH = ['kediri', 'bojonegoro', 'surabaya', 'malang', 'jatim', 'nasional', 'internasional'];
+app.post('/api/kontributor/kirim', async (req, res) => {
+  try {
+    if (!rateLimit('kirim:' + clientIp(req), BATAS_KIRIM, 3600_000)) return res.status(429).json({ error: `Batas kiriman tercapai (${BATAS_KIRIM} per jam). Coba lagi nanti.` });
+    const b = req.body || {};
+    const nama = String(b.nama || '').trim().slice(0, 80);
+    const email = String(b.email || '').trim().toLowerCase().slice(0, 254);
+    const judul = String(b.judul || '').trim().slice(0, 180);
+    const isi = String(b.isi || '').trim().slice(0, 20000);
+    const kategori = KATEGORI_SAH.includes(b.kategori) ? b.kategori : 'daerah';
+    const wilayah = WILAYAH_SAH.includes(b.wilayah) ? b.wilayah : 'nasional';
+    const tautan = String(b.tautan || '').trim().slice(0, 300);
+    if (!nama || !/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(email)) return res.status(400).json({ error: 'Nama dan email yang valid wajib diisi' });
+    if (judul.length < 12) return res.status(400).json({ error: 'Judul minimal 12 karakter' });
+    if (isi.length < 120) return res.status(400).json({ error: 'Isi berita minimal 120 karakter' });
+    const ev = { jenis: 'kontributor', nama, email, kategori, wilayah, tautan: tautan || null, panjang: isi.length };
+    const r = await pool.query(
+      `INSERT INTO ai_findings(article_id, agent_id, severity, title, detail, evidence, status)
+       VALUES(NULL,'etika','info',$1,$2,$3,'baru') RETURNING id`,
+      [`Kiriman kontributor: ${judul}`, isi, JSON.stringify(ev)]
+    );
+    res.status(201).json({ ok: true, id: r.rows[0].id, pesan: 'Kiriman diterima dan masuk antrean moderasi redaksi.' });
+  } catch (e) { res.status(500).json({ error: 'Kiriman gagal diproses' }); }
+});
+
+/* ---------- 5. Laporan konten / penyalahgunaan dari publik (B-20) ---------- */
+const JENIS_LAPORAN = ['spam', 'sara', 'hoaks', 'pelecehan', 'hak-cipta', 'lainnya'];
+app.post('/api/lapor', async (req, res) => {
+  try {
+    if (!rateLimit('lapor:' + clientIp(req), 8, 3600_000)) return res.status(429).json({ error: 'Batas laporan tercapai. Coba lagi nanti.' });
+    const b = req.body || {};
+    const jenis = JENIS_LAPORAN.includes(b.jenis) ? b.jenis : 'lainnya';
+    const target = String(b.target || '').trim().slice(0, 160);
+    const catatan = String(b.catatan || '').trim().slice(0, 1000);
+    const email = String(b.email || '').trim().toLowerCase().slice(0, 254);
+    if (!target) return res.status(400).json({ error: 'Target laporan wajib diisi' });
+    const ev = { jenis: 'laporan', tipe: jenis, email: email || null, halaman: String(b.halaman || '').slice(0, 120) };
+    const r = await pool.query(
+      `INSERT INTO ai_findings(article_id, agent_id, severity, title, detail, evidence, status)
+       VALUES(NULL,'etika','peringatan',$1,$2,$3,'baru') RETURNING id`,
+      [`Laporan ${jenis}: ${target}`, catatan || '(tanpa catatan)', JSON.stringify(ev)]
+    );
+    res.status(201).json({ ok: true, id: r.rows[0].id, pesan: 'Laporan diterima. Tim moderasi meninjau dalam 1×24 jam.' });
+  } catch (e) { res.status(500).json({ error: 'Laporan gagal diproses' }); }
+});
+
+/* ---------- 6. Statistik konten untuk dasbor & CMS ---------- */
+app.get('/api/stats/konten', async (req, res) => {
+  try {
+    const [art, kirim, lapor, kom, vid] = await Promise.all([
+      pool.query(`SELECT COUNT(*)::int total, COUNT(*) FILTER (WHERE status='tayang')::int tayang FROM articles`),
+      pool.query(`SELECT COUNT(*)::int total, COUNT(*) FILTER (WHERE status='baru')::int baru FROM ai_findings WHERE evidence->>'jenis'='kontributor'`),
+      pool.query(`SELECT COUNT(*)::int total, COUNT(*) FILTER (WHERE status='baru')::int baru FROM ai_findings WHERE evidence->>'jenis'='laporan'`),
+      pool.query(`SELECT COUNT(*)::int total FROM comments`),
+      pool.query(`SELECT COUNT(*)::int total FROM episodes`)
+    ]);
+    res.json({ ok: true, artikel: art.rows[0], kiriman: kirim.rows[0], laporan: lapor.rows[0], komentar: kom.rows[0], episode: vid.rows[0] });
+  } catch (e) { res.status(503).json({ ok: false, error: e.message }); }
+});
+
 app.use((req, res) => {
   if (req.path.startsWith('/api/')) return res.status(404).json({ error: 'Endpoint tidak ditemukan' });
   if (!WEBSITE_ADA) return res.status(404).json({ error: 'Halaman tidak ditemukan (static dilayani CDN)' });
