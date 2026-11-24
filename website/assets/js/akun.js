@@ -146,6 +146,12 @@
       document.getElementById('verifBadge').style.color = a.terverifikasi ? '#2fd27a' : '#f2c14e';
       document.getElementById('status2fa').textContent = r.data.duaFaktor ? 'Aktif' : 'Belum aktif';
       document.getElementById('status2fa').style.color = r.data.duaFaktor ? '#2fd27a' : '#f2c14e';
+      /* Isi formulir profil agar nama tidak terkirim kosong saat pengguna
+         hanya mengubah bio (penyebab galat "Nama minimal 2 karakter"). */
+      var fNama = document.getElementById('p-nama');
+      var fBio = document.getElementById('p-bio');
+      if (fNama && !fNama.value) fNama.value = a.nama || '';
+      if (fBio && !fBio.value) fBio.value = a.bio || '';
       root.hidden = false;
       muatLayanan();
       muatAktivitas();
@@ -194,9 +200,10 @@
     if (formProfil) formProfil.addEventListener('submit', function (e) {
       e.preventDefault();
       var selesai = tombolSibuk(formProfil.querySelector('button[type=submit]'), 'Menyimpan…');
-      minta('/api/akun/saya', { method: 'PATCH', body: {
-        nama: formProfil.elements.nama.value, bio: formProfil.elements.bio.value
-      } }).then(function (r) {
+      var kirim = { bio: formProfil.elements.bio.value };
+      var namaForm = (formProfil.elements.nama.value || '').trim();
+      if (namaForm.length >= 2) kirim.nama = namaForm;   // jangan kirim nama kosong
+      minta('/api/akun/saya', { method: 'PATCH', body: kirim }).then(function (r) {
         pesan(pesanEl, r.ok ? '✅ Profil tersimpan.' : '⚠️ ' + (r.data.error || 'Gagal menyimpan'), r.ok ? 'ok' : 'err');
         if (r.ok) {
           document.getElementById('namaAnggota').textContent = r.data.anggota.nama;
