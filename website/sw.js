@@ -1,5 +1,5 @@
 /* MBCINDONESIA.TV — Service Worker (cache app-shell, network-first untuk navigasi) */
-const CACHE = 'mbc-tv-v4';
+const CACHE = 'mbc-tv-v5'; /* naikkan versi setiap aset berubah agar klien lama ikut segar */
 const SHELL = [
   './', './index.html', './watch.html', './live.html', './berita.html', './privasi.html', './syarat.html',
   './assets/css/site.css', './assets/js/site.js', './assets/js/data.js', './assets/js/ai-news.js', './assets/js/companion.js',
@@ -17,6 +17,12 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;            /* sumber luar: langsung ke jaringan */
   if (url.pathname.includes('/assets/video/')) return;   /* video: jangan di-cache agar Range/seek tetap benar */
+  /* API: SELALU ke jaringan, tidak di-cache. Dulu JSON /api/newsroom/public-list
+     ikut tersimpan cache-first sehingga daftar berita CMS bisa basi berhari-hari. */
+  if (url.pathname.startsWith('/api/')) {
+    e.respondWith(fetch(req).catch(() => new Response(JSON.stringify({ offline: true }), { status: 503, headers: { 'Content-Type': 'application/json' } })));
+    return;
+  }
   if (req.mode === 'navigate') {
     e.respondWith(fetch(req).catch(() => caches.match('./index.html')));
     return;

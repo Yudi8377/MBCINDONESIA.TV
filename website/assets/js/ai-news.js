@@ -15,12 +15,21 @@
 const MBC_NEWS = (() => {
 
   /* ---------- 1. KORPUS ---------- */
+  /* batas wilayah Jawa Timur: satu definisi, dipakai rubrik & filter wilayah */
+  const WILAYAH_JATIM = ['kediri', 'bojonegoro', 'surabaya', 'malang', 'jatim'];
+  /* teks gabungan untuk predikat rubrik yang tahan artikel CMS tanpa field wilayah/topic */
+  function teks(a) {
+    if (!a) return '';
+    return [a.wilayah, a.topic, a.kicker, a.channel, a.place, a.title, a.deck, (a.tags || []).join(' ')]
+      .filter(Boolean).join(' ').toLowerCase();
+  }
   const articles = [
     {
       id: 'n-bmkg-kediri-banjir',
       title: 'BMKG Peringatkan Hujan Ekstrem Sepekan ke Depan di Jawa Timur',
       kicker: 'Kebencanaan',
       topic: 'lingkungan',
+      wilayah: 'kediri',
       place: 'Kediri, Jawa Timur',
       date: '2026-11-21',
       author: 'Tim MBC Newsroom',
@@ -44,6 +53,7 @@ const MBC_NEWS = (() => {
       title: 'Upah Minimum Kota Kediri 2027 Diusulkan Naik 6,5 Persen',
       kicker: 'Ekonomi',
       topic: 'ekonomi',
+      wilayah: 'kediri',
       place: 'Kediri, Jawa Timur',
       date: '2026-11-20',
       author: 'Redaksi Ekonomi',
@@ -68,6 +78,7 @@ const MBC_NEWS = (() => {
       title: 'Produksi Dokumenter Kali Brantas Masuk Tahap Penyuntingan Akhir',
       kicker: 'Produksi',
       topic: 'budaya',
+      wilayah: 'kediri',
       place: 'Kediri',
       date: '2026-11-19',
       author: 'Desk Produksi',
@@ -88,6 +99,7 @@ const MBC_NEWS = (() => {
       title: 'Redaksi Media Lokal Mulai Mengadopsi AI untuk Riset dan Verifikasi',
       kicker: 'Teknologi',
       topic: 'teknologi',
+      wilayah: 'nasional',
       place: 'Jakarta',
       date: '2026-11-18',
       author: 'Redaksi Teknologi',
@@ -111,6 +123,7 @@ const MBC_NEWS = (() => {
       title: 'Kopi Robusta Kediri Tembus Pasar Eropa Lewat Koperasi Petani',
       kicker: 'Ekonomi Kreatif',
       topic: 'ekonomi',
+      wilayah: 'kediri',
       place: 'Kediri–Kertosono',
       date: '2026-11-17',
       author: 'Redaksi Ekonomi',
@@ -134,6 +147,7 @@ const MBC_NEWS = (() => {
       title: 'Diaspora Indonesia di Hong Kong Buka Kelas Bahasa untuk Pekerja Migran',
       kicker: 'Internasional',
       topic: 'internasional',
+      wilayah: 'internasional',
       wilayah: 'internasional',
       place: 'Hong Kong SAR',
       date: '2026-11-20',
@@ -159,6 +173,7 @@ const MBC_NEWS = (() => {
       kicker: 'Daerah',
       topic: 'ekonomi',
       wilayah: 'kediri',
+      wilayah: 'kediri',
       place: 'Kediri, Jawa Timur',
       date: '2026-11-19',
       author: 'Redaksi Daerah',
@@ -182,6 +197,7 @@ const MBC_NEWS = (() => {
       title: 'Angka Partisipasi Kuliah di Jawa Timur Naik, Kesiapan Digital Jadi Sorotan',
       kicker: 'Pendidikan',
       topic: 'pendidikan',
+      wilayah: 'jatim',
       place: 'Jawa Timur',
       date: '2026-11-16',
       author: 'Redaksi Pendidikan',
@@ -373,28 +389,110 @@ const MBC_NEWS = (() => {
   return {
     articles, LIBRARY, SOURCE_TYPES,
     analyze, summarize, sentiment, entities, searchLiteracy, searchArticles, route,
-    /* Pemetaan rubrik (URL: berita.html?rubrik=daerah) ke topik artikel */
-    RUBRIK_TOPIC: {
-      daerah: ['ekonomi', 'lingkungan', 'budaya', 'pendidikan'],
-      nasional: ['ekonomi', 'lingkungan', 'teknologi', 'pendidikan'],
-      internasional: ['internasional'],
-      budaya: ['budaya'],
-      teknologi: ['teknologi'],
-      ekonomi: ['ekonomi'],
-      pendidikan: ['pendidikan']
+    /* ---------- RUBRIK: satu definisi, dipakai chips & halaman rubrik ----------
+       Dulu rubrik dipetakan ke TOPIK (daerah → ekonomi+lingkungan+budaya+pendidikan),
+       sehingga chip "Pendidikan" menyala padahal daftar berisi artikel ekonomi, dan
+       chip "Budaya" tidak menyala walau hasilnya satu artikel budaya.
+       Aturan baru tahan artikel CMS yang belum punya field wilayah/topic. */
+    RUBRIK: [
+      { id: 'daerah', label: 'Daerah', ket: 'Liputan kabupaten & kota di Jawa Timur',
+        cocok: a => WILAYAH_JATIM.indexOf(a.wilayah) >= 0 || /kediri|blitar|trenggalek|tulungagung|nganjuk|madiun|bojonegoro|surabaya|malang|jember|banyuwangi|sidoarjo|gresik|jawa timur|jatim/.test(teks(a)) },
+      { id: 'nasional', label: 'Nasional', ket: 'Politik, hukum, dan isu lintas daerah',
+        cocok: a => a.wilayah === 'nasional' || a.topic === 'nasional' || ['politik', 'hukum', 'sosial'].indexOf(a.topic) >= 0 },
+      { id: 'internasional', label: 'Internasional', ket: 'Peristiwa dunia & diaspora Indonesia',
+        cocok: a => a.wilayah === 'internasional' || a.topic === 'internasional' || /diaspora|luar negeri|hongkong|malaysia|singapura|eropa/.test(teks(a)) },
+      { id: 'budaya', label: 'Budaya', ket: 'Tradisi, seni, dan dokumenter Nusantara',
+        cocok: a => a.topic === 'budaya' },
+      { id: 'teknologi', label: 'Teknologi', ket: 'AI, literasi digital, dan inovasi',
+        cocok: a => a.topic === 'teknologi' },
+      { id: 'ekonomi', label: 'Ekonomi', ket: 'UMKM, upah, pasar, dan koperasi',
+        cocok: a => a.topic === 'ekonomi' },
+      { id: 'pendidikan', label: 'Pendidikan', ket: 'Kampus, literasi, dan keterampilan',
+        cocok: a => a.topic === 'pendidikan' },
+      { id: 'lingkungan', label: 'Lingkungan', ket: 'Cuaca ekstrem, bencana, dan iklim',
+        cocok: a => a.topic === 'lingkungan' }
+    ],
+    /* rubrik yang muncul di formulir kontributor tapi tidak punya halaman sendiri */
+    ALIAS_RUBRIK: { politik: 'nasional', hukum: 'nasional', sosial: 'nasional', opini: 'nasional', 'jawa-timur': 'daerah' },
+    normalisasiRubrik: function (id) {
+      var k = String(id || '').toLowerCase().trim().replace(/\s+/g, '-');
+      if (this.rubrikById(k)) return k;
+      return this.ALIAS_RUBRIK[k] || k;
     },
+    rubrikById: function (id) {
+      var k = String(id || '').toLowerCase();
+      for (var i = 0; i < this.RUBRIK.length; i++) if (this.RUBRIK[i].id === k) return this.RUBRIK[i];
+      return null;
+    },
+    /* slug tak dikenal TIDAK lagi diam-diam menampilkan semua berita */
     articlesByRubrik: function (rubrik) {
-      var t = this.RUBRIK_TOPIC[rubrik];
-      if (!t) return this.articles.slice();
-      return this.articles.filter(function (a) { return t.indexOf(a.topic) >= 0; });
+      var r = this.rubrikById(rubrik);
+      if (!r) return [];
+      return this.articles.filter(r.cocok);
+    },
+    /* daftar rubrik + jumlah berita (untuk chips & halaman rubrik) */
+    daftarRubrik: function () {
+      var self = this;
+      return this.RUBRIK.map(function (r) {
+        return { id: r.id, label: r.label, ket: r.ket, jumlah: self.articles.filter(r.cocok).length };
+      });
+    },
+    /* ---------- WILAYAH: satu definisi untuk ?wilayah= dan halaman rubrik ---------- */
+    WILAYAH_JATIM: WILAYAH_JATIM,
+    WILAYAH: [
+      { id: 'kediri', label: 'Kediri', ket: 'Kota & Kabupaten Kediri' },
+      { id: 'bojonegoro', label: 'Bojonegoro', ket: 'Kabupaten Bojonegoro' },
+      { id: 'surabaya', label: 'Surabaya', ket: 'Kota Surabaya' },
+      { id: 'malang', label: 'Malang', ket: 'Kota & Kabupaten Malang' },
+      { id: 'jatim', label: 'Jawa Timur', ket: 'Seluruh kota & kabupaten Jawa Timur' },
+      { id: 'nasional', label: 'Nasional', ket: 'Liputan tingkat nasional' },
+      { id: 'internasional', label: 'Internasional', ket: 'Luar negeri & diaspora' }
+    ],
+    ALIAS_WILAYAH: { 'jawa-timur': 'jatim', 'jawa timur': 'jatim', jember: 'jatim', blitar: 'jatim', 'kota kediri': 'kediri' },
+    normalisasiWilayah: function (id) {
+      var w = String(id || '').toLowerCase().trim();
+      if (w === 'jatim' || w === 'jawa timur') return 'jatim';
+      for (var i = 0; i < this.WILAYAH.length; i++) if (this.WILAYAH[i].id === w) return w;
+      return this.ALIAS_WILAYAH[w] || w;
+    },
+    /* CMS belum menyimpan kolom wilayah: tebak dari tag/judul/tempat/kanal,
+       supaya artikel newsroom ikut muncul di ?wilayah= yang benar. */
+    tebakWilayah: function (a) {
+      var eksplisit = this.normalisasiWilayah(a && a.wilayah);
+      if (eksplisit) return eksplisit;
+      var t = teks(a);
+      if (/internasional|diaspora|luar negeri|hongkong|malaysia|singapura|eropa|jepang|amerika/.test(t)) return 'internasional';
+      if (/bojonegoro/.test(t)) return 'bojonegoro';
+      if (/surabaya/.test(t)) return 'surabaya';
+      if (/malang/.test(t)) return 'malang';
+      if (/kediri|blitar|trenggalek|tulungagung|nganjuk|madiun|jember|banyuwangi|sidoarjo|gresik|jawa timur|jatim/.test(t)) return 'jatim';
+      if (/nasional|politik|hukum|jakarta|indonesia/.test(t)) return 'nasional';
+      return null;
+    },
+    wilayahById: function (id) {
+      var w = String(id || '').toLowerCase();
+      for (var i = 0; i < this.WILAYAH.length; i++) if (this.WILAYAH[i].id === w) return this.WILAYAH[i];
+      return null;
     },
     articlesByWilayah: function (wilayah) {
       if (!wilayah) return this.articles.slice();
+      var w = this.normalisasiWilayah(wilayah);
+      if (w === 'jatim') {
+        var daftar = this.WILAYAH_JATIM;
+        return this.articles.filter(function (a) { return daftar.indexOf(a.wilayah) >= 0; });
+      }
       return this.articles.filter(function (a) {
-        if (a.wilayah) return a.wilayah === wilayah;
-        return (a.place || '').toLowerCase().indexOf(wilayah) >= 0;
+        if (a.wilayah) return a.wilayah === w;
+        return (a.place || '').toLowerCase().indexOf(w) >= 0;
       });
     },
+    daftarWilayah: function () {
+      var self = this;
+      return this.WILAYAH.map(function (w) {
+        return { id: w.id, label: w.label, ket: w.ket, jumlah: self.articlesByWilayah(w.id).length };
+      });
+    },
+    teks: teks,
     topics: [...new Set(articles.map(a => a.topic))],
     topicsLabel: { lingkungan: 'Lingkungan', ekonomi: 'Ekonomi', budaya: 'Budaya', teknologi: 'Teknologi', pendidikan: 'Pendidikan', internasional: 'Internasional' }
   };

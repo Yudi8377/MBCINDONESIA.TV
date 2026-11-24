@@ -83,28 +83,19 @@
       <h2>Daftar rubrik</h2>
       <p>Klik untuk membuka berita pada rubrik tersebut.</p>
       <div class="rubrik-list" id="daftarRubrik">
-        <a href="berita.html">Semua berita <b>Lihat →</b></a>
-        <a href="berita.html?rubrik=daerah">Daerah — kabupaten &amp; kota <b>Lihat →</b></a>
-        <a href="berita.html?rubrik=nasional">Nasional — politik, hukum, ekonomi <b>Lihat →</b></a>
-        <a href="berita.html?rubrik=internasional">Internasional — dunia &amp; diaspora <b>Lihat →</b></a>
-        <a href="berita.html?rubrik=budaya">Budaya &amp; tradisi Nusantara <b>Lihat →</b></a>
-        <a href="berita.html?rubrik=teknologi">Teknologi &amp; literasi digital <b>Lihat →</b></a>
-        <a href="berita.html?rubrik=ekonomi">Ekonomi &amp; UMKM <b>Lihat →</b></a>
-        <a href="berita.html?rubrik=pendidikan">Pendidikan <b>Lihat →</b></a>
-        <a href="kontributor.html">Kirim berita untuk rubrik ini <b>Kirim →</b></a>
+        <a href="berita.html" data-chips="semua">Semua berita <b>—</b></a>
+        <!-- diisi skrip dari data artikel agar jumlahnya nyata, bukan karangan -->
       </div>
+      <p style="font-size:.76rem;color:var(--muted);margin:.7rem 0 0" id="catatanRubrik"></p>
+    </section>
     </section>
 
     <aside style="display:flex;flex-direction:column;gap:1rem">
       <div class="kartu">
         <h2>Wilayah prioritas</h2>
         <p style="margin-bottom:.5rem">Liputan daerah kami mulai dari basis MBC Indonesia di Jawa Timur:</p>
-        <div class="rubrik-list">
-          <a href="berita.html?wilayah=kediri">Kediri <b>→</b></a>
-          <a href="berita.html?wilayah=bojonegoro">Bojonegoro <b>→</b></a>
-          <a href="berita.html?wilayah=surabaya">Surabaya <b>→</b></a>
-          <a href="berita.html?wilayah=malang">Malang <b>→</b></a>
-          <a href="berita.html?wilayah=jatim">Jawa Timur lainnya <b>→</b></a>
+        <div class="rubrik-list" id="daftarWilayah">
+          <!-- diisi skrip: setiap wilayah menampilkan jumlah berita sebenarnya -->
         </div>
       </div>
       <div class="kartu">
@@ -127,6 +118,85 @@
     <span><a href="privasi.html">Kebijakan Privasi</a> · <a href="syarat.html">Syarat &amp; Ketentuan</a> · <a href="rubrik.html">Rubrik</a> · <a href="kontributor.html">Kirim Berita</a> · <a href="sitemap.xml">Sitemap</a></span>
   </div>
 </div></footer>
+<script src="assets/js/ai-news.js"></script>
+<script>
+'use strict';
+/* Daftar rubrik & wilayah dirender dari SATU sumber data (window.MBC_NEWS),
+   sehingga isi halaman tidak pernah berbeda dengan hasil yang muncul saat diklik:
+   - angka = jumlah berita yang benar-benar cocok dengan predikat rubrik/wilayah
+   - rubrik/wilayah kosong ditandai jujur "belum ada", bukan dikarang
+   - berita CMS yang tayang setelah halaman dimuat ikut dihitung */
+(function () {
+  var N = window.MBC_NEWS;
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); };
+  var hostR = document.getElementById('daftarRubrik');
+  var hostW = document.getElementById('daftarWilayah');
+  var catatan = document.getElementById('catatanRubrik');
+  if (!N) {
+    if (catatan) catatan.textContent = 'Daftar rubrik tidak dapat dimuat. Buka halaman Berita untuk melihat semua liputan.';
+    return;
+  }
+  function render() {
+    if (!hostR) return;
+    /* Rubrik */
+    hostR.innerHTML = '<a href="berita.html">Semua berita <b>' + N.articles.length + ' berita →</b></a>' +
+      N.daftarRubrik().map(function (r) {
+        var kosong = r.jumlah === 0;
+        return '<a href="berita.html?rubrik=' + encodeURIComponent(r.id) + '"' +
+          (kosong ? ' style="opacity:.55" aria-disabled="true"' : '') + '>' +
+          '<span><strong>' + esc(r.label) + '</strong> — ' + esc(r.ket) + '</span>' +
+          '<b>' + (kosong ? 'belum ada →' : r.jumlah + ' berita →') + '</b></a>';
+      }).join('') +
+      '<a href="kontributor.html">Kirim berita untuk rubrik ini <b>Kirim →</b></a>';
+    /* Wilayah: daftar + batas diambil dari definisi di ai-news.js */
+    if (hostW) hostW.innerHTML = N.daftarWilayah().map(function (w) {
+      var kosong = w.jumlah === 0;
+      return '<a href="berita.html?wilayah=' + encodeURIComponent(w.id) + '"' +
+        (kosong ? ' style="opacity:.55" aria-disabled="true"' : '') + '>' +
+        '<span>' + esc(w.label) + ' — ' + esc(w.ket) + '</span>' +
+        '<b>' + (kosong ? 'belum ada →' : w.jumlah + ' berita →') + '</b></a>';
+    }).join('');
+    /* Catatan kejujuran data */
+    if (catatan) {
+      var kosongR = N.daftarRubrik().filter(function (r) { return r.jumlah === 0; }).map(function (r) { return r.label; });
+      catatan.textContent = N.articles.length + ' berita terbit dalam ' + N.daftarRubrik().length + ' rubrik.' +
+        (kosongR.length ? ' Rubrik yang belum memiliki berita: ' + kosongR.join(', ') + '.' : ' Semua rubrik sudah berisi.');
+    }
+    /* sorot rubrik/wilayah yang sedang dibuka bila URL menyebutnya */
+    var PAR = new URLSearchParams(location.search);
+    var sorot = function (host, kunci, nilai) {
+      if (!host || !nilai) return;
+      var a = host.querySelector('a[href*="' + kunci + '=' + nilai + '"]');
+      if (a) { a.style.borderColor = 'var(--red)'; a.style.background = 'rgba(255,82,69,.12)'; a.style.opacity = '1'; }
+    };
+    sorot(hostR, 'rubrik', PAR.get('rubrik'));
+    sorot(hostW, 'wilayah', PAR.get('wilayah'));
+  }
+  render();
+  window.__renderRubrik = render;
+
+  /* Sinkronkan dengan CMS seperti halaman berita, supaya jumlah di sini
+     tidak tertinggal dari berita yang sudah tayang di newsroom. */
+  fetch('/api/newsroom/public-list').then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+    if (!d || !d.articles || !d.articles.length) return;
+    var ada = {}; N.articles.forEach(function (x) { ada[String(x.title).toLowerCase()] = 1; });
+    var tambah = d.articles.filter(function (x) { return x.title && !ada[String(x.title).toLowerCase()]; });
+    if (!tambah.length) return;
+    tambah.forEach(function (x) {
+      var kanal = String(x.channel || '').toLowerCase().trim();
+      N.articles.push({
+        id: x.slug, title: x.title, deck: x.deck || '', body: [], kicker: x.channel || 'Berita',
+        topic: N.rubrikById(kanal) ? kanal : 'daerah',
+        wilayah: N.normalisasiWilayah(x.wilayah || '') || N.tebakWilayah(x) || null,
+        place: x.place || 'MBC INDONESIA', date: (x.published_at || '').slice(0, 10),
+        author: x.author || 'Redaksi MBC', img: x.hero_image || 'assets/img/kabar-nusantara.jpg',
+        tags: x.tags || [], claims: []
+      });
+    });
+    render();
+  }).catch(function () {});
+})();
+</script>
 <script src="assets/js/site.js"></script>
 <script src="assets/js/analitik.js"></script>
 <script src="assets/js/aksi-publik.js"></script>

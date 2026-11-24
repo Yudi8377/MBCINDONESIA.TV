@@ -39,7 +39,13 @@
       if (tombol) { tombol.disabled = true; tombol.textContent = 'Mengirim…'; }
       kirimJSON('/api/kontributor/kirim', data).then(function (r) {
         if (r.ok) {
-          if (pesan) { pesan.textContent = '✅ ' + (r.body.pesan || 'Kiriman diterima.'); pesan.style.color = '#2fd27a'; pesan.hidden = false; }
+          if (pesan) {
+            var kr = (f.elements && f.elements.kategori) ? f.elements.kategori.value : '';
+            var wr = (f.elements && f.elements.wilayah) ? f.elements.wilayah.value : '';
+            var taut = (kr && wr) ? ' Berita Anda akan tampil di rubrik ' + kr.toUpperCase() + ' / wilayah ' + wr.toUpperCase() + ' setelah disetujui.' : '';
+            pesan.textContent = '✅ ' + (r.body.pesan || 'Kiriman diterima.') + taut;
+            pesan.style.color = '#2fd27a'; pesan.hidden = false;
+          }
           f.reset();
           if (window.MBC_ANALITIK) window.MBC_ANALITIK.kirim('share', { seconds: 0 });
         } else {

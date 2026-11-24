@@ -1,7 +1,9 @@
 # LAPORAN RILIS 1.5.0 — MBC SINGLE ACCOUNT
 
 **Tanggal:** 24 November 2026 · **Versi:** 1.5.0 · **Tahap:** II dari roadmap audit
-**Status uji:** API **54/54** · UI **29/29** (Playwright, desktop + mobile 360/390)
+**Status uji:** API **54/54** · UI **29/29** (lokal, DB salinan produksi) · UI produksi **15/15**
+**LIVE:** https://mbcindonesia-tv.vercel.app — deploy `dpl_4hRb8uXtkED5zZouFmkP2Uzq9Ti4` (commit `6929d95`)
+diperbarui `dpl_7c1HL3cEW1kfbPuM3McpwGe1kppu` (commit `9ac9188`)
 
 ---
 
@@ -69,7 +71,9 @@ halaman publik dan pintasan Masuk/Daftar di footer beranda.
 | Tautan S&K mengarah ke `../syarat.html` (404) | Pendaftar tidak bisa membaca syarat | Diperbaiki menjadi `syarat.html` |
 | Kode OTP disimpan sebagai jenis `daftar`, verifikasi mencari `verifikasi` | Verifikasi email selalu gagal | Jenis diseragamkan + verifikasi mengenali email dari sesi |
 | Aset dasbor `assets/…` relatif ke `/akun/` | CSS/JS 404 di dasbor | Diubah menjadi `../assets/…` |
-| Versi aplikasi tersebar di beberapa tempat | `/api/health` bisa beda dari CHANGELOG | Satu sumber: `package.json` |
+| Versi aplikasi tersebar di beberapa tempat | `/api/health` bisa beda dari CHANGELOG | Satu sumber: `package.json`; env Vercel `APP_VERSION` → 1.5.0 |
+| Formulir profil mengirim nama kosong saat hanya bio diubah | Simpan gagal "Nama minimal 2 karakter" (ditemukan di uji produksi) | Formulir diisi otomatis dari data akun; nama hanya dikirim bila ≥ 2 karakter |
+| Gangguan DB sesaat dijawab 500 "Pendaftaran gagal diproses" | Pengguna mengira salah mengisi | Klasifikasi galat koneksi/pool → **503** "Layanan sedang sibuk", penanda `sementara: true` (teruji 5/5; **menunggu push berikutnya**) |
 
 ---
 
@@ -112,7 +116,27 @@ karena uji dijalankan di DB salinan.
 
 ---
 
-## 6. Sisa pekerjaan (rekomendasi rilis berikutnya)
+## 6. Hasil uji produksi (setelah live)
+
+| Yang diuji di https://mbcindonesia-tv.vercel.app | Hasil |
+|---|---|
+| Halaman publik lama (beranda, berita, live, rubrik, kontributor) | ✅ 200 |
+| Halaman akun (`masuk`, `daftar`, `lupa`, `/akun`) | ✅ 200 ( `/akun/` → 308 → `/akun` 200 ) |
+| `/newsroom` tanpa token | ✅ **401**, 7.173 B (gerbang) |
+| `POST /api/akun/daftar` | ✅ 201, kode verifikasi **tidak** muncul di respons |
+| `GET /api/akun/{saya,layanan,aktivitas}` | ✅ 200 dengan token, **401** tanpa token |
+| Masuk salah/benar | ✅ 401 / 200 |
+| 2FA produksi: aktifkan → konfirmasi TOTP → masuk tanpa kode (428) → masuk dengan kode (200) → matikan (200) | ✅ seluruh siklus |
+| `POST /api/akun/lupa` | ✅ 200 tanpa membocorkan kode |
+| UI produksi (daftar → dasbor → ubah bio → keluar → masuk ulang) | ✅ 15/15, tanpa galat JS |
+| Responsif 360 px & 390 px (halaman daftar & dasbor) | ✅ tanpa geser horizontal |
+| `/api/health` | ✅ 200, db true, versi **1.5.0** |
+
+Catatan jujur: saat uji, Supabase sempat tidak terhubung beberapa detik (`db:false`) sehingga satu
+pendaftaran dijawab 500; setelah koneksi pulih semuanya 201. Perbaikan pesan (503) sudah dikerjakan
+dan teruji klasifikasinya, tetapi **belum terkirim** karena kode perangkat GitHub kedaluwarsa.
+
+## 7. Sisa pekerjaan (rekomendasi rilis berikutnya)
 
 1. Aktifkan kanal email: buat kunci Resend (gratis 100 email/hari) atau SMTP, lalu uji kirim
    sungguhan ke satu alamat internal sebelum diumumkan.

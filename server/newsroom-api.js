@@ -229,7 +229,8 @@ module.exports = function mountNewsroom(app, ctx) {
   app.get('/api/newsroom/public-list', async (req, res) => {
     try {
       const { rows } = await q(`SELECT a.slug, a.title, a.deck, a.body, a.tags, a.hero_image, a.published_at,
-          a.ai_summary, a.read_time_min, c.name AS channel, c.color AS channel_color, s.display_name AS author
+          a.ai_summary, a.read_time_min, c.name AS channel, c.color AS channel_color, s.display_name AS author,
+          to_jsonb(a)->>'wilayah' AS wilayah
         FROM articles a LEFT JOIN channels c ON c.id=a.channel_id LEFT JOIN staff s ON s.user_email=a.author_email
         WHERE a.status='tayang' ORDER BY a.published_at DESC NULLS LAST LIMIT 24`);
       res.setHeader('Cache-Control', 'public, max-age=60');
