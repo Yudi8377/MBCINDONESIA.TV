@@ -5,6 +5,7 @@ Cara pakai:
     python3 ops/push-device-flow.py --kode        # tampilkan kode 8 karakter
     # (setujui di https://github.com/login/device)
     python3 ops/push-device-flow.py --lanjutkan   # tukar kode -> token, lalu push
+    python3 ops/push-device-flow.py --push-saja   # ulangi push dengan token tersimpan
 
 Token hanya disimpan di memori proses (dan file sementara 0600 yang dihapus setelah push).
 """
@@ -15,6 +16,7 @@ SCOPE = 'repo'
 REPO = 'Yudi8377/MBCINDONESIA.TV'
 DIR_REPO = '/tmp/pushrepo'
 BERKAS = '/tmp/gh_device.json'
+BERKAS_TOKEN = '/tmp/gh_token.json'   # 0600, token OAuth terakhir (agar push bisa diulang tanpa kode baru)
 
 
 def minta(url, data=None, header=None):
@@ -42,7 +44,18 @@ def kode():
     print()
 
 
+def cek_repo():
+    if not os.path.isdir(os.path.join(DIR_REPO, '.git')):
+        print('❌ Repo tujuan %s tidak ada / belum siap.' % DIR_REPO)
+        print('   Siapkan dulu (salinan kerja + commit), lalu ulangi. Token tidak akan hilang:')
+        print('   gunakan  python3 ops/push-device-flow.py --push-saja')
+        return False
+    return True
+
+
 def lanjutkan():
+    if not cek_repo():
+        return 6
     if not os.path.exists(BERKAS):
         print('Belum ada kode aktif. Jalankan dulu: --kode')
         return 2
@@ -73,6 +86,12 @@ def lanjutkan():
         print('Belum disetujui. Setujui di https://github.com/login/device lalu ulangi --lanjutkan')
         return 4
 
+    try:
+        with open(BERKAS_TOKEN, 'w') as f:
+            json.dump({'token': token, 'dibuat': int(time.time())}, f)
+        os.chmod(BERKAS_TOKEN, 0o600)
+    except Exception as e:
+        print('  (peringatan) token tidak bisa disimpan: %s' % e)
     print('✅ Token diterima (tidak ditampilkan). Mulai push…')
     url = f'https://x-access-token:{token}@github.com/{REPO}.git'
     hasil = subprocess.run(['git', '-C', DIR_REPO, 'push', '-u', url, 'main'], capture_output=True, text=True)
@@ -86,7 +105,32 @@ def lanjutkan():
     return 5
 
 
+def push_saja():
+    if not cek_repo():
+        return 6
+    if not os.path.exists(BERKAS_TOKEN):
+        print('Belum ada token tersimpan. Jalankan --kode lalu --lanjutkan.')
+        return 2
+    token = json.load(open(BERKAS_TOKEN)).get('token')
+    if not token:
+        print('Berkas token rusak. Jalankan --kode lagi.'); return 2
+    print('→ Push memakai token tersimpan…')
+    url = f'https://x-access-token:{token}@github.com/{REPO}.git'
+    hasil = subprocess.run(['git', '-C', DIR_REPO, 'push', '-u', url, 'main'], capture_output=True, text=True)
+    print((hasil.stdout + hasil.stderr).replace(token, '***').strip()[-800:])
+    if hasil.returncode == 0:
+        print('\n✅ Push berhasil. Vercel membangun dari branch main.')
+        for f in (BERKAS, BERKAS_TOKEN):
+            if os.path.exists(f):
+                os.remove(f)
+        return 0
+    print('\n❌ push gagal (kode %d).' % hasil.returncode)
+    return 5
+
+
 if __name__ == '__main__':
+    if '--push-saja' in sys.argv:
+        sys.exit(push_saja())
     if '--kode' in sys.argv:
         kode(); sys.exit(0)
     if '--lanjutkan' in sys.argv:

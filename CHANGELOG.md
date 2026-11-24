@@ -1,3 +1,36 @@
+## [1.6.0] — 2026-11-21 — MULTI-AGEN AI EDITORIAL (6 AGEN, HIBRIDA)
+
+### Enam agen spesialis untuk tugas redaksi
+`Pencari Berita` (riset & radar isu), `Verifikator & Klarifikasi` (cek klaim, langkah klarifikasi & hak jawab),
+`Penyunting Naskah` (struktur & suntingan), `SEO & Judul`, `Hukum & Etika` (clickbait, praduga tak bersalah, UU PDP),
+`Analis Data` (angka, periode, sumber pembanding resmi).
+
+### Hibrida: mesin lokal dulu, LLM opsional
+- **Mesin lokal selalu jalan** — deterministik, naskah tidak keluar server, tanpa biaya. **Tidak ada API key pun
+  keenam agen tetap berfungsi penuh** (dipilih agar fitur tidak pernah mati karena kuota/biaya).
+- **LLM opsional** (OpenAI/Groq/OpenRouter/Together/DeepSeek/Ollama): cukup isi `LLM_PROVIDER` + `LLM_API_KEY`
+  di Vercel, tanpa ubah kode. Hasil agen diperkaya model.
+- **Gagal-aman**: bila LLM error/timeout/kuota habis, otomatis jatuh ke mesin lokal; pengguna tidak pernah melihat error.
+  Setiap hasil jujur menyebut sumbernya: `lokal` / `hibrida` + alasan (`http_500`, `timeout`, `kuota_harian_habis`).
+
+### Keamanan
+- Semua endpoint `/api/newsroom/agen/*` wajib token staf; peran selain `editorial`/`direksi` → 403 (ditegakkan di server).
+- Agen **tidak pernah** menerbitkan/mengubah naskah. Setiap jalan & simpan temuan masuk `audit_log`.
+- Draf teks bebas tidak disimpan ke CMS; temuan hanya masuk `ai_findings` bila staf menekan simpan.
+
+### Berkas
+- Baru: `server/agen-ai.js` (6 agen + lapisan LLM), `server/newsroom-agen.js` (5 endpoint), `docs/AGEN-AI.md`.
+- Diperbarui: `server/server.js` (pendaftaran), `server/newsroom/cms.js` (Studio AI baru: kartu agen, hasil, simpan,
+  pencarian arsip, draf teks), `package.json` (1.6.0).
+- Uji baru: `ops/uji-agen-ai.py` (30), `ops/uji-agen-llm.py` (13), `ops/uji-ui-agen.py` (33).
+
+### Hasil uji (lokal, sebelum produksi)
+- API **30/30** lulus: 401 tanpa token, 403 peran sales, 6 agen, klaim angka, sumber kosong → "belum layak tayang",
+  draf teks, validasi 400/404, cari arsip, simpan temuan, riwayat, audit.
+- Jalur LLM **13/13** lulus: hibrida saat LLM menjawab; lokal saat HTTP 500; lokal saat timeout (klaim lokal tidak hilang).
+- UI **33/33** lulus: 6 kartu agen, pilih/batal (klik + Enter), pilih semua, hasil 6 blok, simpan temuan,
+  jalankan sebagian, pencarian arsip, draf teks (+ penolakan simpan), penolakan peran non-editorial, tanpa galat JS.
+
 ## [1.5.1] — 2026-11-21 — FILTER RUBRIK, WILAYAH, DAN TOPIK
 
 ### Keluhan yang diselesaikan

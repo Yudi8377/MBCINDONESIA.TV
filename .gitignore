@@ -40,3 +40,5 @@ tmp/
 .cache/
 coverage/
 dist/
+server/scripts/_harness-*.js
+__pycache__/

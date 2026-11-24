@@ -1,6 +1,6 @@
 {
   "name": "mbcindonesia-tv",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "private": true,
   "description": "MBCINDONESIA.TV — situs publik + web app newsroom + API (Express) siap Vercel",
   "scripts": {

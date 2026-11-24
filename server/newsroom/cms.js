@@ -88,6 +88,27 @@ const dt = s => s ? new Date(s).toLocaleString('id-ID', { day: '2-digit', month:
   .bar-row .b{flex:1;height:7px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}
   .bar-row .b i{display:block;height:100%;border-radius:99px}
   .bar-row .v{width:56px;text-align:right;color:#fff;font-variant-numeric:tabular-nums}
+  /* ---- Studio Multi-Agen AI (6 agen spesialis) ---- */
+  .ag-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:.55rem}
+  .ag-card{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:11px;padding:.6rem .7rem;cursor:pointer;transition:border-color .15s,background .15s}
+  .ag-card:hover{border-color:rgba(255,82,69,.45);background:rgba(255,255,255,.05)}
+  .ag-card.on{border-color:rgba(255,82,69,.7);background:rgba(255,82,69,.1)}
+  .ag-card .h{display:flex;gap:.4rem;align-items:center;font-size:.8rem;font-weight:700;color:#fff}
+  .ag-card p{font-size:.71rem;color:var(--muted);margin:.25rem 0 .4rem;line-height:1.45}
+  .ag-badge{display:inline-block;font-size:.62rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:.1rem .35rem;border-radius:5px;border:1px solid var(--line)}
+  .ag-badge.lokal{color:#8ab4ff;border-color:rgba(138,180,255,.45)}
+  .ag-badge.hibrida{color:#2fd27a;border-color:rgba(47,210,122,.45)}
+  .ag-out{margin-top:.6rem;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+  .ag-out .head{display:flex;gap:.5rem;align-items:center;justify-content:space-between;padding:.5rem .65rem;background:rgba(255,255,255,.04);font-size:.78rem;font-weight:700;color:#fff}
+  .ag-out .body{padding:.6rem .7rem;font-size:.75rem;line-height:1.6;color:#d5deee}
+  .ag-out .body ul{margin:.25rem 0 .5rem 1rem}
+  .ag-out .body li{margin-bottom:.2rem}
+  .ag-out .kv{display:grid;grid-template-columns:150px 1fr;gap:.2rem .6rem;font-size:.74rem}
+  .ag-out .kv b{color:var(--muted);font-weight:600}
+  .ag-find{border:1px solid var(--line);border-radius:8px;padding:.4rem .55rem;margin-top:.4rem;font-size:.73rem}
+  .ag-find.kritis{border-left:3px solid #ff5245}.ag-find.peringatan{border-left:3px solid #f2c14e}
+  .ag-find.saran{border-left:3px solid #8ab4ff}.ag-find.info{border-left:3px solid #94a0b8}
+  .ag-progress{font-size:.72rem;color:var(--muted);margin-left:.4rem}
   `;
   document.head.appendChild(st);
 })();
@@ -857,60 +878,206 @@ async function viewContentAnalytics(root) {
   </div>`;
 }
 
-/* ══════════════ 9. STUDIO AI (dasbor agen) ══════════════ */
+/* ══════════════ 9. STUDIO MULTI-AGEN AI (6 agen spesialis) ══════════════
+   Hibrida: mesin lokal selalu jalan (deterministik, naskah tidak keluar server);
+   bila LLM_API_KEY diisi di server, hasil diperkaya model tanpa mengubah UI.
+   Akses: staf editorial/direksi (ditegakkan di server, bukan hanya di sini). */
+
+const AG_STATE = { agen: [], llm: null, pilih: {}, hasil: null, artikel: [], artikelId: null, q: '' };
+
 async function viewAIStudio(root) {
-  root.innerHTML = `<div class="cms-empty">Memuat studio AI…</div>`;
-  const [ov, agents] = await Promise.all([NR.get('/overview'), NR.get('/ai/agents')]);
+  root.innerHTML = `<div class="cms-empty">Memuat studio multi-agen…</div>`;
+  let daftar;
+  try { daftar = await NR.get('/agen/daftar'); }
+  catch (e) {
+    root.innerHTML = `<div class="cms-panel"><h3>Studio Multi-Agen AI</h3>
+      <p class="cms-sub">Studio ini hanya untuk staf editorial/direksi. Server menolak permintaan ini: ${esc(e.message)}</p></div>`;
+    return;
+  }
+  AG_STATE.agen = daftar.agen || [];
+  AG_STATE.llm = daftar.llm || null;
+  if (!Object.keys(AG_STATE.pilih).length) AG_STATE.agen.forEach(a => { AG_STATE.pilih[a.id] = true; });
+
+  /* daftar artikel untuk dipilih (dipakai juga oleh Pencari Berita) */
+  try { AG_STATE.artikel = (await NR.get('/articles?limit=60')).articles || []; }
+  catch (_) { AG_STATE.artikel = []; }
+  if (AG_STATE.artikel.length && !AG_STATE.artikelId) AG_STATE.artikelId = AG_STATE.artikel[0].id;
+
+  const llmAktif = !!(AG_STATE.llm && AG_STATE.llm.aktif);
   root.innerHTML = `
   <div class="cms-panel">
-    <h3>Multi-Agent AI Newsroom <span class="cms-sub">${agents.agents.length} agen · pustaka rujukan ${agents.library_size} sumber</span></h3>
-    <p class="cms-sub" style="margin-bottom:.7rem">Semua agen berjalan <b>di server MBC sendiri</b> — naskah tidak dikirim ke layanan AI pihak ketiga. Hasil deterministik &amp; dapat diaudit, sehingga cocok untuk kepatuhan editorial.</p>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.55rem">
-      ${agents.agents.map(g => `
-        <div class="agent-card">
-          <div class="h"><span style="color:${g.color};font-size:1rem">${g.icon}</span> ${esc(g.name)}</div>
-          <p>${esc(g.description)}</p>
-          <div class="cms-sub">${g.run_count} run · ${g.open_findings} temuan terbuka ${g.last_run_at ? '· terakhir ' + dt(g.last_run_at) : ''}</div>
+    <h3>Multi-Agen AI Editorial <span class="cms-sub">${AG_STATE.agen.length} agen spesialis</span></h3>
+    <p class="cms-sub" style="margin-bottom:.7rem">
+      Agen membantu tugas redaksi: <b>mencari</b> bahan, <b>mengklarifikasi</b> klaim, <b>menyunting</b> naskah,
+      menyiapkan <b>SEO</b>, memeriksa <b>hukum &amp; etika</b>, dan membaca <b>data</b>.
+      Agen <b>tidak pernah</b> menerbitkan atau mengubah naskah — keputusan akhir tetap manusia.
+    </p>
+    <div class="cms-bar" style="margin-bottom:.6rem">
+      <span class="ag-badge ${llmAktif ? 'hibrida' : 'lokal'}">${llmAktif ? 'HIBRIDA · LLM aktif' : 'MESIN LOKAL · tanpa API key'}</span>
+      <span class="cms-sub">${esc((AG_STATE.llm && AG_STATE.llm.catatan) || '')}</span>
+    </div>
+    <div class="ag-grid" id="agGrid">
+      ${AG_STATE.agen.map(a => `
+        <div class="ag-card${AG_STATE.pilih[a.id] ? ' on' : ''}" data-agen="${a.id}" role="button" tabindex="0" aria-pressed="${AG_STATE.pilih[a.id] ? 'true' : 'false'}">
+          <div class="h"><span style="color:${a.warna};font-size:1rem">${a.ikon}</span> ${esc(a.nama)}
+            <span class="ag-badge ${llmAktif ? 'hibrida' : 'lokal'}" style="margin-left:auto">${llmAktif ? 'hibrida' : 'lokal'}</span></div>
+          <p>${esc(a.deskripsi)}</p>
+          <div class="cms-sub">${esc(a.peran)}</div>
         </div>`).join('')}
     </div>
-    <div class="cms-bar" style="margin-top:.7rem">
-      <button class="cms-btn primary" id="sweepAll">⚡ Jalankan sweep seluruh newsroom</button>
-      <button class="cms-btn" id="processJobs">Proses antrean tugas</button>
-      <span class="cms-sub" id="aiStudioMsg"></span>
-    </div>
   </div>
-  <div class="cms-cols">
-    <div class="cms-panel"><h3>Temuan per tingkat</h3>
-      <div class="bar-row"><span class="n">Kritis</span><span class="b"><i style="width:${Math.min(100, (ov.findings_by_severity.kritis || 0) * 12)}%;background:#ff5245"></i></span><span class="v">${ov.findings_by_severity.kritis || 0}</span></div>
-      <div class="bar-row"><span class="n">Peringatan</span><span class="b"><i style="width:${Math.min(100, (ov.findings_by_severity.peringatan || 0) * 12)}%;background:#f2c14e"></i></span><span class="v">${ov.findings_by_severity.peringatan || 0}</span></div>
-      <div class="bar-row"><span class="n">Saran</span><span class="b"><i style="width:${Math.min(100, (ov.findings_by_severity.saran || 0) * 12)}%;background:#8ab4ff"></i></span><span class="v">${ov.findings_by_severity.saran || 0}</span></div>
-      <div class="bar-row"><span class="n">Info</span><span class="b"><i style="width:${Math.min(100, (ov.findings_by_severity.info || 0) * 12)}%;background:#94a0b8"></i></span><span class="v">${ov.findings_by_severity.info || 0}</span></div>
-      <button class="cms-btn ghost" style="margin-top:.5rem" data-goto="findings">Buka kotak temuan →</button>
+
+  <div class="cms-panel">
+    <h3 style="margin-bottom:.5rem">Bahan yang diperiksa</h3>
+    <div class="cms-bar">
+      <select id="agArtikel" style="min-width:min(420px,100%)">
+        ${AG_STATE.artikel.map(a => `<option value="${a.id}"${a.id === AG_STATE.artikelId ? ' selected' : ''}>#${a.id} · ${esc(String(a.title).slice(0, 70))} — ${esc(STATUS_LABEL[a.status] || a.status || '')}</option>`).join('') || '<option value="">(belum ada artikel)</option>'}
+      </select>
+      <button class="cms-btn primary" id="agJalan">▶ Jalankan agen terpilih</button>
+      <button class="cms-btn" id="agSemua">Pilih semua agen</button>
+      <span class="ag-progress" id="agProgres"></span>
     </div>
-    <div class="cms-panel"><h3>Tentang cara kerja</h3>
-      <ul style="font-size:.76rem;color:var(--muted);line-height:1.7;padding-left:1rem">
-        <li><b>Ringkas</b> & <b>SEO</b> menyiapkan ringkasan, meta, kata kunci.</li>
-        <li><b>Nada</b> mengukur sentimen & keseimbangan narasumber.</li>
-        <li><b>Fakta</b> menandai klaim berangka & kelengkapan sumber.</li>
-        <li><b>Etika</b> memeriksa clickbait, atribusi kabur, data sensitif.</li>
-        <li><b>Hukum</b> memeriksa praduga tak bersalah & UU PDP.</li>
-        <li><b>Literasi</b> mencocokkan rujukan dengan pustaka kurasi.</li>
-        <li><b>Social</b> membuat takarir & judul push.</li>
-        <li><b>Peliputan</b> mengusulkan sudut lanjutan & narasumber.</li>
-      </ul>
-      <p class="cms-sub" style="margin-top:.4rem">Keputusan akhir tetap manusia: agen tidak pernah menerbitkan artikel sendiri.</p>
+    <details style="margin-top:.3rem">
+      <summary class="cms-sub" style="cursor:pointer">Atau periksa draf teks bebas (tidak disimpan ke CMS)</summary>
+      <div style="margin-top:.5rem;display:grid;gap:.4rem">
+        <input id="agJudul" placeholder="Judul draf (opsional)" style="padding:.45rem .55rem;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.04);color:var(--text)">
+        <textarea id="agTeks" rows="6" placeholder="Tempel naskah draf di sini (minimal 40 karakter)…" style="padding:.5rem .55rem;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.04);color:var(--text);font-family:inherit"></textarea>
+        <div><button class="cms-btn" id="agJalanTeks">Periksa draf teks</button></div>
+      </div>
+    </details>
+  </div>
+
+  <div class="cms-panel">
+    <h3 style="margin-bottom:.5rem">🔎 Cari di arsip MBC <span class="cms-sub">bahan untuk agen Pencari Berita</span></h3>
+    <div class="cms-bar">
+      <input id="agCari" placeholder="Kata kunci, mis. kopi / banjir / upah…" style="flex:1;min-width:200px;padding:.45rem .55rem;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.04);color:var(--text)">
+      <button class="cms-btn" id="agCariBtn">Cari</button>
     </div>
-  </div>`;
-  $('#sweepAll').addEventListener('click', async e => {
-    e.target.disabled = true; e.target.textContent = 'Menjalankan…';
-    try { const r = await NR.post('/ai/sweep'); $('#aiStudioMsg').textContent = `${r.articles} artikel · ${r.findings} temuan`; toast('Sweep selesai'); }
-    catch (err) { toast(err.message); }
-    finally { e.target.disabled = false; e.target.textContent = '⚡ Jalankan sweep seluruh newsroom'; }
+    <div id="agHasilCari" class="cms-sub"></div>
+  </div>
+
+  <div id="agHasil"></div>`;
+
+  /* pilih/batal agen */
+  const kartu = (el) => el.closest('[data-agen]');
+  root.querySelectorAll('[data-agen]').forEach(el => {
+    const toggle = () => {
+      const id = el.dataset.agen;
+      AG_STATE.pilih[id] = !AG_STATE.pilih[id];
+      el.classList.toggle('on', AG_STATE.pilih[id]);
+      el.setAttribute('aria-pressed', AG_STATE.pilih[id] ? 'true' : 'false');
+    };
+    el.addEventListener('click', toggle);
+    el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
   });
-  $('#processJobs').addEventListener('click', async () => {
-    try { const r = await NR.post('/ai/jobs/process'); toast(`${r.processed} tugas antrean diproses`); } catch (e) { toast(e.message); }
+
+  $('#agSemua').addEventListener('click', () => {
+    const semuaOn = AG_STATE.agen.every(a => AG_STATE.pilih[a.id]);
+    AG_STATE.agen.forEach(a => { AG_STATE.pilih[a.id] = !semuaOn; });
+    root.querySelectorAll('[data-agen]').forEach(el => {
+      const on = AG_STATE.pilih[el.dataset.agen];
+      el.classList.toggle('on', on); el.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  });
+
+  const agenTerpilih = () => AG_STATE.agen.map(a => a.id).filter(id => AG_STATE.pilih[id]);
+
+  async function jalankan(payload, label) {
+    const ids = agenTerpilih();
+    if (!ids.length) return toast('Pilih minimal satu agen');
+    $('#agProgres').textContent = 'Menjalankan ' + ids.length + ' agen…';
+    $('#agJalan').disabled = true;
+    try {
+      const r = await NR.post('/agen/jalankan', { ...payload, agen: ids });
+      AG_STATE.hasil = r;
+      renderHasil(r, label || AG_STATE.artikel.find(a => a.id === r.artikel.id)?.title || r.artikel.judul);
+      const temuan = (r.hasil || []).reduce((n, h) => n + (h.temuan ? h.temuan.length : 0), 0);
+      $('#agProgres').textContent = `${(r.hasil || []).length} agen · ${temuan} temuan · sumber ${r.hasil[0] ? r.hasil[0].sumber : '-'}`;
+      toast('Agen selesai dijalankan');
+    } catch (e) {
+      $('#agProgres').textContent = '';
+      toast(e.message);
+    } finally { $('#agJalan').disabled = false; }
+  }
+
+  $('#agJalan').addEventListener('click', () => {
+    const id = Number($('#agArtikel').value);
+    if (!id) return toast('Belum ada artikel untuk diperiksa');
+    AG_STATE.artikelId = id;
+    AG_STATE.mode = 'artikel';
+    jalankan({ artikel_id: id });
+  });
+  $('#agJalanTeks').addEventListener('click', () => {
+    const teks = ($('#agTeks').value || '').trim();
+    if (teks.length < 40) return toast('Teks minimal 40 karakter');
+    AG_STATE.mode = 'teks';
+    jalankan({ teks, judul: $('#agJudul').value || 'Draf tanpa judul' });
+  });
+  $('#agCariBtn').addEventListener('click', async () => {
+    const kueri = ($('#agCari').value || '').trim();
+    if (kueri.length < 3) return toast('Kata kunci minimal 3 karakter');
+    $('#agHasilCari').textContent = 'Mencari…';
+    try {
+      const r = await NR.post('/agen/cari', { q: kueri });
+      $('#agHasilCari').innerHTML = r.hasil.length
+        ? r.hasil.map(h => `<div style="margin:.25rem 0"><button class="cms-btn ghost" data-pilih="${h.id}">#${h.id}</button> ${esc(h.judul)} <span class="cms-sub">· ${esc(STATUS_LABEL[h.status] || h.status || '')} · skor ${h.skor}</span></div>`).join('')
+        : 'Tidak ada artikel cocok di arsip.';
+    } catch (e) { $('#agHasilCari').textContent = e.message; }
+  });
+  $('#agHasilCari').addEventListener('click', e => {
+    const b = e.target.closest('[data-pilih]'); if (!b) return;
+    const id = Number(b.dataset.pilih);
+    const sel = $('#agArtikel');
+    if (sel && [...sel.options].some(o => Number(o.value) === id)) { sel.value = String(id); AG_STATE.artikelId = id; toast('Artikel #' + id + ' dipilih'); }
+    else toast('Artikel itu di luar 60 terbaru — buka dari menu Artikel');
   });
   root.addEventListener('click', e => { const g = e.target.closest('[data-goto]'); if (g) navTo(g.dataset.goto); });
+  if (AG_STATE.hasil) renderHasil(AG_STATE.hasil, null);
+}
+
+/* render hasil 6 agen menjadi kartu yang bisa dibaca & disimpan */
+function renderHasil(r, judulArtikel) {
+  const host = $('#agHasil'); if (!host) return;
+  const judul = judulArtikel || (r.artikel && (r.artikel.judul || r.artikel.title)) || 'Hasil agen';
+  const baris = (label, nilai) => (nilai === undefined || nilai === null || nilai === '' || (Array.isArray(nilai) && !nilai.length))
+    ? '' : `<div><b>${esc(label)}</b><span>${esc(Array.isArray(nilai) ? nilai.join(' · ') : String(nilai))}</span></div>`;
+  host.innerHTML = `
+    <div class="cms-panel">
+      <h3 style="margin-bottom:.3rem">Hasil pemeriksaan <span class="cms-sub">${esc(String(judul).slice(0, 90))}</span></h3>
+      <div class="cms-bar">
+        <span class="ag-badge ${(r.hasil || []).some(h => h.sumber === 'hibrida') ? 'hibrida' : 'lokal'}">${(r.hasil || []).some(h => h.sumber === 'hibrida') ? 'hibrida' : 'mesin lokal'}</span>
+        <span class="cms-sub">${r.asal === 'teks' ? 'Draf teks (tidak disimpan ke CMS)' : 'Artikel CMS #' + (r.artikel && r.artikel.id)}</span>
+        <button class="cms-btn primary" id="agSimpan" style="margin-left:auto">💾 Simpan temuan ke kotak temuan</button>
+        <button class="cms-btn" data-goto="findings">Buka kotak temuan →</button>
+      </div>
+      ${(r.hasil || []).map(h => h.error ? `
+        <div class="ag-out"><div class="head"><span>⚠️ ${esc(h.agent)}</span></div>
+        <div class="body">Agen gagal: ${esc(h.error)}</div></div>` : `
+        <div class="ag-out">
+          <div class="head">
+            <span><span style="color:${h.warna}">${h.ikon}</span> ${esc(h.nama)}</span>
+            <span class="ag-badge ${h.sumber === 'hibrida' ? 'hibrida' : 'lokal'}">${esc(h.sumber)}${h.catatan_llm ? ' · ' + esc(h.catatan_llm) : ''} · ${h.durasi_ms} ms</span>
+          </div>
+          <div class="body">
+            <div style="margin-bottom:.4rem"><b>${esc(h.ringkas || '')}</b></div>
+            <div class="kv">${Object.entries(h.data || {}).map(([k, v]) => baris(k.replace(/_/g, ' '), v)).join('')}</div>
+            ${(h.temuan || []).map(t => `<div class="ag-find ${esc(t.tingkat || 'info')}"><b>${esc(t.judul)}</b>${t.rincian ? ' — ' + esc(t.rincian) : ''}</div>`).join('')}
+          </div>
+        </div>`).join('')}
+    </div>`;
+  const simpan = $('#agSimpan');
+  if (simpan) simpan.addEventListener('click', async () => {
+    if (r.asal !== 'artikel') return toast('Draf teks tidak disimpan — simpan dulu sebagai artikel');
+    const temuan = [];
+    (r.hasil || []).forEach(h => (h.temuan || []).forEach(t => temuan.push({ agent: h.agent, tingkat: t.tingkat, judul: t.judul, rincian: t.rincian, bukti: t.bukti })));
+    if (!temuan.length) return toast('Tidak ada temuan untuk disimpan');
+    simpan.disabled = true;
+    try {
+      const out = await NR.post('/agen/simpan', { artikel_id: r.artikel.id, temuan });
+      toast(out.disimpan + ' temuan disimpan');
+      simpan.textContent = '✓ Tersimpan (' + out.disimpan + ')';
+    } catch (e) { toast(e.message); simpan.disabled = false; }
+  });
 }
 
 /* ---------- ekspos modul ke window (dipakai router newsroom/index.html) ---------- */

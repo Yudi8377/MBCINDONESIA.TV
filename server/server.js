@@ -582,6 +582,9 @@ require('./newsroom-api')(app, {
   pool, requireAuth, requireRole, audit,
   LIBRARY: require('./content-library.json')
 });
+/* Multi-agen AI editorial (6 agen spesialis, hibrida: mesin lokal + LLM opsional).
+   Didaftarkan setelah newsroom agar ctx & middleware auth sudah siap. */
+require('./newsroom-agen')(app, { pool, requireAuth, audit });
 
 /* ================= PINTU INTERNAL (NEWSROOM) =================
    Newsroom adalah dapur produksi: tidak boleh diakses anonim dan tidak diindeks.
