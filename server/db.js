@@ -17,14 +17,26 @@ function toPgUrl(u) {
 const connectionString = toPgUrl(rawUrl);
 const isRemote = /supabase\.(co|com|in)|neon\.tech|neon\.build|render\.com|railway|aws|azure|digitalocean|sslmode=require/.test(connectionString) || process.env.PGSSL === 'require';
 const isSupabasePooler = /pooler\.supabase\.com/.test(connectionString);
+/* Session pooler Supabase (:5432) menghitung satu klien per proses SELAMA koneksi
+   terbuka, dan jatahnya hanya 15 untuk seluruh proyek. Serverless membuat banyak
+   instance sekaligus, jadi jatah itu cepat habis ("max clients reached in session
+   mode"). Karena itu di lingkungan serverless: klien per instance kecil dan
+   koneksi menganggur cepat ditutup. Transaction pooler (:6543) tidak butuh
+   penyesuaian ini, tetapi nilainya tetap aman untuknya. */
+const SERVERLESS = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.FUNCTION_TARGET);
+const batasKlien = Number(
+  process.env.PG_POOL_MAX ||
+  (SERVERLESS ? (isSupabasePooler ? 1 : 2) : (isSupabasePooler ? 5 : 10))
+);
 
 const pool = new Pool({
   connectionString,
-  max: Number(process.env.PG_POOL_MAX || (isSupabasePooler ? 5 : 10)),
+  max: batasKlien,
   ssl: isRemote ? { rejectUnauthorized: false } : false,
   statement_timeout: Number(process.env.PG_STATEMENT_TIMEOUT || 20000),
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: Number(process.env.PG_CONNECT_TIMEOUT || 15000),
+  idleTimeoutMillis: Number(process.env.PG_IDLE_TIMEOUT || (SERVERLESS ? 3000 : 30000)),
+  connectionTimeoutMillis: Number(process.env.PG_CONNECT_TIMEOUT || (SERVERLESS ? 10000 : 15000)),
+  allowExitOnIdle: SERVERLESS,
   application_name: 'mbcindonesia-tv'
 });
 
@@ -36,7 +48,8 @@ const pool = new Pool({
 pool.on('error', err => console.error('[pg] pool error:', err.message));
 
 const TRANSIEN = new Set(['ECONNRESET', 'ETIMEDOUT', 'ENOTFOUND', 'EAI_AGAIN', 'EPIPE',
-  '57P01', '57P02', '57P03', '08000', '08001', '08003', '08006', '53300', 'XX000']);
+  '57P01', '57P02', '57P03', '08000', '08001', '08003', '08006', '53300', 'XX000',
+  'EMAXCONNSESSION']);   /* jatah sesi pooler penuh → tunggu sebentar, coba lagi */
 
 const queryAsli = pool.query.bind(pool);
 pool.query = async function (...args) {
@@ -60,4 +73,4 @@ const dbInfo = (() => {
   } catch (_) { return { host: '?', database: '?', provider: '?', pooler: false, ssl: isRemote }; }
 })();
 
-module.exports = { pool, dbInfo };
+module.exports = { pool, dbInfo: { ...dbInfo, max_clients: batasKlien, serverless: SERVERLESS } };

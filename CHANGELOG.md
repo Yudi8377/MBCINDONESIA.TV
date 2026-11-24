@@ -30,6 +30,15 @@ kelak, aplikasi otomatis memakai `users.role` apa adanya.
 (Newsroom, akun dibuat administrator), dengan tautan ke pintu internal. Tautan `Rubrik.html`
 yang salah huruf diperbaiki menjadi `rubrik.html` (sebelumnya 404 di server Linux/Vercel).
 
+### Perbaikan produksi: pooler Supabase kehabisan klien
+Saat rilis, `/api/health` sempat menjawab `db:false`. Penyebabnya bukan rilis ini: **session pooler
+Supabase hanya memberi 15 klien untuk seluruh proyek**, sedangkan setiap instans serverless memegang
+satu selama koneksi terbuka — dan serverless membuat banyak instans sekaligus.
+`server/db.js` kini menyesuaikan diri untuk serverless: **1 klien per instans** (`PG_POOL_MAX`),
+koneksi menganggur ditutup setelah 3 detik, `allowExitOnIdle`, dan kode galat `EMAXCONNSESSION`
+diperlakukan sebagai galat transien (dicoba ulang) alih-alih 503.
+Hasil di produksi: `db:true` konsisten, latensi `/api/health` turun dari ~1.600 ms ke ~217 ms.
+
 ### Berkas
 - Baru: `server/peran.js`, `server/newsroom-pengguna.js`, `docs/PERAN-RBAC.md`, `docs/MIGRASI-1.6.1.sql`,
   `ops/uji-rbac.py`, `ops/uji-ui-pengguna.py`.
