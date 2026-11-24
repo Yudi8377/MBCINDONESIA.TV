@@ -108,3 +108,40 @@ studio agen terbuka untuk editorial, serta `sales` ditolak dari modul editorial.
 - `APP_VERSION` di environment Vercel kini `1.6.1`; `PG_POOL_MAX=1` (production).
 - Bila pooler kembali melaporkan `max clients reached in session mode`, tunggu ±3 menit —
   jangan menaikkan `PG_POOL_MAX` untuk serverless.
+
+---
+
+## 6. Temuan lanjutan (setelah deploy pertama)
+
+Verifikasi berjenjang menemukan dua hal yang tidak terlihat dari uji lokal:
+
+**a) Gerbang Vercel masih memakai daftar peran lama.** `api/index.js` — berkas yang menyajikan CMS
+di Vercel — punya daftar peran hard-code `['editorial','direksi','finance','sales']`. Akibatnya
+`admin`, `pemred`, `redaktur`, dan `reporter` **ditolak di gerbang** walau tokennya sah dan lolos di
+Express. Kini daftar peran dibaca dari `server/peran.js` (sumber tunggal) dan akun `nonaktif` juga
+ditolak di gerbang tersebut. Commit: `67dcac9`.
+
+**b) `cms.js` tidak punya rute sendiri di produksi.** Berkas itu di-inline ke `index.html` oleh
+`api/index.js`, jadi `/newsroom/cms.js` menjawab 404 — ini **memang rancangan** (agar tidak ada
+berkas JS yang bisa diambil langsung). Verifikasi harus memeriksa isi HTML `/newsroom`, bukan
+berkas JS terpisah.
+
+**c) Anggota publik tercampur di panel.** 6 akun "Anggota Publik" sisa pendaftaran uji muncul
+sebagai akun staf. Panel kini hanya menampilkan akun staf dengan centang opsional untuk melihat
+anggota publik. Commit: `0d9e8d3`.
+
+### Cara terbit berikutnya (tanpa batas 14 menit)
+Device flow GitHub kedaluwarsa dalam 14 menit sehingga sering gagal disetujui. Gunakan
+`ops/push-isi.py` dengan Personal Access Token:
+
+```bash
+export GH_TOKEN=ghp_xxx          # scope `repo`
+python3 ops/push-isi.py          # periksa dulu (dry-run)
+python3 ops/push-isi.py --kirim  # terbitkan lewat Contents API
+```
+
+### Verifikasi akhir produksi — 26/26
+Halaman publik 200; `/newsroom` tanpa token 401 (termasuk token sampah); administrator masuk dan
+menerima CMS lengkap dengan panel; panel melaporkan 4 akun staf + 6 anggota publik terpisah;
+`sales`/`finance`/`editorial` lolos gerbang sesuai peran namun ditolak 403 dari panel;
+`/api/health` → `db:true`, `version:1.6.1`.
