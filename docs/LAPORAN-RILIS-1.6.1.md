@@ -145,3 +145,11 @@ Halaman publik 200; `/newsroom` tanpa token 401 (termasuk token sampah); adminis
 menerima CMS lengkap dengan panel; panel melaporkan 4 akun staf + 6 anggota publik terpisah;
 `sales`/`finance`/`editorial` lolos gerbang sesuai peran namun ditolak 403 dari panel;
 `/api/health` → `db:true`, `version:1.6.1`.
+
+---
+
+## 7. Pencabutan akses terbit
+
+Token PAT yang dipakai untuk menerbitkan rilis ini (`...VX3QQ`, scope `repo`, pemilik @Yudi8377)
+**harus dicabut** setelah selesai: https://github.com/settings/tokens → pilih token → *Delete*.
+Tidak ada token yang disimpan di dalam repo maupun di workspace.
