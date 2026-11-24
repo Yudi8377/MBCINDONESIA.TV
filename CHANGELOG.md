@@ -1,3 +1,48 @@
+## [1.6.1] — 2026-11-21 — PERAN LENGKAP (RBAC) + PANEL ADMINISTRATOR
+
+### Delapan peran dengan matriks izin terdokumentasi
+`Administrator`, `Direksi/Pimpinan`, `Pemimpin Redaksi`, `Redaktur/Editor`, `Reporter`,
+`Staf Editorial`, `Keuangan`, `Komersial`. Sumber tunggal: `server/peran.js`; matriks dibaca
+UI dari endpoint yang sama sehingga tampilan tidak pernah menebak (`docs/PERAN-RBAC.md`).
+
+### Panel administrator di UI — Newsroom → Tata Kelola → Pengguna & Peran
+Daftar staf + pencarian, ubah peran lewat **pilihan** (bukan mengetik kode), label jabatan bebas,
+setel ulang sandi, aktif/nonaktifkan akun, buat akun staf baru (sandi sementara acak ditampilkan sekali),
+serta tabel matriks izin. Hanya terbuka untuk `admin`; menu tidak dirender untuk peran lain.
+
+### Peran baru berfungsi tanpa DDL
+Constraint `users_role_check` hanya menerima `direksi/finance/sales/editorial` dan `mbc_app`
+tak berhak ALTER. Karena itu peran baru disimpan sebagai penanda pada label jabatan
+(`staff.title = "Pemimpin Redaksi · mbc:role=pemred"`) dan dibaca sebagai **peran efektif** oleh
+login, token, `/api/state`, semua gerbang peran, dan panel admin. Bila constraint dilonggarkan
+kelak, aplikasi otomatis memakai `users.role` apa adanya.
+
+### Aturan yang kini ditegakkan server
+- Reporter hanya draf: perpindahan tahap, penerbitan, dan hapus artikel ditolak 403.
+- Hanya `admin`/`direksi`/`pemred` boleh menerbitkan & menyetujui.
+- `finance`/`sales` ditolak dari modul editorial; mendarat di Keuangan / CRM.
+- Akun nonaktif ditolak saat login **dan** di setiap permintaan (`requireAuth`), walau token masih sah.
+- Administrator tidak bisa menurunkan/menonaktifkan dirinya sendiri; administrator terakhir tidak bisa dicabut.
+- Setiap perubahan pengguna masuk `audit_log`.
+
+### Halaman masuk publik
+`/masuk.html` kini menjelaskan dua pintu: publik (anggota/kreator/kontributor/mitra) dan internal
+(Newsroom, akun dibuat administrator), dengan tautan ke pintu internal. Tautan `Rubrik.html`
+yang salah huruf diperbaiki menjadi `rubrik.html` (sebelumnya 404 di server Linux/Vercel).
+
+### Berkas
+- Baru: `server/peran.js`, `server/newsroom-pengguna.js`, `docs/PERAN-RBAC.md`, `docs/MIGRASI-1.6.1.sql`,
+  `ops/uji-rbac.py`, `ops/uji-ui-pengguna.py`.
+- Diperbarui: `server/server.js` (token & gate peran efektif, `requireAuth` cek status, mount panel),
+  `server/newsroom-api.js`, `server/newsroom-agen.js`, `server/newsroom/cms.js` (view `Pengguna & Peran`),
+  `server/newsroom/index.html` (menu, pendaratan per peran), `website/masuk.html`, `package.json` (1.6.1).
+
+### Hasil uji
+- API **60/60** (`ops/uji-rbac.py`), UI **50/50** (`ops/uji-ui-pengguna.py`).
+- Regresi: multi-agen **30/30**, jalur LLM **13/13**, Studio AI UI **33/33**.
+- Verifikasi langsung ke database produksi (Supabase, constraint lama tetap aktif): login per peran baru,
+  `/api/state`, panel admin, ubah peran lintas akun, dan pemulihan data — **21/21** lulus.
+
 ## [1.6.0] — 2026-11-21 — MULTI-AGEN AI EDITORIAL (6 AGEN, HIBRIDA)
 
 ### Enam agen spesialis untuk tugas redaksi

@@ -27,6 +27,7 @@ const compression = require('compression');
 const { pool, dbInfo } = require('./db');
 /* Satu sumber kebenaran versi: package.json (supaya /api/health & /api/status
    tidak pernah tertinggal dari CHANGELOG). */
+const RBAC = require('./peran');
 const VERSI = (() => {
   try { return require('../package.json').version || '0.0.0'; } catch (e) { return '0.0.0'; }
 })();
@@ -156,22 +157,54 @@ function loginSucceeded(ip, email) {
 
 /* ---------- Auth ---------- */
 function signToken(u) {
-  return jwt.sign({ sub: u.id, email: u.email, name: u.name, role: u.role, roleLabel: u.role_label || u.roleLabel }, EFFECTIVE_SECRET, { expiresIn: '12h' });
+  /* `role` = peran EFEKTIF (sudah membaca penanda mbc:role= pada label jabatan),
+     jadi token selalu membawa wewenang yang benar walau users.role dibatasi constraint. */
+  const peran = RBAC.dariBaris(u);
+  const label = RBAC.info(peran).nama;
+  return jwt.sign({ sub: u.id, email: u.email, name: u.name, role: peran, roleDb: u.role, roleLabel: u.role_label || u.roleLabel || label, status: u.status }, EFFECTIVE_SECRET, { expiresIn: '12h' });
 }
 function requireAuth(req, res, next) {
   const h = req.headers.authorization || '';
   const token = h.startsWith('Bearer ') ? h.slice(7) : null;
   if (!token) return res.status(401).json({ error: 'Token tidak ada' });
-  try { req.user = jwt.verify(token, EFFECTIVE_SECRET); next(); }
+  try {
+    req.user = jwt.verify(token, EFFECTIVE_SECRET);
+    /* akun yang dinonaktifkan administrator langsung ditolak, walau tokennya belum kedaluwarsa */
+    if (req.user.status && String(req.user.status).toLowerCase() !== 'aktif') {
+      return res.status(403).json({ error: 'Akun Anda dinonaktifkan. Hubungi administrator.' });
+    }
+    next();
+  }
   catch { return res.status(401).json({ error: 'Token tidak valid / kedaluwarsa' }); }
 }
 const requireRole = (...roles) => (req, res, next) => {
   if (!req.user || !roles.includes(req.user.role)) return res.status(403).json({ error: 'Peran Anda tidak diizinkan untuk aksi ini' });
+  if (req.user.status && String(req.user.status).toLowerCase() === 'nonaktif') return res.status(403).json({ error: 'Akun Anda dinonaktifkan. Hubungi administrator.' });
   next();
 };
 async function audit(action, who) {
   try { await pool.query('INSERT INTO audit_log(action, who) VALUES($1,$2)', [String(action).slice(0, 300), String(who || 'System').slice(0, 120)]); }
   catch (e) { console.error('[audit] gagal menulis:', e.message); }
+}
+
+/* Ambil akun lengkap dengan JABATAN EFEKTIF.
+   Peran di `users.role` dibatasi constraint database (direksi/finance/sales/editorial),
+   sedangkan peran baru (admin, pemred, redaktur, reporter) disimpan pada label jabatan
+   (`staff.title`, cadangan `users.role_label`) dengan penanda `mbc:role=`.
+   Fungsi ini menyatukan keduanya sehingga token & respons login selalu benar. */
+async function akunDenganJabatan(where, params) {
+  let sql = `SELECT u.* FROM users u WHERE ${where}`;
+  try {
+    const r = await pool.query(`SELECT u.*, s.title AS staff_title FROM users u
+      LEFT JOIN staff s ON lower(s.user_email) = lower(u.email) WHERE ${where}`, params);
+    const u = r.rows[0];
+    if (u) u.role_label = u.staff_title || u.role_label;
+    return u;
+  } catch (_) {
+    /* tabel staff belum ada → pakai users saja */
+    const r = await pool.query(sql, params);
+    return r.rows[0];
+  }
 }
 
 /* ================= API PUBLIK ================= */
@@ -300,13 +333,14 @@ app.post('/api/auth/login', async (req, res) => {
     return res.status(429).json({ error: `Terlalu banyak percobaan masuk untuk akun ini. Coba lagi dalam ${Math.ceil(held.retry / 60)} menit.` });
   }
   try {
-    const { rows } = await pool.query('SELECT * FROM users WHERE email=$1', [em]);
-    const u = rows[0];
+    const u = await akunDenganJabatan('u.email=$1', [em]);
+    const rows = u ? [u] : [];
     const okPass = u && await bcrypt.compare(String(password), u.pass_hash);
     if (!okPass) { loginFailed(ip, em); return res.status(401).json({ error: 'Email atau kata sandi salah' }); }
     loginSucceeded(ip, em);
     await audit(`Login — ${u.name} (${u.role_label})`, u.name);
-    res.json({ token: signToken(u), user: { email: u.email, name: u.name, role: u.role, roleLabel: u.role_label } });
+    const peranEfektif = RBAC.dariBaris(u);
+    res.json({ token: signToken(u), user: { email: u.email, name: u.name, role: peranEfektif, roleLabel: RBAC.info(peranEfektif).nama } });
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 app.get('/api/auth/me', requireAuth, (req, res) => res.json({ user: req.user }));
@@ -351,22 +385,23 @@ app.patch('/api/auth/profile', requireAuth, async (req, res) => {
 
 app.get('/api/state', requireAuth, async (req, res) => {
   const role = req.user.role;
+  const izin = RBAC.info(role).boleh || {};
   const out = {};
   try {
     // Aktivitas terbaru untuk semua peran (read-only)
     out.audit = (await pool.query('SELECT action AS t, who, to_char(created_at, \'YYYY-MM-DD HH24:MI\') AS at FROM audit_log ORDER BY id DESC LIMIT 150')).rows;
 
-    if (['direksi', 'sales'].includes(role)) {
+    if (['direksi', 'sales', 'admin'].includes(role)) {
       const dealRows = (await pool.query('SELECT id, stage, company, deal, value_jt AS val FROM crm_deals ORDER BY id')).rows;
       out.crm = { prospek: [], penawaran: [], negosiasi: [], kontrak: [], selesai: [] };
       for (const d of dealRows) out.crm[d.stage].push({ id: d.id, co: d.company, deal: d.deal, val: Number(d.val) });
       out.campaigns = (await pool.query('SELECT id, company AS co, package AS pkg, total, done FROM campaigns ORDER BY id')).rows;
       out.slots = (await pool.query('SELECT id, slot, price, status FROM ad_slots ORDER BY id')).rows;
     }
-    if (['direksi', 'editorial'].includes(role)) {
+    if (['direksi', 'editorial', 'admin', 'pemred', 'redaktur', 'reporter'].includes(role)) {
       out.produksi = (await pool.query('SELECT id, name AS n, client AS c, stage, progress AS prog, due, budget_jt AS bud FROM production_projects ORDER BY id')).rows.map(r => ({ ...r, bud: Number(r.bud) }));
     }
-    if (['direksi', 'finance'].includes(role)) {
+    if (['direksi', 'finance', 'admin'].includes(role)) {
       out.piutang = (await pool.query('SELECT inv, company AS co, amount_jt AS amt, due, aging FROM invoices ORDER BY id')).rows.map(r => ({ ...r, amt: Number(r.amt) }));
       out.approvals = (await pool.query('SELECT ref AS id, description AS d, amount_jt AS amt FROM approvals WHERE status=\'pending\' ORDER BY id')).rows.map(r => ({ ...r, amt: Number(r.amt) }));
       const m = {};
@@ -377,11 +412,12 @@ app.get('/api/state', requireAuth, async (req, res) => {
       // kirim bentuk sederhana: rows sebagai array nilai saja
       out.master = Object.fromEntries(Object.entries(m).map(([k, v]) => [k, { cols: v.cols, rows: v.raw.map(r => [r.c1, r.c2, r.c3].filter(x => x !== '')), ids: v.raw.map(r => r.id) }]));
     }
-    if (role === 'direksi') {
+    if (['direksi', 'admin', 'pemred'].includes(role)) {
       const pipeline = (await pool.query('SELECT COALESCE(SUM(value_jt),0) AS s FROM crm_deals WHERE stage <> \'selesai\'')).rows[0].s;
       const pendingAppr = (await pool.query('SELECT COUNT(*)::int AS c FROM approvals WHERE status=\'pending\'')).rows[0].c;
       out.summary = { pipeline_jt: Number(pipeline), pending_approvals: pendingAppr };
     }
+    out.izin = { peran: role, nama: RBAC.info(role).nama, ...izin };
     res.json(out);
   } catch (e) {
     console.error('[state]', e);
@@ -585,6 +621,8 @@ require('./newsroom-api')(app, {
 /* Multi-agen AI editorial (6 agen spesialis, hibrida: mesin lokal + LLM opsional).
    Didaftarkan setelah newsroom agar ctx & middleware auth sudah siap. */
 require('./newsroom-agen')(app, { pool, requireAuth, audit });
+/* Panel administrator: kelola pengguna & peran (khusus peran admin). */
+require('./newsroom-pengguna')(app, { pool, requireAuth, audit });
 
 /* ================= PINTU INTERNAL (NEWSROOM) =================
    Newsroom adalah dapur produksi: tidak boleh diakses anonim dan tidak diindeks.
@@ -606,20 +644,25 @@ app.post('/api/newsroom/gate', (req, res) => {
     res.setHeader('Retry-After', String(held.retry));
     return res.status(429).json({ error: `Terlalu banyak percobaan masuk untuk akun ini. Coba lagi dalam ${Math.ceil(held.retry / 60)} menit.` });
   }
-  pool.query('SELECT * FROM users WHERE email=$1', [String(email).trim().toLowerCase()]).then(async ({ rows }) => {
+  akunDenganJabatan('u.email=$1', [String(email).trim().toLowerCase()]).then(async (akun) => {
+    const rows = akun ? [akun] : [];
     const u = rows[0];
     const okPass = u && await bcrypt.compare(String(password), u.pass_hash);
     if (!okPass) { loginFailed(ip, email); return res.status(401).json({ error: 'Kredensial tidak dikenali' }); }
     /* /api/newsroom/gate = pintu aplikasi internal (semua peran perusahaan).
        Endpoint /api/newsroom/* tetap dibatasi peran oleh guard RBAC di bawah. */
-    if (!['editorial', 'direksi', 'finance', 'sales'].includes(u.role)) {
+    const peranEfektif = RBAC.dariBaris(u);
+    if (!RBAC.SEMUA_PERAN.includes(peranEfektif)) {
       return res.status(403).json({ error: 'Akun ini tidak memiliki akses ke aplikasi internal' });
+    }
+    if (!RBAC.akunAktif(u)) {
+      return res.status(403).json({ error: 'Akun Anda dinonaktifkan. Hubungi administrator.' });
     }
     loginSucceeded(ip, email);
     const token = signToken(u);
     res.setHeader('Set-Cookie', `mbc_gate=${encodeURIComponent(token)}; Path=/newsroom; HttpOnly; SameSite=Lax; Max-Age=43200${process.env.NODE_ENV === 'production' ? '; Secure' : ''}`);
-    await audit(`Akses newsroom — ${u.name} (${u.role_label})`, u.name);
-    res.json({ ok: true, token, user: { email: u.email, name: u.name, role: u.role, roleLabel: u.role_label } });
+    await audit(`Akses newsroom — ${u.name} (${RBAC.info(peranEfektif).nama})`, u.name);
+    res.json({ ok: true, token, user: { email: u.email, name: u.name, role: peranEfektif, roleLabel: RBAC.info(peranEfektif).nama } });
   }).catch(() => res.status(500).json({ error: 'Gagal memproses login' }));
 });
 app.use('/newsroom', (req, res, next) => {

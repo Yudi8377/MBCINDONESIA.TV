@@ -17,14 +17,18 @@
    ============================================================ */
 'use strict';
 const { AGENTS, runAgent, runPipeline, SWEEP_ORDER } = require('./agents');
+/* Satu sumber kebenaran peran & izin (lihat server/peran.js).
+   Peran baru (admin, pemred, redaktur, reporter) dipetakan ke izin yang sama,
+   tanpa perlu ALTER constraint `users_role_check` di database. */
+const RBAC = require('./peran');
 
 module.exports = function mountNewsroom(app, ctx) {
   const { pool, requireAuth, requireRole, audit, LIBRARY = [] } = ctx;
 
-  /* peran yang boleh masuk newsroom */
-  const NEWSROOM_ROLES = ['editorial', 'direksi'];
-  const EDIT_ROLES = ['editorial', 'direksi'];
-  const APPROVER_ROLES = ['direksi'];              // pemimpin redaksi = direksi
+  /* peran yang boleh masuk newsroom (dari modul RBAC) */
+  const NEWSROOM_ROLES = RBAC.PERAN_NEWSROOM;      // admin, direksi, pemred, redaktur, reporter, editorial
+  const EDIT_ROLES = NEWSROOM_ROLES;
+  const APPROVER_ROLES = RBAC.PERAN_SETUJU;        // admin, direksi, pemred (bukan redaktur/reporter)
 
   /* gerbang peran untuk modul EDITORIAL (artikel, kalender, AI, moderasi, media).
      Aplikasi internal dipakai semua peran, tetapi data redaksi hanya untuk
@@ -32,6 +36,9 @@ module.exports = function mountNewsroom(app, ctx) {
   app.use('/api/newsroom', (req, res, next) => {
     if (req.path === '/gate' || req.path.startsWith('/public/') || req.path === '/public-list') return next();
     return requireAuth(req, res, () => {
+      if (req.user && req.user.status && String(req.user.status).toLowerCase() === 'nonaktif') {
+        return res.status(403).json({ error: 'Akun Anda dinonaktifkan. Hubungi administrator.' });
+      }
       if (NEWSROOM_ROLES.includes(req.user.role)) return next();
       /* endpoint yang aman dibaca peran lain: hanya info ringan untuk UI */
       const OPEN_FOR_ALL = ['/overview', '/analytics', '/findings', '/media', '/taxonomy'];
@@ -185,6 +192,15 @@ module.exports = function mountNewsroom(app, ctx) {
       const a = (await q('SELECT * FROM articles WHERE id=$1', [req.params.id])).rows[0];
       if (!a) return res.status(404).json({ error: 'Artikel tidak ditemukan' });
       if (!FLOW[a.status] || !FLOW[a.status].includes(status)) return res.status(409).json({ error: `Transisi ${a.status} → ${status} tidak sah` });
+      /* RBAC: reporter hanya boleh menulis draf; memindahkan tahap & menerbitkan milik redaktur ke atas. */
+      const peran = (req.user && req.user.role) || '';
+      const hanyaDraf = !RBAC.boleh(peran, 'cms') || peran === 'reporter';
+      if (hanyaDraf && ['review', 'fakta', 'hukum', 'siap', 'terjadwal', 'tayang', 'arsip', 'ditarik'].includes(status)) {
+        return res.status(403).json({ error: `Peran ${RBAC.info(peran).nama} tidak boleh memindahkan status ke "${status}". Simpan sebagai draf atau minta redaktur.` });
+      }
+      if (status === 'tayang' && !RBAC.boleh(peran, 'setujui')) {
+        return res.status(403).json({ error: 'Hanya pemimpin redaksi/direksi yang dapat menerbitkan artikel' });
+      }
       if (status === 'tayang') {
         const p = publishability(a);
         if (!p.can_publish) return res.status(409).json({ error: 'Belum memenuhi syarat tayang: ' + p.blockers.join('; '), blockers: p.blockers });
@@ -214,7 +230,10 @@ module.exports = function mountNewsroom(app, ctx) {
     } catch (e) { res.status(500).json({ error: 'Gagal menduplikasi: ' + e.message }); }
   });
 
-  app.delete('/api/newsroom/articles/:id', requireAuth, async (req, res) => {
+  app.delete('/api/newsroom/articles/:id', requireAuth, (req, res, next) => {
+    if (req.user.role === 'reporter') return res.status(403).json({ error: 'Reporter tidak boleh menghapus artikel' });
+    next();
+  }, async (req, res) => {
     try {
       const a = (await q('SELECT title,status FROM articles WHERE id=$1', [req.params.id])).rows[0];
       if (!a) return res.status(404).json({ error: 'Artikel tidak ditemukan' });
@@ -598,5 +617,5 @@ module.exports = function mountNewsroom(app, ctx) {
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
-  return { NEWSROOM_ROLES };
+  return { NEWSROOM_ROLES, RBAC };
 };

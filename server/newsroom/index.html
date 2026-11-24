@@ -421,44 +421,46 @@ const USERS = {
   'redaksi@mbcindonesia.tv':  {pass:'demo123', name:'Sinta Maharani', role:'editorial', roleLabel:'Produser Redaksi'}
 };
 const NAV = [
-  {id:'desk', label:'Meja Redaksi', group:'EDITORIAL', roles:['direksi','editorial'],
+  {id:'desk', label:'Meja Redaksi', group:'EDITORIAL', roles:['admin','direksi','pemred','redaktur','reporter','editorial'],
    icon:'<path d="M3 5h18v3H3zM4 10h16M4 14h16M4 18h10" stroke-width="1.7" fill="none" stroke-linecap="round"/>'},
-  {id:'articles', label:'Artikel (CMS)', group:'EDITORIAL', roles:['direksi','editorial'],
+  {id:'articles', label:'Artikel (CMS)', group:'EDITORIAL', roles:['admin','direksi','pemred','redaktur','reporter','editorial'],
    icon:'<path d="M5 3h9l5 5v13H5z" stroke-width="1.7" fill="none" stroke-linejoin="round"/><path d="M14 3v5h5M8 12h8M8 16h8" stroke-width="1.7" fill="none" stroke-linecap="round"/>'},
-  {id:'calendar', label:'Kalender Editorial', group:'EDITORIAL', roles:['direksi','editorial'],
+  {id:'calendar', label:'Kalender Editorial', group:'EDITORIAL', roles:['admin','direksi','pemred','redaktur','reporter','editorial'],
    icon:'<rect x="3" y="5" width="18" height="16" rx="2" stroke-width="1.7" fill="none"/><path d="M3 10h18M8 3v4M16 3v4" stroke-width="1.7" stroke-linecap="round"/>'},
-  {id:'findings', label:'Temuan AI', group:'EDITORIAL', roles:['direksi','editorial'],
+  {id:'findings', label:'Temuan AI', group:'EDITORIAL', roles:['admin','direksi','pemred','redaktur','reporter','editorial'],
    icon:'<path d="M12 3l2.6 5.6 6.4.8-4.7 4.3 1.3 6.3L12 17l-5.6 3 1.3-6.3L3 9.4l6.4-.8z" stroke-width="1.6" fill="none" stroke-linejoin="round"/>'},
-  {id:'antrean', label:'Kiriman & Laporan', group:'EDITORIAL', roles:['direksi','editorial'],
+  {id:'antrean', label:'Kiriman & Laporan', group:'EDITORIAL', roles:['admin','direksi','pemred','redaktur'],
    icon:'<path d="M4 5h16v12H9l-5 4z" stroke-width="1.7" fill="none" stroke-linejoin="round"/><path d="M8 9h8M8 12h6M8 15h4" stroke-width="1.6" stroke-linecap="round"/>'},
-  {id:'moderation', label:'Moderasi Komentar', group:'EDITORIAL', roles:['direksi','editorial'],
+  {id:'moderation', label:'Moderasi Komentar', group:'EDITORIAL', roles:['admin','direksi','pemred','redaktur'],
    icon:'<path d="M4 5h16v10H9l-5 4z" stroke-width="1.7" fill="none" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke-width="1.6" stroke-linecap="round"/>'},
-  {id:'media', label:'Media Library', group:'OPERASIONAL', roles:['direksi','editorial','sales'],
+  {id:'media', label:'Media Library', group:'OPERASIONAL', roles:['admin','direksi','pemred','redaktur','reporter','editorial','sales'],
    icon:'<rect x="3" y="5" width="18" height="14" rx="2" stroke-width="1.7" fill="none"/><circle cx="8.5" cy="10" r="1.6" stroke-width="1.5" fill="none"/><path d="M4 17l5-4 3 2 3-3 4 5" stroke-width="1.6" fill="none" stroke-linejoin="round"/>'},
-  {id:'content-analytics', label:'Analitik Konten', group:'PERUSAHAAN', roles:['direksi','editorial','finance'],
+  {id:'content-analytics', label:'Analitik Konten', group:'PERUSAHAAN', roles:['admin','direksi','pemred','redaktur','finance'],
    icon:'<path d="M4 19V9m5 10V5m5 14v-7m5 7V8" stroke-width="1.8" stroke-linecap="round"/>'},
-  {id:'ai-studio', label:'Studio AI', group:'EDITORIAL', roles:['direksi','editorial'],
+  {id:'ai-studio', label:'Studio AI', group:'EDITORIAL', roles:['admin','direksi','pemred','redaktur','reporter','editorial'],
    icon:'<circle cx="12" cy="12" r="3.2" stroke-width="1.7" fill="none"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2" stroke-width="1.6" stroke-linecap="round"/>'},
-  {id:'dashboard', label:'Dasbor Direksi', group:'UTAMA', roles:['direksi','finance','sales','editorial'],
+  {id:'dashboard', label:'Dasbor Direksi', group:'UTAMA', roles:['admin','direksi','pemred','redaktur','reporter','editorial','finance','sales'],
    icon:'<path d="M3 13h8V3H3zM13 21h8V11h-8zM13 3v6h8V3zM3 21h8v-6H3z" stroke-width="1.7" stroke-linejoin="round" fill="none"/>'},
-  {id:'crm', label:'CRM & Pipeline', group:'KOMERSIAL', roles:['direksi','sales'],
+  {id:'crm', label:'CRM & Pipeline', group:'KOMERSIAL', roles:['admin','direksi','sales'],
    icon:'<circle cx="9" cy="8" r="3.2" stroke-width="1.7" fill="none"/><path d="M3.5 20c.6-3.6 2.8-5.4 5.5-5.4s4.9 1.8 5.5 5.4M16 4.5a3.2 3.2 0 0 1 0 7M18.6 14.9c1.5.8 2.3 2.6 2.6 5.1" stroke-width="1.7" fill="none" stroke-linecap="round"/>'},
-  {id:'ads', label:'Iklan & Sponsorship', group:'KOMERSIAL', roles:['direksi','sales'],
+  {id:'ads', label:'Iklan & Sponsorship', group:'KOMERSIAL', roles:['admin','direksi','sales'],
    icon:'<path d="M3 11v3a1 1 0 0 0 1 1h2l4 4V6l-4 4H4a1 1 0 0 0-1 1Z" stroke-width="1.7" fill="none" stroke-linejoin="round"/><path d="M14 9a4 4 0 0 1 0 6M17 6.5a7.5 7.5 0 0 1 0 11" stroke-width="1.7" fill="none" stroke-linecap="round"/>'},
-  {id:'produksi', label:'Produksi & Studio', group:'OPERASIONAL', roles:['direksi','editorial'],
+  {id:'produksi', label:'Produksi & Studio', group:'OPERASIONAL', roles:['admin','direksi','pemred','redaktur','editorial'],
    icon:'<path d="M3 8h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H3z" stroke-width="1.7" fill="none"/><path d="M3 12h16M7 8V6m5 2V6m5 2V6" stroke-width="1.7" stroke-linecap="round"/>'},
-  {id:'keuangan', label:'Keuangan & Pajak', group:'PERUSAHAAN', roles:['direksi','finance'],
+  {id:'keuangan', label:'Keuangan & Pajak', group:'PERUSAHAAN', roles:['admin','direksi','finance'],
    icon:'<rect x="3" y="6" width="18" height="13" rx="2" stroke-width="1.7" fill="none"/><path d="M3 10h18M7 15h4" stroke-width="1.7" stroke-linecap="round"/>'},
-  {id:'master', label:'Master Data', group:'PERUSAHAAN', roles:['direksi','finance'],
+  {id:'master', label:'Master Data', group:'PERUSAHAAN', roles:['admin','direksi','finance'],
    icon:'<ellipse cx="12" cy="6" rx="8" ry="3" stroke-width="1.7" fill="none"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" stroke-width="1.7" fill="none"/>'},
-  {id:'laporan', label:'Laporan & BI', group:'PERUSAHAAN', roles:['direksi','finance'],
+  {id:'laporan', label:'Laporan & BI', group:'PERUSAHAAN', roles:['admin','direksi','finance'],
    icon:'<path d="M4 20V10m6 10V4m6 16v-8m4 8H2" stroke-width="1.8" stroke-linecap="round"/>'},
-  {id:'audit', label:'Audit Trail', group:'TATA KELOLA', roles:['direksi','finance','sales','editorial'],
+  {id:'audit', label:'Audit Trail', group:'TATA KELOLA', roles:['admin','direksi','finance','sales','editorial'],
    icon:'<path d="M12 3l8 3v6c0 4.5-3.2 7.6-8 9-4.8-1.4-8-4.5-8-9V6z" stroke-width="1.7" fill="none" stroke-linejoin="round"/><path d="M9.5 12l2 2 3.5-4" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>'},
-  {id:'pengaturan', label:'Pengaturan', group:'TATA KELOLA', roles:['direksi','finance','sales','editorial'],
+  {id:'pengguna', label:'Pengguna & Peran', group:'TATA KELOLA', roles:['admin'],
+   icon:'<circle cx="9" cy="8" r="3.2" stroke-width="1.7" fill="none"/><path d="M3.5 20c.6-3.6 2.8-5.4 5.5-5.4s4.9 1.8 5.5 5.4" stroke-width="1.7" fill="none" stroke-linecap="round"/><path d="M17 7.5l1.6 1.6L22 5.8" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'},
+  {id:'pengaturan', label:'Pengaturan', group:'TATA KELOLA', roles:['admin','direksi','pemred','redaktur','reporter','editorial','finance','sales'],
    icon:'<circle cx="12" cy="12" r="3.2" stroke-width="1.7" fill="none"/><path d="M19.4 15a8 8 0 0 0 .1-6l2-1.5-2-3.4-2.3 1a8 8 0 0 0-5.2-3L11.6 0h-4l-.4 2.6a8 8 0 0 0-5.2 3l-2.3-1-2 3.4 2 1.5a8 8 0 0 0 .1 6l-2 1.5 2 3.4 2.3-1a8 8 0 0 0 5.2 3l.4 2.6h4l.4-2.6a8 8 0 0 0 5.2-3l2.3 1 2-3.4z" stroke-width="1.4" fill="none" stroke-linejoin="round" transform="scale(0.82) translate(1.5 1.5)"/>'}
 ];
-const VIEW_TITLES = {desk:'Meja Redaksi', articles:'Artikel — CMS Editorial', calendar:'Kalender Editorial', findings:'Temuan AI', moderation:'Moderasi Komentar', media:'Media Library', 'content-analytics':'Analitik Konten', 'ai-studio':'Studio Multi-Agent AI', dashboard:'Dasbor Direksi', crm:'CRM & Pipeline Penjualan', ads:'Iklan & Sponsorship', produksi:'Produksi & Studio', keuangan:'Keuangan, Akuntansi & Pajak', master:'Master Data', laporan:'Laporan & BI', audit:'Audit Trail', pengaturan:'Pengaturan'};
+const VIEW_TITLES = {desk:'Meja Redaksi', articles:'Artikel — CMS Editorial', calendar:'Kalender Editorial', findings:'Temuan AI', moderation:'Moderasi Komentar', media:'Media Library', 'content-analytics':'Analitik Konten', 'ai-studio':'Studio Multi-Agent AI', dashboard:'Dasbor Direksi', crm:'CRM & Pipeline Penjualan', ads:'Iklan & Sponsorship', produksi:'Produksi & Studio', keuangan:'Keuangan, Akuntansi & Pajak', master:'Master Data', laporan:'Laporan & BI', audit:'Audit Trail', pengaturan:'Pengaturan', pengguna:'Pengguna & Peran'};
 let currentView='dashboard';   // ditimpa setelah login bila peran = editorial
 
 function renderNav(){
@@ -539,7 +541,10 @@ function boot(){
   $('#userAvatar').textContent=s.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
   const allowed=NAV.filter(n=>n.roles.includes(s.role)).map(n=>n.id);
   // Redaksi mendarat di Meja Redaksi (bukan dasbor direksi) saat sesi baru dimulai
-  if(s.role==='editorial' && (!allowed.includes(currentView) || currentView==='dashboard')) currentView='desk';
+  /* Pendaratan sesuai pekerjaan: redaksi → Meja Redaksi, keuangan → Keuangan, komersial → CRM. */
+  const PENDARATAN = {editorial:'desk', redaktur:'desk', reporter:'articles', pemred:'desk', finance:'keuangan', sales:'crm'};
+  const tujuan = PENDARATAN[s.role];
+  if(tujuan && allowed.includes(tujuan) && (!allowed.includes(currentView) || currentView==='dashboard')) currentView=tujuan;
   if(!allowed.includes(currentView)) currentView = allowed.includes('dashboard') ? 'dashboard' : allowed[0];
   /* Judul dasbor menyesuaikan peran — bukan "Dasbor Direksi" untuk semua orang */
   VIEW_TITLES.dashboard = s.role === 'direksi' ? 'Dasbor Direksi' : 'Dasbor Ringkas';
@@ -622,7 +627,7 @@ overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
 /* ══════════ VIEWS ══════════ */
 function renderView(){
   const root=$('#viewRoot');
-  const views={desk:viewDesk, articles:viewArticles, calendar:viewCalendar, findings:viewFindings, moderation:viewModeration, media:viewMedia, 'content-analytics':viewContentAnalytics, 'ai-studio':viewAIStudio, dashboard:viewDashboard, crm:viewCrm, ads:viewAds, produksi:viewProduksi, keuangan:viewKeuangan, master:viewMaster, laporan:viewLaporan, audit:viewAudit, pengaturan:viewPengaturan};
+  const views={desk:viewDesk, articles:viewArticles, calendar:viewCalendar, findings:viewFindings, moderation:viewModeration, media:viewMedia, 'content-analytics':viewContentAnalytics, 'ai-studio':viewAIStudio, dashboard:viewDashboard, crm:viewCrm, ads:viewAds, produksi:viewProduksi, keuangan:viewKeuangan, master:viewMaster, laporan:viewLaporan, audit:viewAudit, pengaturan:viewPengaturan, pengguna:viewPengguna};
   (views[currentView]||viewDashboard)(root);
 }
 

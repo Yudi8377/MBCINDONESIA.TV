@@ -1,5 +1,5 @@
 /* MBCINDONESIA.TV — Service Worker (cache app-shell, network-first untuk navigasi) */
-const CACHE = 'mbc-tv-v5'; /* naikkan versi setiap aset berubah agar klien lama ikut segar */
+const CACHE = 'mbc-tv-v6'; /* naikkan versi setiap aset berubah agar klien lama ikut segar */
 const SHELL = [
   './', './index.html', './watch.html', './live.html', './berita.html', './privasi.html', './syarat.html',
   './assets/css/site.css', './assets/js/site.js', './assets/js/data.js', './assets/js/ai-news.js', './assets/js/companion.js',

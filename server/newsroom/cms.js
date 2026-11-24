@@ -109,6 +109,25 @@ const dt = s => s ? new Date(s).toLocaleString('id-ID', { day: '2-digit', month:
   .ag-find.kritis{border-left:3px solid #ff5245}.ag-find.peringatan{border-left:3px solid #f2c14e}
   .ag-find.saran{border-left:3px solid #8ab4ff}.ag-find.info{border-left:3px solid #94a0b8}
   .ag-progress{font-size:.72rem;color:var(--muted);margin-left:.4rem}
+  /* ---- Panel Pengguna & Peran (administrator) ---- */
+  .pg-tabel{width:100%;border-collapse:collapse;font-size:.76rem}
+  .pg-tabel th{text-align:left;color:var(--muted);font-weight:700;font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;padding:.4rem .5rem;border-bottom:1px solid var(--line)}
+  .pg-tabel td{padding:.45rem .5rem;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle}
+  .pg-tabel tr:hover td{background:rgba(255,255,255,.03)}
+  .pg-peran{font-size:.66rem;font-weight:800;padding:.12rem .4rem;border-radius:6px;border:1px solid var(--line);white-space:nowrap}
+  .pg-peran.admin{color:#ff8a80;border-color:rgba(255,82,69,.5)}
+  .pg-peran.direksi,.pg-peran.pemred{color:#f2c14e;border-color:rgba(242,193,78,.45)}
+  .pg-peran.redaktur,.pg-peran.reporter,.pg-peran.editorial{color:#2fd27a;border-color:rgba(47,210,122,.4)}
+  .pg-peran.finance{color:#8ab4ff;border-color:rgba(138,180,255,.4)}
+  .pg-peran.sales{color:#5eead4;border-color:rgba(94,234,212,.4)}
+  .pg-matriks{width:100%;border-collapse:collapse;font-size:.72rem}
+  .pg-matriks th,.pg-matriks td{padding:.35rem .4rem;border-bottom:1px solid rgba(255,255,255,.06);text-align:center}
+  .pg-matriks th:first-child,.pg-matriks td:first-child{text-align:left}
+  .pg-ya{color:#2fd27a;font-weight:800}
+  .pg-tidak{color:#5a6a86}
+  .pg-nonaktif{opacity:.5;text-decoration:line-through}
+  .pg-pilih{background:#0a1120;border:1px solid var(--line);border-radius:7px;color:#dbe2f0;font-size:.72rem;padding:.25rem .35rem;font-family:inherit;max-width:11rem}
+  .pg-pilih:focus{outline:2px solid rgba(255,82,69,.45);outline-offset:1px}
   `;
   document.head.appendChild(st);
 })();
@@ -1080,12 +1099,167 @@ function renderHasil(r, judulArtikel) {
   });
 }
 
+/* ══════════════ 11. PENGGUNA & PERAN (khusus administrator) ══════════════
+   Satu-satunya tempat mengelola akun staf & peran dari UI.
+   Semua izin tetap ditegakkan di server (server/newsroom-pengguna.js). */
+
+async function viewPengguna(root) {
+  root.innerHTML = `<div class="cms-empty">Memuat data pengguna…</div>`;
+  let d;
+  try { d = await NR.get('/pengguna'); }
+  catch (e) {
+    root.innerHTML = `<div class="cms-panel"><h3>Pengguna &amp; Peran</h3>
+      <p class="cms-sub">Halaman ini hanya untuk <b>administrator</b>. Server menolak permintaan ini: ${esc(e.message)}</p></div>`;
+    return;
+  }
+  const saya = d.saya || {};
+  const migrasi = d.migrasi || {};
+  const adaStatus = !!migrasi.status;
+
+  const peranPil = (p, aktif) => `<span class="pg-peran ${esc(p)}">${esc(aktif)}</span>`;
+
+  root.innerHTML = `
+  <div class="cms-panel">
+    <h3>Pengguna &amp; Peran <span class="cms-sub">${d.total} akun staf</span></h3>
+    <p class="cms-sub" style="margin-bottom:.6rem">
+      Kelola akun karyawan di sini. <b>Anggota publik</b> (pendaftar dari halaman masuk) tidak perlu diberi peran internal —
+      mereka otomatis tercatat sebagai Anggota Publik dan tidak bisa masuk Newsroom.
+    </p>
+    ${adaStatus ? '' : `<div class="ag-find peringatan" style="margin-bottom:.6rem">
+      <b>Kolom <code>users.status</code> belum ada.</b> Ubah peran &amp; buat akun tetap bisa;
+      menonaktifkan akun perlu migrasi: <code>docs/MIGRASI-1.6.1.sql</code>.</div>`}
+    <div class="cms-bar">
+      <input id="pgCari" placeholder="Cari nama / email…" style="flex:1;min-width:180px;padding:.45rem .55rem;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.04);color:var(--text)">
+      <button class="cms-btn primary" id="pgBaru">+ Akun staf baru</button>
+      <span class="cms-sub" id="pgInfo"></span>
+    </div>
+    <div id="pgTabel"></div>
+  </div>
+  <div class="cms-panel">
+    <h3>Matriks izin per peran</h3>
+    <p class="cms-sub" style="margin-bottom:.5rem">Ditegakkan di server, bukan hanya disembunyikan di tampilan.</p>
+    <div style="overflow-x:auto"><table class="pg-matriks">
+      <thead><tr><th>Peran</th>${(d.kolom || []).map(k => `<th>${esc(k.label)}</th>`).join('')}</tr></thead>
+      <tbody>${(d.peran || []).map(r => `<tr>
+        <td>${peranPil(r.peran, r.nama)}<div class="cms-sub" style="margin-top:.15rem">${esc(r.deskripsi)}</div></td>
+        ${(d.kolom || []).map(k => `<td class="${r.akses[k.kunci] ? 'pg-ya' : 'pg-tidak'}">${r.akses[k.kunci] ? '✓' : '—'}</td>`).join('')}
+      </tr>`).join('')}</tbody>
+    </table></div>
+    <p class="cms-sub" style="margin-top:.5rem">Label jabatan (mis. “Redaktur Pelaksana”, “Manajer Pemasaran”) disimpan terpisah dari peran teknis,
+      jadi penambahan jabatan tidak memerlukan migrasi database.</p>
+  </div>`;
+
+  let daftar = d.pengguna || [];
+
+  function render() {
+    const cari = ($('#pgCari').value || '').toLowerCase().trim();
+    const baris = daftar.filter(u => !cari || u.nama.toLowerCase().includes(cari) || u.email.toLowerCase().includes(cari) || (u.jabatan || '').toLowerCase().includes(cari));
+    $('#pgTabel').innerHTML = baris.length ? `<div style="overflow-x:auto"><table class="pg-tabel">
+      <thead><tr><th>Nama</th><th>Email</th><th>Peran</th><th>Jabatan</th><th>Status</th><th></th></tr></thead>
+      <tbody>${baris.map(u => `<tr class="${u.status === 'nonaktif' ? 'pg-nonaktif' : ''}">
+        <td><b>${esc(u.nama)}</b>${u.email === saya.email ? ' <span class="cms-sub">(Anda)</span>' : ''}</td>
+        <td class="cms-sub">${esc(u.email)}</td>
+        <td><select class="pg-pilih" data-pilih="${u.id}" aria-label="Peran ${esc(u.nama)}">
+          ${(d.peran || []).map(r => `<option value="${esc(r.peran)}"${r.peran === u.peran ? ' selected' : ''}>${esc(r.nama)}</option>`).join('')}
+        </select> <button class="cms-btn ghost" data-ubah="${u.id}" title="Ubah label jabatan">Jabatan</button></td>
+        <td class="cms-sub">${esc(u.jabatan || '—')}</td>
+        <td>${u.status === 'nonaktif' ? '<span style="color:#ff8a80">nonaktif</span>' : '<span style="color:#2fd27a">aktif</span>'}</td>
+        <td style="text-align:right;white-space:nowrap">
+          <button class="cms-btn ghost" data-sandi="${u.id}">Setel sandi</button>
+          ${adaStatus ? `<button class="cms-btn ghost" data-status="${u.id}" data-nilai="${u.status === 'nonaktif' ? 'aktif' : 'nonaktif'}">${u.status === 'nonaktif' ? 'Aktifkan' : 'Nonaktifkan'}</button>` : ''}
+        </td>
+      </tr>`).join('')}</tbody></table></div>`
+      : `<div class="cms-empty">Tidak ada akun yang cocok dengan “${esc(cari)}”.</div>`;
+  }
+  render();
+  $('#pgCari').addEventListener('input', render);
+
+  /* peran: pilih langsung di kolom (tanpa mengetik kode peran) */
+  $('#pgTabel').addEventListener('change', async e => {
+    const pilih = e.target.closest('[data-pilih]');
+    if (!pilih) return;
+    const u = daftar.find(x => x.id === Number(pilih.dataset.pilih));
+    if (!u) return;
+    const peranBaru = pilih.value;
+    const namaBaru = (d.peran.find(r => r.peran === peranBaru) || {}).nama || peranBaru;
+    if (!confirm(`Ubah peran ${u.nama} (${u.email}) dari “${u.peran_nama}” menjadi “${namaBaru}”?`)) {
+      pilih.value = u.peran; return;
+    }
+    pilih.disabled = true;
+    try {
+      const r = await NR.patch(`/pengguna/${u.id}/peran`, { peran: peranBaru, jabatan: '' });
+      u.peran = r.pengguna.peran; u.peran_nama = r.pengguna.peran_nama; u.jabatan = r.pengguna.jabatan;
+      render(); toast(`Peran ${u.email} → ${r.pengguna.peran_nama}`);
+    } catch (err) {
+      toast(err.message); pilih.value = u.peran;
+    } finally { pilih.disabled = false; }
+  });
+
+  /* ubah peran */
+  $('#pgTabel').addEventListener('click', async e => {
+    const ubah = e.target.closest('[data-ubah]');
+    const sandi = e.target.closest('[data-sandi]');
+    const status = e.target.closest('[data-status]');
+    if (ubah) {
+      const u = daftar.find(x => x.id === Number(ubah.dataset.ubah));
+      if (!u) return;
+      const label = prompt(`Label jabatan untuk ${u.nama} (${u.email}):\nContoh: Redaktur Pelaksana, Manajer Pemasaran, Wakil Pemred.\nPeran teknis diubah lewat pilihan di kolom Peran.`, u.jabatan || '');
+      if (label === null) return;
+      try {
+        const r = await NR.patch(`/pengguna/${u.id}/peran`, { peran: u.peran, jabatan: label || '' });
+        u.jabatan = r.pengguna.jabatan; render(); toast(`Jabatan ${u.email} → ${r.pengguna.jabatan}`);
+      } catch (err) { toast(err.message); }
+    }
+    if (sandi) {
+      const u = daftar.find(x => x.id === Number(sandi.dataset.sandi));
+      if (!u) return;
+      const baru = prompt(`Kata sandi baru untuk ${u.nama} (${u.email}):\nMinimal 8 karakter, memuat huruf dan angka.`);
+      if (!baru) return;
+      try {
+        const r = await NR.post(`/pengguna/${u.id}/sandi`, { sandi: baru });
+        toast(r.catatan || 'Kata sandi disetel ulang');
+      } catch (err) { toast(err.message); }
+    }
+    if (status) {
+      const u = daftar.find(x => x.id === Number(status.dataset.status));
+      if (!u) return;
+      const nilai = status.dataset.nilai;
+      if (!confirm(`${nilai === 'nonaktif' ? 'Nonaktifkan' : 'Aktifkan'} akun ${u.nama} (${u.email})?`)) return;
+      try {
+        await NR.post(`/pengguna/${u.id}/status`, { status: nilai });
+        u.status = nilai; render(); toast(`Akun ${u.email} → ${nilai}`);
+      } catch (err) { toast(err.message); }
+    }
+  });
+
+  /* akun baru */
+  $('#pgBaru').addEventListener('click', async () => {
+    const email = prompt('Email karyawan (mis. nama@mbcindonesia.tv):');
+    if (!email) return;
+    const nama = prompt('Nama lengkap:');
+    if (!nama) return;
+    const peta = (d.peran || []).map((r, i) => `${i + 1}. ${r.nama} (${r.peran})`).join('\n');
+    const jawab = prompt(`Peran akun baru:\n\n${peta}\n\nTulis nomor atau kode peran:`, 'reporter');
+    if (!jawab) return;
+    const indeks = Number(jawab);
+    const peran = Number.isInteger(indeks) && d.peran[indeks - 1] ? d.peran[indeks - 1].peran : jawab;
+    const jabatan = prompt('Jabatan/label (opsional):', '') || '';
+    try {
+      const r = await NR.post('/pengguna', { email: email.trim(), nama: nama.trim(), peran: peran.trim().toLowerCase(), jabatan });
+      daftar.push({ id: r.pengguna.id, email: r.pengguna.email, nama: r.pengguna.nama, peran: r.pengguna.peran,
+        peran_nama: r.pengguna.peran_nama, jabatan: r.pengguna.jabatan, status: 'aktif' });
+      render();
+      alert(`Akun dibuat.\n\nSandi sementara: ${r.sandi_sementara}\n\nSandi ini hanya tampil sekali. Sampaikan lewat kanal aman dan minta pengguna segera menggantinya.`);
+    } catch (err) { toast(err.message); }
+  });
+}
+
 /* ---------- ekspos modul ke window (dipakai router newsroom/index.html) ---------- */
 if (typeof window !== 'undefined') {
   Object.assign(window, {
     NR, STATUS_LABEL, STATUS_COLOR, FLOW_MAP,
     viewDesk, viewArticles, viewCalendar, viewFindings, viewModeration, viewAntrean,
-    viewMedia, viewContentAnalytics, viewAIStudio,
+    viewMedia, viewContentAnalytics, viewAIStudio, viewPengguna,
     openEditor, openTaskModal, runAgentQuick
   });
 }

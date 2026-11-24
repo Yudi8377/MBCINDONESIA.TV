@@ -18,11 +18,13 @@
    ============================================================ */
 'use strict';
 const { DAFTAR_AGEN, AGEN, jalankanBanyak, jalankanAgen, statusLLM, cariArtikel } = require('./agen-ai');
+const RBAC = require('./peran');
 
 module.exports = function mountAgen(app, ctx) {
   const { pool, requireAuth, audit } = ctx;
   const q = (sql, params) => pool.query(sql, params);
-  const PERAN = ['editorial', 'direksi'];
+  /* studio agen terbuka untuk semua peran yang punya akses CMS (admin s/d reporter) */
+  const PERAN = RBAC.PERAN_NEWSROOM;
   const nama = req => (req.user && (req.user.name || req.user.email)) || 'operator';
 
   /* gerbang peran: satu tempat, tidak bisa dilewati dari UI */
