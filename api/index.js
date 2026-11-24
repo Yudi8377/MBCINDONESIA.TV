@@ -7,6 +7,14 @@ process.env.VERCEL = '1';
 
 const NEWSROOM_REGEX = /^\/newsroom(\/(index\.html)?)?\/?$/i;
 
+/* Daftar peran diambil dari sumber tunggal server/peran.js — jangan ditulis ulang di sini.
+   Sebelumnya daftar ini hard-code 4 peran lama, sehingga administrator/pemred/redaktur/
+   reporter hasil rilis 1.6.1 ditolak di gerbang Vercel walau tokennya sah. */
+function daftarPeran() {
+  try { return require('../server/peran').SEMUA_PERAN; }
+  catch (_) { return ['admin', 'direksi', 'pemred', 'redaktur', 'reporter', 'editorial', 'finance', 'sales']; }
+}
+
 function punyaTokenSah(req) {
   try {
     const jwt = require('jsonwebtoken');
@@ -19,7 +27,8 @@ function punyaTokenSah(req) {
       : cookie ? decodeURIComponent(cookie.split('=').slice(1).join('=')) : q;
     if (!token) return false;
     const p = jwt.verify(token, secret);
-    return ['editorial', 'direksi', 'finance', 'sales'].includes(p.role);
+    if (p.status && String(p.status).toLowerCase() !== 'aktif') return false;   /* akun nonaktif ditolak */
+    return daftarPeran().includes(p.role);
   } catch (_) { return false; }
 }
 
