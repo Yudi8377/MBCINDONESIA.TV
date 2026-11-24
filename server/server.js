@@ -25,6 +25,11 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const compression = require('compression');
 const { pool, dbInfo } = require('./db');
+/* Satu sumber kebenaran versi: package.json (supaya /api/health & /api/status
+   tidak pernah tertinggal dari CHANGELOG). */
+const VERSI = (() => {
+  try { return require('../package.json').version || '0.0.0'; } catch (e) { return '0.0.0'; }
+})();
 
 const PORT = Number(process.env.PORT || 8080);
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -177,7 +182,7 @@ let _hz = { t: 0, body: null };
 app.get('/api/healthz', (req, res) => {
   const kini = Date.now();
   if (!_hz.body || kini - _hz.t > 1000) {
-    _hz = { t: kini, body: { status: 'ok', uptime_s: Math.round(process.uptime()), version: process.env.APP_VERSION || '1.4.0' } };
+    _hz = { t: kini, body: { status: 'ok', uptime_s: Math.round(process.uptime()), version: process.env.APP_VERSION || VERSI } };
   }
   res.setHeader('Cache-Control', 'no-store');
   res.json(_hz.body);
@@ -191,7 +196,7 @@ app.get('/api/health', async (req, res) => {
       ok: true, db: true, time: new Date().toISOString(), latency_ms: Date.now() - t0,
       /* provider & host ditampilkan agar operator tahu ke mana aplikasi menyambung */
       provider: dbInfo.provider, db_host: dbInfo.host, db_name: dbInfo.database,
-      tls: dbInfo.ssl, pooler: dbInfo.pooler, version: process.env.APP_VERSION || '1.4.0'
+      tls: dbInfo.ssl, pooler: dbInfo.pooler, version: process.env.APP_VERSION || VERSI
     });
   } catch (e) {
     res.status(503).json({ ok: false, db: false, provider: dbInfo.provider, db_host: dbInfo.host, error: 'Database tidak terjangkau' });
@@ -250,7 +255,7 @@ app.get('/api/status', async (req, res) => {
   const mulai = Date.now() - Math.round(process.uptime() * 1000);
   const hasil = {
     service: 'mbcindonesia-tv',
-    version: process.env.APP_VERSION || '1.4.2',
+    version: process.env.APP_VERSION || VERSI,
     env: process.env.NODE_ENV || 'development',
     uptime_s: Math.round(process.uptime()),
     started_at: new Date(mulai).toISOString(),
@@ -565,6 +570,12 @@ app.get('/.well-known/assetlinks.json', (req, res) => {
   res.setHeader('Content-Type', 'application/json');
   res.sendFile(p, err => { if (err) res.status(404).json({ error: 'assetlinks.json belum diisi fingerprint rilis' }); });
 });
+
+/* ================= API AKUN PUBLIK (MBC Single Account, 1.5.0) =================
+   Didaftarkan SEBELUM newsroom agar rute /api/akun/* tersedia untuk pengunjung. */
+if (process.env.AKUN_NONAKTIF !== '1') {
+  require('./akun')(app, { pool, secret: EFFECTIVE_SECRET, rateLimit, clientIp });
+}
 
 /* ================= API NEWSROOM (CMS, editorial, multi-agent AI) ================= */
 require('./newsroom-api')(app, {

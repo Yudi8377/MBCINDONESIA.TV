@@ -69,6 +69,23 @@ dan label di dalam video tidak cocok dengan judul episode.
 | Selasar Budaya | Ep 11 — Wayang Kulit: Dalang Muda Surakarta | `ep-11-wayang-kulit-dalang-muda-surakarta.mp4` |
 | Selasar Budaya | Ep 10 — Tari Saman di Tanah Gayo | `ep-10-tari-saman-di-tanah-gayo.mp4` |
 
+
+## Verifikasi di PRODUKSI (24 Nov 2026)
+
+Deploy `dpl_6BG6LanwMnP6SW3RuKcNnM18ngF8` (commit `ab89551`) — status **READY**, alias `mbcindonesia-tv.vercel.app`.
+
+| Uji produksi | Hasil |
+|---|---|
+| 26 klip episode dapat diakses (HTTP 200) | ✅ 26/26 |
+| 11 klip generik lama (`subaru`, `bunny`, …) | ✅ 404 — benar-benar hilang dari CDN |
+| Chromium: **seluruh 26 episode** diputar satu per satu, `currentSrc` = klip episode itu | ✅ **26/26 lulus, 0 gagal** |
+| Ruang Bisnis Ep 24 | ✅ klip berlabel "RUANG BISNIS · Ep 24 - UMKM Kediri Go Global" |
+| Halaman publik (`/`, `/live.html`, `/berita.html`, `/watch.html`, `/privasi.html`, `/syarat.html`, `/sitemap.xml`, `/sw.js`, `/manifest.webmanifest`) | ✅ semua 200 |
+| API (`/api/healthz`, `/api/programs`) | ✅ 200 |
+| Gerbang CMS `/newsroom` tanpa token | ✅ 401 (tetap terlindungi) |
+
+Bukti tangkapan layar produksi: `docs/bukti/ruang-bisnis-ep24-produksi.png`.
+
 ## Catatan
 
 Klip ini adalah **kartu siaran** (bumper 6 detik) per episode, bukan potongan acara penuh.

@@ -181,7 +181,8 @@ Aplikasi ini sudah disiapkan agar bisa berjalan di Vercel **tanpa mengubah arsit
 3. Tambahkan Environment Variables (Production + Preview):
    - `SUPABASE_DB_URL` = `postgresql://postgres.<ref>:<sandi>@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres`
    - `JWT_SECRET` = hasil `openssl rand -hex 48`
-   - `APP_VERSION` = `1.4.6`
+   - `APP_VERSION` = `1.5.0`
+   - `AKUN_MODE` = `pratayang` (atau `email` bila `AKUN_EMAIL_WEBHOOK` tersedia)
 4. **Deploy** → dapat URL `https://mbcindonesia-tv.vercel.app` (permanen, HTTPS otomatis).
 5. Cek: `/api/health` harus `db:true` dan `provider:"supabase"`.
 
@@ -190,3 +191,45 @@ Aplikasi ini sudah disiapkan agar bisa berjalan di Vercel **tanpa mengubah arsit
 ### Kalau ingin domain sendiri
 Vercel → Project → Settings → Domains → tambah `mbcindonesia.tv`, lalu arahkan nameserver/A-record
 sesuai instruksi yang muncul. Tanpa domain sendiri, URL `*.vercel.app` **sudah permanen**.
+
+---
+
+## MBC Single Account (1.5.0)
+
+Satu akun untuk seluruh layanan: pendaftaran, masuk, verifikasi email (OTP), pemulihan akun,
+2FA TOTP, dan dasbor anggota di `/akun/`.
+
+| Halaman | Fungsi |
+|---|---|
+| `/daftar.html` | pendaftaran anggota publik (nama, email, sandi ≥8 huruf+angka, persetujuan S&K) |
+| `/masuk.html` | masuk, mendukung 2FA |
+| `/lupa.html` | minta kode pemulihan → tetapkan kata sandi baru |
+| `/akun/` | dasbor: profil, keamanan, perangkat aktif, status layanan |
+
+**Data disimpan tanpa migrasi wajib:** `users` (identitas + `pass_hash`), `ai_findings` (catatan JSON
+`profil`/`sesi`/`otp`/`2fa`), `audit_log` (jejak aktivitas). Akun DB `mbc_app` tidak berhak DDL;
+`docs/MIGRASI-1.5.0.sql` opsional untuk struktur relasional.
+
+**Agar kode OTP benar-benar terkirim ke email**, pasang salah satu di Environment Variables:
+
+```
+RESEND_API_KEY=re_xxxxxxxx      # kanal utama (Resend, gratis 100 email/hari)
+AKUN_EMAIL_DARI=MBC Indonesia <no-reply@mbcindonesia.tv>
+AKUN_EMAIL_TERUSAN=halo@mbcindonesia.tv   # salinan untuk bantuan manual (opsional)
+```
+
+atau `SMTP_HOST/SMTP_PORT/SMTP_USER/SMTP_PASS` (butuh paket `nodemailer`), atau `AKUN_EMAIL_WEBHOOK`.
+Tanpa kredensial: pendaftaran & masuk tetap berfungsi, verifikasi email dibantu manual oleh dukungan.
+
+**Uji sebelum rilis (jangan di produksi):**
+
+```bash
+createdb -h /tmp -p 5433 mbcuji && pg_restore -h /tmp -p 5433 -d mbcuji --no-owner backups/mbc-*.dump
+cd server && SUPABASE_DB_URL='postgresql://uji@localhost:5433/mbcuji?host=/tmp' \
+  JWT_SECRET=uji AKUN_PRATAYANG_KODE=1 BATAS_KIRIM_JAM=50 node server.js &
+JWT_SECRET=uji python3 ops/uji-akun-1.5.0.py       # 54 kasus API
+JWT_SECRET=uji python3 ops/uji-ui-akun-1.5.0.py    # 29 kasus UI (Playwright)
+```
+
+> `AKUN_PRATAYANG_KODE=1` **hanya** untuk DB uji — memungkinkan skrip membaca kode dari respons.
+> Di produksi kode tidak pernah ditampilkan ke publik.

@@ -55,9 +55,13 @@
 
 
   /* ---------------- 2a. Pastikan tombol & jendela laporan selalu ada ---------------- */
-  function pastikanLapor() {
-    if (document.getElementById('laporBtn')) return;
+  /* Gaya inti dipasang SEBELUM pemeriksaan awal: halaman yang sudah memuat
+     #laporBtn/#laporModal dari HTML (mis. halaman akun) tetap butuh aturan
+     `[hidden]{display:none}` agar jendela laporan tidak menutupi formulir. */
+  function pasangGayaLapor() {
+    if (document.getElementById('gayaLapor')) return;
     var gaya = document.createElement('style');
+    gaya.id = 'gayaLapor';
     gaya.textContent = '#laporModal[hidden]{display:none !important}' +
       '#laporModal{position:fixed;inset:0;z-index:80;background:rgba(4,7,14,.8);display:grid;place-items:center;padding:1rem}' +
       '#laporBtn{position:fixed;right:14px;bottom:14px;z-index:60;font-size:.76rem;padding:.5rem .8rem}' +
@@ -69,6 +73,11 @@
       '#laporModal input,#laporModal select,#laporModal textarea{flex:1;background:#0a1020;border:1px solid var(--line,#26304a);border-radius:9px;color:#fff;padding:.5rem .6rem;font-size:.85rem;font-family:inherit;min-height:42px}' +
       '#laporModal textarea{min-height:84px;resize:vertical}';
     document.head.appendChild(gaya);
+  }
+
+  function pastikanLapor() {
+    pasangGayaLapor();
+    if (document.getElementById('laporBtn')) return;
 
     var btn = document.createElement('button');
     btn.id = 'laporBtn'; btn.className = 'btn btn-ghost';

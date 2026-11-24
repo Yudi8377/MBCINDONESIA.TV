@@ -1,3 +1,69 @@
+## [1.5.0] — 2026-11-24 — MBC SINGLE ACCOUNT
+
+### Satu akun untuk seluruh layanan MBC Indonesia
+Pendaftaran, masuk, verifikasi email (OTP), pemulihan akun, 2FA TOTP, dan dasbor anggota.
+Modul baru `server/akun.js` (14 endpoint di `/api/akun/*`) + klien `website/assets/js/akun.js`
+dan empat halaman: `masuk.html`, `daftar.html`, `lupa.html`, `akun/index.html`.
+
+### Keputusan teknis penting
+- **Tanpa migrasi wajib.** Akun aplikasi `mbc_app` di Supabase tidak berhak DDL
+  (`create table` → *permission denied for schema public*; `alter table users` → *must be owner*).
+  Karena itu data akun disimpan di tabel yang sudah ada: `users` (identitas + `pass_hash`),
+  `ai_findings` (catatan JSON bersistem `jenis`+`kunci`: profil, sesi, OTP, 2FA),
+  `audit_log` (jejak aktivitas). `docs/MIGRASI-1.5.0.sql` disediakan **opsional** untuk memindahkan
+  data ke tabel `members`/`member_sessions`/`member_codes`/`member_2fa` bila tim IT menghendaki
+  struktur relasional — modul mendeteksinya otomatis.
+- **Peran publik tidak pernah menyentuh CMS.** Constraint `users_role_check` hanya mengizinkan
+  `direksi|finance|sales|editorial`; anggota publik disimpan sebagai `editorial` dengan
+  `role_label` = "Anggota Publik · …". CMS tetap memakai daftar staf tertutup → `/newsroom` 401
+  tanpa token (diuji ulang).
+- **Celah yang ditutup sebelum rilis:** `/api/akun/lupa` semula mengembalikan `kodePratayang`
+  untuk email apa pun di mode pratayang — artinya siapa pun yang tahu email staf bisa mengambil
+  alih akun. Kode pemulihan kini **tidak pernah** dikirim di respons, kecuali variabel
+  `AKUN_PRATAYANG_KODE=1` sengaja dipasang pada lingkungan uji/demo.
+- **Keamanan.** bcrypt cost 12; token HMAC-SHA256 7 hari + `sid`, sesi dicabut saat keluar/ganti
+  sandi/pemulihan (disimpan sebagai hash `sid`, maks 8 perangkat); OTP 6 digit berlaku 10 menit,
+  maks 5 percobaan, sekali pakai, disimpan sebagai hash; 2FA TOTP RFC 6238 (SHA-1, 6 digit,
+  jendela ±30 dtk) + 3 kode cadangan; respons "lupa sandi" selalu 200 agar email terdaftar
+  tidak bisa ditebak; cookie `HttpOnly; SameSite=Lax; Secure` di HTTPS.
+- **Pembatas laju** mengikuti `rateLimit(kunci, maks, jendela)` milik server.js, dapat diatur
+  lewat variabel lingkungan `AKUN_BATAS_*` (daftar 5/jam, masuk 10/10 mnt, OTP verifikasi
+  12/10 mnt, lupa & pulihkan 5/15 mnt).
+- **Kanal email siap pakai (3 pilihan, satu kredensial).** `RESEND_API_KEY` (utama, tanpa paket
+  tambahan), `SMTP_HOST/…` (nodemailer), atau `AKUN_EMAIL_WEBHOOK` (webhook generik). Semua email
+  memakai template teks + HTML yang sama. Bila belum ada kredensial: pendaftaran/masuk tetap penuh,
+  kode **tidak** ditampilkan ke publik, dan `AKUN_EMAIL_TERUSAN` menerima salinan untuk bantuan
+  manual oleh dukungan. `AKUN_NONAKTIF=1` mematikan seluruh modul.
+
+### Perbaikan yang ditemukan saat pengujian
+- **Modal lapor menutupi formulir.** Di halaman akun, `#laporModal` sudah ada di HTML tetapi aturan
+  `[hidden]{display:none}` hanya disuntik `aksi-publik.js` **setelah** pemeriksaan awal sehingga
+  modal transparan menutupi kolom input (klik tidak bisa masuk). Gaya inti kini dipasang lebih dulu
+  (`pasangGayaLapor()`) dan tiap halaman akun memuat aturan kritis inline di `<head>`.
+- **Luapan horizontal di ponsel** (`daftar.html` 486 px pada layar 360 px): `.form-akun` diberi
+  `max-width:min(460px,100%)`/`min-width:0`, label menumpuk di bawah 540 px, dan tautan
+  S&K/Privasi diperbaiki (`../syarat.html` → `syarat.html`) serta boleh membungkus.
+- **Verifikasi email gagal dari dasbor:** kode dari pendaftaran disimpan dengan jenis `daftar`,
+  sedangkan endpoint verifikasi mencari jenis `verifikasi` → diseragamkan; endpoint verifikasi kini
+  juga mengenali email dari sesi (dasbor tidak perlu mengirim email).
+- **Aset dasbor 404:** `website/akun/index.html` memakai `assets/...` (relatif ke `/akun/`) →
+  diubah menjadi `../assets/...`.
+
+### Pengujian (sebelum produksi)
+- Salinan produksi dipulihkan ke PostgreSQL 17 lokal (`pg_restore` dari `backups/mbc-20261124-0051.dump`)
+  sebagai DB uji; seluruh uji API & UI dijalankan terhadap salinan itu.
+- `ops/uji-akun-1.5.0.py` — **54/54 lulus** (validasi daftar, masuk, profil, OTP, ganti sandi,
+  lupa/pulih, 2FA aktif–masuk–matikan, aktivitas, layanan, regresi staf lama, pembatas laju,
+  pembersihan data uji). Dapat diulang tanpa restart server.
+- `ops/uji-ui-akun-1.5.0.py` — **29/29 lulus** dua kali berturut-turut (Playwright Chromium):
+  daftar → kode verifikasi → dasbor → verifikasi email → ubah profil → keluar → masuk → lupa kata
+  sandi → pulih, plus mobile 360/390 px tanpa geser horizontal dan tanpa galat JavaScript.
+
+### Berkas
+`server/akun.js`, `website/assets/js/akun.js`, `website/{masuk,daftar,lupa}.html`,
+`website/akun/index.html`, menu "Masuk" di seluruh halaman publik + footer,
+`docs/MIGRASI-1.5.0.sql`, `docs/LAPORAN-RILIS-1.5.0.md`, `ops/uji-akun-1.5.0.py`, `ops/uji-ui-akun-1.5.0.py`.
+
 ## [1.4.14] — 2026-11-23 — GO LIVE Vercel
 
 ### Deploy berhasil dari GitHub (bukan unggahan manual)

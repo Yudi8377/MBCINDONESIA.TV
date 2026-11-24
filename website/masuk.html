@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="format-detection" content="telephone=no">
+<title>Masuk Akun — MBC INDONESIA</title>
+<meta name="description" content="Masuk ke akun MBC Indonesia — satu akun untuk Live TV, News, Kontributor, Creator, Business, Community, Academy, dan Marketplace.">
+<link rel="canonical" href="/masuk.html">
+<meta name="theme-color" content="#070b14">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="assets/css/site.css">
+<style>
+  .rubrik-warp{max-width:1100px;margin:0 auto;padding:2rem 0 3.5rem}
+  .rubrik-warp h1{font-size:clamp(1.5rem,3.4vw,2.2rem);line-height:1.2;margin:.2rem 0 .5rem}
+  .rubrik-warp .lead{color:var(--muted);font-size:.95rem;max-width:70ch;margin-bottom:1.6rem}
+  .rubrik-grid{display:grid;gap:1.2rem;grid-template-columns:1.15fr .85fr}
+  @media(max-width:900px){.rubrik-grid{grid-template-columns:1fr}}
+  .kartu{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.15rem}
+  .kartu h2{font-size:1.02rem;margin:0 0 .3rem;color:#fff}
+  .kartu p{color:var(--muted);font-size:.86rem;margin:0 0 .8rem}
+  .bidang{display:flex;gap:.4rem;align-items:center;margin-bottom:.55rem}
+  .bidang label{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700;min-width:82px}
+  .bidang input,.bidang select,.bidang textarea{flex:1;background:#0a1020;border:1px solid var(--line);border-radius:9px;color:#fff;padding:.55rem .6rem;font-size:.86rem;font-family:inherit;min-height:44px}
+  .bidang textarea{min-height:150px;resize:vertical}
+  .bidang input:focus,.bidang select:focus,.bidang textarea:focus{outline:2px solid var(--red);outline-offset:1px}
+  .petunjuk{font-size:.75rem;color:var(--muted);margin:-.2rem 0 .8rem}
+  .rubrik-list{display:flex;flex-direction:column;gap:.5rem}
+  .rubrik-list a{display:flex;justify-content:space-between;gap:.6rem;padding:.6rem .7rem;border:1px solid var(--line);border-radius:10px;color:#dfe5f1;font-size:.83rem;text-decoration:none}
+  .rubrik-list a:hover{border-color:var(--red);color:#fff}
+  .rubrik-list b{color:var(--red2);font-weight:700;white-space:nowrap}
+  .langkah{counter-reset:l;list-style:none;padding:0;margin:0}
+  .langkah li{counter-increment:l;position:relative;padding-left:1.9rem;margin-bottom:.6rem;font-size:.85rem;color:#cfd6e6}
+  .langkah li::before{content:counter(l);position:absolute;left:0;top:-1px;width:1.35rem;height:1.35rem;border-radius:50%;background:var(--red);color:#fff;font-size:.72rem;font-weight:800;display:grid;place-items:center}
+
+  /* --- 1.5.0: cegah luapan horizontal di ponsel (360–390 px) --- */
+  .form-akun{max-width:min(460px,100%);min-width:0}
+  .form-akun input,.form-akun select,.form-akun textarea{min-width:0}
+  .dua-kolom{min-width:0}
+  .dua-kolom>*{min-width:0}
+  @media(max-width:540px){
+    .form-akun{padding:1rem .85rem}
+    .form-akun .baris{flex-direction:column;align-items:stretch;gap:.25rem}
+    .form-akun label{min-width:0}
+  }
+</style>
+<style id="gayaLaporKritis">#laporModal[hidden]{display:none !important}</style>
+</head>
+<body>
+<a class="skip-link" href="#utama">Lewati ke konten utama</a>
+
+<div class="topbar"><div class="container">
+  <span><strong>MBCINDONESIA.TV</strong> — Televisi Digital MBC Indonesia Group</span>
+  <span class="live-dot"><i class="pulse"></i> <a href="live.html">Siaran Langsung</a></span>
+</div></div>
+
+<header class="site-header"><div class="container">
+  <a class="logo" href="index.html" aria-label="MBC Indonesia — Beranda">
+    <span class="logo-badge" aria-hidden="true">
+      <svg viewBox="0 0 32 32" fill="none"><path d="M7 23V9l6 7 3-4 3 4 6-7v14" stroke="#fff" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="26.4" cy="7.2" r="2.4" fill="#ffd166"/></svg>
+    </span>
+    <span class="logo-text"><span class="l1">MBC<em>INDONESIA</em></span><br><span class="l2">Televisi Digital</span></span>
+  </a>
+  <nav class="main-nav" aria-label="Navigasi utama">
+    <a href="index.html">Beranda</a>
+    <a href="index.html#katalog">Program</a>
+    <a href="live.html">Live TV</a>
+    <a href="berita.html">Berita</a>
+    <a href="Rubrik.html" >Rubrik</a>
+    <a href="kontributor.html">Kirim Berita</a>
+    <a href="/masuk.html" class="active">Masuk</a>
+  </nav>
+  <a class="btn btn-red" href="live.html"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Tonton Live</a>
+  <button class="hamburger" onclick="toggleMobileNav()" aria-label="Buka menu">☰</button>
+</div>
+<nav class="mobile-nav" id="mobileNav">
+  <a href="index.html">Beranda</a><a href="index.html#katalog">Program</a><a href="live.html">Live TV</a>
+  <a href="berita.html">Berita</a><a href="Rubrik.html">Rubrik</a><a href="kontributor.html">Kirim Berita</a>
+  <a href="privasi.html">Privasi</a><a href="syarat.html">Syarat</a>
+</nav></header>
+
+<main id="utama" class="container rubrik-warp">
+
+<style>
+  .form-akun{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:1.3rem 1.4rem;max-width:460px}
+  .form-akun h2{font-size:1.05rem;margin:0 0 .2rem;color:#fff}
+  .form-akun .sub{color:var(--muted);font-size:.82rem;margin:0 0 1rem}
+  .form-akun .baris{display:flex;gap:.45rem;align-items:center;margin-bottom:.6rem}
+  .form-akun label{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;min-width:96px}
+  .form-akun input,.form-akun select{flex:1;background:#0a1020;border:1px solid var(--line);border-radius:9px;color:#fff;padding:.6rem .65rem;font-size:.88rem;font-family:inherit;min-height:44px}
+  .form-akun input:focus,.form-akun select:focus{outline:2px solid var(--red);outline-offset:1px}
+  .form-akun .cek{display:flex;gap:.5rem;align-items:flex-start;font-size:.78rem;color:var(--muted);margin:.2rem 0 .8rem}
+  .form-akun .cek input{flex:0 0 auto;min-height:auto;width:18px;height:18px;margin-top:2px}
+  .form-akun .tautan{font-size:.8rem;color:var(--red2);display:inline-block;margin-top:.6rem}
+  .dua-kolom{display:grid;grid-template-columns:1.05fr .95fr;gap:1.2rem;align-items:start}
+  @media(max-width:860px){.dua-kolom{grid-template-columns:1fr}}
+  .info-kartu{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:1rem 1.1rem}
+  .info-kartu h3{font-size:.95rem;margin:0 0 .4rem;color:#fff}
+  .info-kartu li{font-size:.83rem;color:#cfd6e6;margin-bottom:.35rem}
+</style>
+
+  <span class="kicker" style="color:var(--red2);font-weight:800;letter-spacing:.14em;font-size:.7rem;text-transform:uppercase">MBC Single Account</span>
+  <h1>Masuk ke Akun MBC Indonesia</h1>
+  <p class="lead">Satu akun untuk Live TV, News, Kontributor, Creator, Business, Community, Academy, dan Marketplace.</p>
+  <div class="dua-kolom">
+    <form class="form-akun" id="formMasuk" novalidate>
+      <h2>Masuk</h2>
+      <p class="sub">Gunakan email dan kata sandi akun Anda.</p>
+      <div class="baris"><label for="m-email">Email</label><input id="m-email" name="email" type="email" autocomplete="email" required placeholder="nama@contoh.com"></div>
+      <div class="baris"><label for="m-sandi">Kata sandi</label><input id="m-sandi" name="sandi" type="password" autocomplete="current-password" required placeholder="••••••••"></div>
+      <p data-pesan hidden style="font-size:.83rem;margin:.2rem 0 .6rem"></p>
+      <button type="submit" class="btn btn-red" style="width:100%">Masuk</button>
+      <a class="tautan" href="lupa.html">Lupa kata sandi?</a> · <a class="tautan" href="daftar.html">Buat akun baru</a>
+    </form>
+    <aside class="info-kartu">
+      <h3>Yang Anda dapat</h3>
+      <ul style="padding-left:1.1rem;margin:.3rem 0 0">
+        <li>Profil &amp; dasbor pribadi</li>
+        <li>Kirim berita sebagai kontributor</li>
+        <li>Verifikasi email dengan kode OTP</li>
+        <li>Autentikasi dua faktor (TOTP)</li>
+        <li>Riwayat aktivitas akun</li>
+      </ul>
+      <p style="font-size:.78rem;color:var(--muted);margin:.8rem 0 0">Data Anda diproses sesuai <a href="../privasi.html" style="color:var(--red2)">Kebijakan Privasi</a> dan UU PDP No. 27/2022.</p>
+    </aside>
+  </div>
+
+</main>
+
+<footer class="site-footer"><div class="container">
+  <div class="footer-bottom" style="border-top:none;margin-top:0">
+    <span>© 2026 MBC Indonesia Group · MBCINDONESIA.TV</span>
+    <span><a href="privasi.html">Kebijakan Privasi</a> · <a href="syarat.html">Syarat &amp; Ketentuan</a> · <a href="Rubrik.html">Rubrik</a> · <a href="kontributor.html">Kirim Berita</a> · <a href="sitemap.xml">Sitemap</a></span>
+  </div>
+</div></footer>
+<button id="laporBtn" class="btn btn-ghost" style="position:fixed;right:14px;bottom:14px;z-index:60;font-size:.76rem;padding:.5rem .8rem" aria-haspopup="dialog">⚑ Laporkan konten</button>
+<div id="laporModal" hidden style="position:fixed;inset:0;z-index:80;background:rgba(4,7,14,.78);display:grid;place-items:center;padding:1rem">
+  <div style="background:var(--card);border:1px solid var(--line);border-radius:14px;max-width:440px;width:100%;padding:1.1rem 1.2rem">
+    <h3 style="margin:0 0 .3rem;font-size:1rem;color:#fff">Laporkan konten</h3>
+    <p style="color:var(--muted);font-size:.8rem;margin:0 0 .8rem">Bantu kami menjaga ruang publik. Laporan ditinjau tim moderasi dalam 1×24 jam.</p>
+    <form>
+      <div class="bidang"><label for="laporJenis">Jenis</label>
+        <select id="laporJenis" name="jenis">
+          <option value="spam">Spam / iklan</option><option value="sara">SARA / ujaran kebencian</option>
+          <option value="hoaks">Hoaks / misinformasi</option><option value="pelecehan">Pelecehan</option>
+          <option value="hak-cipta">Pelanggaran hak cipta</option><option value="lainnya">Lainnya</option>
+        </select></div>
+      <div class="bidang"><label for="laporTarget">Tautan</label><input id="laporTarget" name="target" required maxlength="160" placeholder="Alamat halaman/konten"></div>
+      <div class="bidang"><label for="laporCatatan">Catatan</label><textarea id="laporCatatan" name="catatan" maxlength="1000" style="min-height:90px" placeholder="Jelaskan singkat masalahnya (opsional)"></textarea></div>
+      <div class="bidang"><label for="laporEmail">Email</label><input id="laporEmail" name="email" type="email" maxlength="254" placeholder="opsional — untuk kabar tindak lanjut"></div>
+      <p data-pesan hidden style="font-size:.82rem;margin:.4rem 0"></p>
+      <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.6rem">
+        <button type="button" class="btn btn-ghost" data-tutup style="font-size:.8rem">Batal</button>
+        <button type="submit" class="btn btn-red" style="font-size:.8rem">Kirim laporan</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script src="assets/js/site.js"></script>
+<script src="assets/js/analitik.js"></script>
+<script src="assets/js/aksi-publik.js"></script>
+<script src="assets/js/akun.js"></script>
+</body>
+</html>

@@ -16,9 +16,9 @@ Platform saat ini berada pada **Tahap I (Evaluasi & Penyempurnaan)** — selesai
 
 | Kategori | Jumlah butir | Keterangan |
 |---|---|---|
-| **A. Sudah tersedia & berfungsi** | 34 butir | terverifikasi di produksi |
-| **B. Sudah ada, perlu diperbaiki/disempurnakan** | 21 butir | berfungsi sebagian atau masih data ilustratif |
-| **C. Belum tersedia, harus dibangun** | 46 butir | termasuk 7 menu baru dan Single Account |
+| **A. Sudah tersedia & berfungsi** | **46 butir** | terverifikasi di produksi (naik dari 34 → 41 → 46) |
+| **B. Sudah ada, perlu diperbaiki/disempurnakan** | **10 butir** | berfungsi sebagian atau masih data ilustratif |
+| **C. Belum tersedia, harus dibangun** | **41 butir** | termasuk 7 menu anggota (fondasinya kini sudah ada) |
 
 **Angka kunci:** 8 program · 26 episode (semua memutar video yang benar, terverifikasi 26/26) · 7 artikel · 28 tabel database · 25 endpoint API · 16 modul CMS internal · CMS terlindungi (401 tanpa token).
 
@@ -95,25 +95,25 @@ Platform saat ini berada pada **Tahap I (Evaluasi & Penyempurnaan)** — selesai
 | # | Butir dokumen | Kondisi sekarang | Kekurangan | Usulan perbaikan | Prioritas |
 |---|---|---|---|---|---|
 | B-01 | B.1 kualitas HD/FHD/4K | klip 1280×720 (HD) | belum ada FHD/4K, belum ada pemilih kualitas adaptif | transcode HLS multi-bitrate (360p/720p/1080p) + pemilih kualitas | Tinggi |
-| B-02 | B.1 jumlah penonton real-time | angka ilustratif (2.418) | bukan data nyata | hitung dari sesi aktif (server-sent events) atau analitik | Sedang |
+| ~~B-02~~ | B.1 jumlah penonton real-time | **SELESAI 1.4.16**: heartbeat 30 dtk ke `/api/live/heartbeat`, angka karangan dihapus | jendela 90 detik, belum pakai SSE | opsional SSE untuk realtime halus | ~~Sedang~~ |
 | B-03 | B.1 sistem pengelolaan saluran | tabel `channels` ada | belum ada UI kelola saluran di CMS | tambah modul "Saluran" di CMS | Sedang |
-| B-04 | B.2 berita internasional | 7 artikel domestik | kanal internasional kosong | tambah kategori + sumber wire | Sedang |
-| B-05 | B.2 berita daerah/kabupaten | 6 kategori umum | belum ada taksonomi daerah | tambah tag wilayah (Jatim, Kediri, Bojonegoro, …) | Sedang |
+| ~~B-04~~ | B.2 berita internasional | **SELESAI 1.4.16**: rubrik internasional + artikel diaspora Hong Kong + filter `?rubrik=internasional` | belum ada feed wire otomatis | tambah sumber wire/API berita | ~~Sedang~~ |
+| ~~B-05~~ | B.2 berita daerah/kabupaten | **SELESAI 1.4.16**: taksonomi wilayah (Kediri, Bojonegoro, Surabaya, Malang, Jatim, nasional, internasional) + filter `?wilayah=` | — | — | ~~Sedang~~ |
 | B-06 | B.2 opini & laporan khusus | ada kategori, bukan rubrik khusus | belum dipisah sebagai rubrik | rubrik Opini & Laporan Khusus | Rendah |
-| B-07 | B.2 pengiriman berita oleh kontributor | belum ada | perlu alur submit + moderasi | form kirim berita + antrean review di CMS | Tinggi |
+| ~~B-07~~ | B.2 pengiriman berita oleh kontributor | **SELESAI 1.4.16**: `kontributor.html` + `/api/kontributor/kirim` + antrean CMS "Kiriman & Laporan" | belum ada notifikasi email otomatis | tambahkan email saat status berubah | ~~Tinggi~~ |
 | B-08 | B.4 Kamera Komunitas | hanya program TV "Kamera Komunitas" | belum ada pendaftaran kamera, peta, status online/offline | dibangun terpisah (lihat C-4) | Tinggi |
 | B-09 | B.8 Podcast | program podcast + halaman tonton | belum ada katalog episode audio, belum bisa upload | katalog podcast + pemutar audio + upload | Sedang |
-| B-10 | C. Single Account — fondasi | tabel `users` 4 akun staf | belum ada pendaftaran publik, OTP, pemulihan, 2FA | lihat C-1 | Kritis |
+| ~~B-10~~ | C. Single Account — fondasi | **SELESAI 1.5.0**: `server/akun.js` 14 endpoint, `users` + catatan JSON, OTP, pemulihan, 2FA TOTP, dasbor anggota | kanal email belum diaktifkan (Resend/SMTP siap) | pasang kredensial email + migrasi opsional | ~~Kritis~~ |
 | B-11 | D. Monetisasi — fondasi | CRM, invoice, slot iklan di CMS | belum ada pembayaran online, belum ada laporan otomatis ke mitra | integrasi payment gateway + laporan | Tinggi |
 | B-12 | D. pembagian hasil kreator | belum ada | perlu skema & ledger | lihat C-3 | Tinggi |
-| B-13 | E.12 analitik pengunjung | **tidak ada** alat analitik terpasang | tidak ada data trafik nyata | pasang Vercel Analytics/Plausible (privasi-friendly) | Tinggi |
+| ~~B-13~~ | E.12 analitik pengunjung | **SELESAI 1.4.16**: `analitik.js` + `/api/analytics/*` (tayangan, baca, video, perangkat, halaman teratas) | agregasi memakai `audit_log`; tabel khusus menunggu migrasi | jalankan `docs/MIGRASI-1.4.16.sql` | ~~Tinggi~~ |
 | B-14 | E.11 multibahasa | hanya bahasa Indonesia | belum ada versi Inggris | i18n pada halaman publik (ID/EN) | Sedang |
 | B-15 | E.10 aplikasi iOS | belum ada | folder `ios/` tidak ada; butuh akun Apple Developer | siapkan proyek SwiftUI/PWA-wrapped | Sedang |
 | B-16 | F. manajemen pengguna & anggota | hanya 4 akun staf | belum ada kelola anggota publik | modul Manajemen Anggota | Tinggi |
 | B-17 | F. pengelolaan video & siaran | data program/episode di DB | belum ada UI unggah video di CMS | modul unggah + antrean transcode | Tinggi |
 | B-18 | F. statistik pengunjung & penonton | tabel `content_analytics` 98 baris | belum ada dasbor trafik nyata | sambungkan B-13 ke dasbor | Sedang |
-| B-19 | F. pengaturan backup | skrip `ops/backup.sh` ada | belum terjadwal otomatis | cron harian + uji restore | Tinggi |
-| B-20 | G. moderasi & pelaporan penyalahgunaan | moderasi komentar ada | belum ada tombol "laporkan konten" publik | tombol lapor + antrean | Sedang |
+| ~~B-19~~ | F. pengaturan backup | **SELESAI 1.4.16**: `ops/backup-db.sh` (pg_dump kustom, hash SHA-256, verifikasi `pg_restore --list`, retensi 14 berkas), backup pertama terverifikasi 28 tabel | perlu penjadwalan cron di server pengelola | pasang cron harian 02.15 | ~~Tinggi~~ → operasional |
+| ~~B-20~~ | G. moderasi & pelaporan penyalahgunaan | **SELESAI 1.4.16**: tombol ⚑ di semua halaman + `/api/lapor` (6 jenis) + antrean moderasi | belum ada SLA otomatis | tambahkan pengingat SLA 1×24 jam | ~~Sedang~~ |
 | B-21 | A/B. navigasi publik | 5 menu (Beranda, Program, Live TV, Dokumenter, Podcast, Berita) | belum mencerminkan 10 menu baru | restrukturisasi navigasi setelah C selesai | Sedang |
 
 **Catatan uji:** tidak ditemukan galat konsol, tidak ada overflow horizontal pada Android/iPhone/tablet, dan tidak ada tautan yang mengarah ke workspace internal dari halaman publik.
@@ -231,7 +231,7 @@ Platform saat ini berada pada **Tahap I (Evaluasi & Penyempurnaan)** — selesai
 | C-64 | Aplikasi iOS (App Store) |
 | C-65 | Smart TV (versi TV layout / aplikasi) |
 
-**Total: 46 butir C + 21 butir B = 67 butir pekerjaan pengembangan.**
+**Total: 41 butir C + 10 butir B = 51 butir pekerjaan pengembangan tersisa (dari 67 pada audit awal).**
 
 ---
 
@@ -303,3 +303,49 @@ Platform saat ini berada pada **Tahap I (Evaluasi & Penyempurnaan)** — selesai
 | Galat konsol beranda | Chromium | 0 |
 
 **Kesimpulan:** pekerjaan yang sudah berjalan **sesuai** dengan bagian A–F dokumen untuk lingkup siaran, berita, dashboard internal, dan infrastruktur dasar. Kesenjangan utama ada pada **Single Account** dan **tujuh menu ekonomi/komunitas**, yang memerlukan keputusan anggaran dan penyedia layanan pihak ketiga (email OTP, pembayaran, streaming).
+
+---
+
+## G. STATUS PELAKSANAAN — diperbarui 24 November 2026 (rilis 1.5.0)
+
+**Tahap I-b selesai dan LIVE di https://mbcindonesia-tv.vercel.app** (deploy `dpl_Fcj1k1q9hGQUnTfwbcdM48DCwyXW`, commit `6920a62`).
+
+| Butir | Yang dirilis | Uji produksi |
+|---|---|---|
+| B-13 analitik nyata | `analitik.js`, `/api/analytics/collect`, `/api/analytics/summary` | ✅ data mengalir (204), angka beranda terisi |
+| B-02 penonton live nyata | heartbeat 30 dtk, `/api/live/heartbeat`; simulasi angka dihapus | ✅ "penonton aktif (data nyata)" |
+| B-07 kirim berita kontributor | `kontributor.html`, `/api/kontributor/kirim` (rate limit 3/jam) | ✅ alur kirim → antrean → tindak lanjut lulus |
+| B-20 lapor konten | tombol ⚑ otomatis di semua halaman, `/api/lapor` | ✅ 6 jenis laporan, masuk antrean |
+| B-04/B-05 rubrik & wilayah | `rubrik.html`, filter `?rubrik=` & `?wilayah=`, 2 artikel baru | ✅ filter & URL sinkron |
+| F CMS | modul "Kiriman & Laporan" + `/api/newsroom/antrean` | ✅ terima/tolak tercatat di audit trail |
+| B-19 backup | `ops/backup-db.sh` + backup pertama terverifikasi | ✅ 28 tabel, 108 KB, SHA-256 valid |
+
+**Masih terbuka dari Tahap I-b:**
+- Penjadwalan cron backup di server pengelola (skrip siap; sandbox tidak boleh menulis data produksi).
+- Migrasi tabel khusus (`docs/MIGRASI-1.4.16.sql`) agar analitik tidak lagi menumpang `audit_log`.
+- Notifikasi email saat status kiriman/laporan berubah.
+- Vercel Analytics (opsional; analitik sendiri sudah berjalan).
+
+### Tahap II — MBC Single Account (rilis 1.5.0)
+
+| Butir | Yang dirilis | Uji sebelum rilis |
+|---|---|---|
+| C-01 pendaftaran & masuk | `daftar.html`, `masuk.html`, `/api/akun/daftar`, `/masuk`, `/keluar` | ✅ 54/54 API |
+| C-02 verifikasi email | OTP 6 digit, 10 menit, 5 percobaan, sekali pakai (`/otp/kirim`, `/otp/verifikasi`) | ✅ termasuk penolakan kode salah & kedaluwarsa |
+| C-03 pemulihan akun | `lupa.html`, `/api/akun/lupa` (anti-enumerasi) + `/pulihkan` | ✅ semua sesi perangkat dicabut |
+| C-04 2FA | TOTP RFC 6238 + 3 kode cadangan + matikan dengan kata sandi | ✅ siklus aktif → masuk → matikan |
+| C-05 dasbor anggota | `akun/index.html`: profil, keamanan, aktivitas perangkat, status layanan | ✅ 29/29 UI (desktop + 360/390 px) |
+| B-10 fondasi akun | `server/akun.js`, tabel `users` + catatan JSON (`ai_findings`) | ✅ CMS tetap 401 tanpa token |
+
+**Skor kepatuhan setelah 1.5.0:** **41 → 46 butir tersedia**, 15 → **10 butir perlu diperbaiki**, 46 → **41 butir harus dibangun** (berkurang 5 butir karena Single Account menjadi fondasi bagi 7 menu anggota: Creator, Community, Business, Academy, Marketplace, Podcast, Multibahasa).
+
+**Masih terbuka dari Tahap II:**
+- Kanal email belum diaktifkan (kode modul siap: Resend/SMTP/webhook). Sampai kredensial dipasang, verifikasi email & pemulihan mandiri belum mengirim surel — anggota dibantu lewat `AKUN_EMAIL_TERUSAN`/`halo@mbcindonesia.tv`.
+- `docs/MIGRASI-1.5.0.sql` belum dijalankan (opsional; rilis berjalan tanpa itu).
+- Menu anggota lanjutan (berita tersimpan, kiriman saya, notifikasi, langganan) dijadwalkan 1.6.0.
+
+**Uji rilis 1.5.0:** salinan produksi dipulihkan ke PostgreSQL lokal sebagai DB uji; API **54/54** dan UI **29/29** lulus, diulang dua kali; halaman lama tetap 200; `/newsroom` tetap 401.
+
+**Skor kepatuhan setelah 1.4.16:** 34 → **41 butir tersedia**, 21 → **15 butir perlu diperbaiki**, 46 butir baru tetap (dipimpin Single Account).
+
+**Uji produksi rilis 1.4.16:** 11/11 lulus (analitik, statistik beranda, penonton live, 2 filter rubrik/wilayah, halaman rubrik, formulir kontributor, tombol lapor, validasi server, responsif Android 360 & iPhone 390). CMS tetap 401 tanpa token.
