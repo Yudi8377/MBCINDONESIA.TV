@@ -88,6 +88,23 @@ module.exports = function pasangAkun(app, ctx) {
   function ip(req) { try { return clientIp(req) || '-'; } catch (e) { return '-'; } }
   function ua(req) { return String(req.headers['user-agent'] || '-').slice(0, 180); }
 
+  /* Membedakan gangguan DB sementara (503) dari kesalahan aplikasi (500),
+     supaya pesan ke pengguna jujur dan log tidak menyesatkan. */
+  function galatDb(e) {
+    const m = String((e && (e.code || e.message)) || '');
+    return /ECONNREFUSED|ETIMEDOUT|ENOTFOUND|ECONNRESET|EPIPE|timeout|too many clients|sorry, too many|terminating connection|connection terminated/i.test(m);
+  }
+  function balasGalat(res, e, label) {
+    console.error('[akun] ' + label + ':', e.message);
+    if (galatDb(e)) {
+      return res.status(503).json({
+        error: 'Layanan sedang sibuk. Coba lagi dalam beberapa detik.',
+        sementara: true,
+      });
+    }
+    return res.status(500).json({ error: label });
+  }
+
   const emailSah = (e) => /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(String(e || '').trim());
   const normEmail = (e) => String(e || '').trim().toLowerCase();
 
@@ -468,8 +485,7 @@ module.exports = function pasangAkun(app, ctx) {
           : 'Akun dibuat. Klik "Kirim kode verifikasi" di dasbor, lalu periksa email Anda.',
       });
     } catch (e) {
-      console.error('[akun] daftar:', e.message);
-      return res.status(500).json({ error: 'Pendaftaran gagal diproses' });
+      return balasGalat(res, e, 'Pendaftaran gagal diproses');
     }
   });
 
@@ -504,8 +520,7 @@ module.exports = function pasangAkun(app, ctx) {
       const dataAkun = publik(u);
       return res.json({ ok: true, token, akun: dataAkun, anggota: dataAkun });
     } catch (e) {
-      console.error('[akun] masuk:', e.message);
-      return res.status(500).json({ error: 'Masuk gagal diproses' });
+      return balasGalat(res, e, 'Masuk gagal diproses');
     }
   });
 
@@ -552,8 +567,7 @@ module.exports = function pasangAkun(app, ctx) {
       const dataAkun = publik(u);
       res.json({ ok: true, akun: dataAkun, anggota: dataAkun });
     } catch (e) {
-      console.error('[akun] patch saya:', e.message);
-      res.status(500).json({ error: 'Perubahan profil gagal disimpan' });
+      return balasGalat(res, e, 'Perubahan profil gagal disimpan');
     }
   });
 
@@ -576,8 +590,7 @@ module.exports = function pasangAkun(app, ctx) {
       await pool.query(`INSERT INTO audit_log(action, who) VALUES($1,$2)`, ['Akun: ganti sandi', req.akun.email]).catch(() => {});
       res.json({ ok: true, pesan: 'Kata sandi diperbarui. Perangkat lain telah dikeluarkan.' });
     } catch (e) {
-      console.error('[akun] sandi:', e.message);
-      res.status(500).json({ error: 'Ganti sandi gagal diproses' });
+      return balasGalat(res, e, 'Ganti sandi gagal diproses');
     }
   });
 
@@ -599,8 +612,7 @@ module.exports = function pasangAkun(app, ctx) {
         berlakuDetik: 600,
       });
     } catch (e) {
-      console.error('[akun] otp kirim:', e.message);
-      res.status(500).json({ error: 'Kode gagal dibuat' });
+      return balasGalat(res, e, 'Kode gagal dibuat');
     }
   });
 
@@ -619,8 +631,7 @@ module.exports = function pasangAkun(app, ctx) {
       await pool.query(`INSERT INTO audit_log(action, who) VALUES($1,$2)`, ['Akun: email terverifikasi', email]).catch(() => {});
       res.json({ ok: true, pesan: 'Email berhasil diverifikasi.' });
     } catch (e) {
-      console.error('[akun] otp verifikasi:', e.message);
-      res.status(500).json({ error: 'Verifikasi gagal diproses' });
+      return balasGalat(res, e, 'Verifikasi gagal diproses');
     }
   });
 
@@ -649,8 +660,7 @@ module.exports = function pasangAkun(app, ctx) {
         berlakuDetik: 600,
       });
     } catch (e) {
-      console.error('[akun] lupa:', e.message);
-      res.status(500).json({ error: 'Permintaan pemulihan gagal diproses' });
+      return balasGalat(res, e, 'Permintaan pemulihan gagal diproses');
     }
   });
 
@@ -680,8 +690,7 @@ module.exports = function pasangAkun(app, ctx) {
       u.profil = await profilBaca(u.id);
       res.json({ ok: true, token, akun: publik(u), pesan: 'Kata sandi dipulihkan. Semua perangkat lain telah dikeluarkan.' });
     } catch (e) {
-      console.error('[akun] pulihkan:', e.message);
-      res.status(500).json({ error: 'Pemulihan gagal diproses' });
+      return balasGalat(res, e, 'Pemulihan gagal diproses');
     }
   });
 
@@ -700,8 +709,7 @@ module.exports = function pasangAkun(app, ctx) {
         pesan: 'Pindai kode QR di aplikasi autentikator, lalu masukkan 6 digit untuk konfirmasi.',
       });
     } catch (e) {
-      console.error('[akun] 2fa aktifkan:', e.message);
-      res.status(500).json({ error: '2FA gagal disiapkan' });
+      return balasGalat(res, e, '2FA gagal disiapkan');
     }
   });
 
@@ -721,8 +729,7 @@ module.exports = function pasangAkun(app, ctx) {
       await pool.query(`INSERT INTO audit_log(action, who) VALUES($1,$2)`, ['Akun: 2FA aktif', req.akun.email]).catch(() => {});
       res.json({ ok: true, pesan: '2FA aktif. Simpan kode cadangan ini di tempat aman.', kodeCadangan: cadangan });
     } catch (e) {
-      console.error('[akun] 2fa konfirmasi:', e.message);
-      res.status(500).json({ error: '2FA gagal diaktifkan' });
+      return balasGalat(res, e, '2FA gagal diaktifkan');
     }
   });
 
@@ -738,8 +745,7 @@ module.exports = function pasangAkun(app, ctx) {
       await pool.query(`INSERT INTO audit_log(action, who) VALUES($1,$2)`, ['Akun: 2FA dimatikan', req.akun.email]).catch(() => {});
       res.json({ ok: true, pesan: '2FA dimatikan. Masuk kembali hanya memakai kata sandi.' });
     } catch (e) {
-      console.error('[akun] 2fa matikan:', e.message);
-      res.status(500).json({ error: '2FA gagal dimatikan' });
+      return balasGalat(res, e, '2FA gagal dimatikan');
     }
   });
 
@@ -761,8 +767,7 @@ module.exports = function pasangAkun(app, ctx) {
         duaFaktor: !!(await duaFaktorBaca(req.akun.id)),
       });
     } catch (e) {
-      console.error('[akun] aktivitas:', e.message);
-      res.status(500).json({ error: 'Aktivitas gagal dimuat' });
+      return balasGalat(res, e, 'Aktivitas gagal dimuat');
     }
   });
 
