@@ -1,3 +1,29 @@
+## [1.5.1] — 2026-11-21 — FILTER RUBRIK, WILAYAH, DAN TOPIK
+
+### Keluhan yang diselesaikan
+`berita.html?artikel=n-bmkg-kediri-banjir&rubrik=daerah` menampilkan chip
+`Semua; Lingkungan; Ekonomi; Budaya; Teknologi; Pendidikan` — tidak sesuai konteks rubrik.
+Akar masalahnya bukan satu baris kode: blok `syncFromCMS()` **menimpa** `#topicChips` dengan
+chip berbasis topik setiap `/api/newsroom/public-list` mengembalikan artikel.
+
+### Yang diperbaiki (semua masalah sejenis, bukan hanya gejala)
+- Chip = **satu set rubrik + jumlah berita**, chip aktif mengikuti URL, "Semua" hanya aktif bila tanpa filter.
+- Pil "Rubrik: … ✕" / "Wilayah: … ✕" untuk menghapus filter; artikel yang dibaca diselaraskan dengan hasil filter.
+- URL mempertahankan `utm_*` dan memetakan tautan lama `?topik=` → `?rubrik=`.
+- Rubrik & wilayah punya satu definisi (`RUBRIK`, `WILAYAH`, `WILAYAH_JATIM`) + alias
+  (politik/hukum/sosial/opini → nasional, jawa-timur → jatim) + `tebakWilayah()` untuk artikel CMS.
+- Slug rubrik tak dikenal tidak lagi diam-diam menampilkan semua berita: daftar kosong + peringatan jelas.
+- `rubrik.html` menghitung angka dari data yang sama, ikut menyegarkan saat CMS masuk, wilayah kosong ditandai "belum ada".
+- `sw.js`: `/api/*` **tidak lagi cache-first** (dulu daftar berita CMS bisa basi berhari-hari), cache naik ke `mbc-tv-v5`.
+- Konfirmasi kiriman warga menyebut rubrik/wilayah tujuan.
+- `/api/newsroom/public-list` mengirim `wilayah` bila kolomnya ada (aman tanpa migrasi).
+
+### Uji
+- Lokal: 16 skenario URL + 8 interaksi (`ops/uji-filter-berita.py`) — lulus, tanpa galat JS; 6 halaman diperiksa.
+- Produksi: 9/9 skenario URL + interaksi chip/✕/pencarian — lulus; `caches` = `mbc-tv-v5`; versi `/api/health` = 1.5.1.
+- Catatan insiden: saat verifikasi, Supabase pooler sempat menolak koneksi ~3 menit
+  (`max clients reached in session mode`), lalu pulih sendiri; bukan akibat rilis ini.
+
 ## [1.5.0] — 2026-11-24 — MBC SINGLE ACCOUNT
 
 ### Satu akun untuk seluruh layanan MBC Indonesia

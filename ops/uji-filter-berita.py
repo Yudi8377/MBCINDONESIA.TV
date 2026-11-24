@@ -5,6 +5,8 @@ import json, sys
 from playwright.sync_api import sync_playwright
 
 B = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8101"
+# CMS tiruan hanya dipakai saat uji lokal; di produksi pakai data CMS asli.
+PAKAI_CMS_TIRUAN = "127.0.0.1" in B or "localhost" in B
 CMS = {"articles": [
  {"slug":"cms-pasar","title":"Pasar Setono Betek Ramai Jelang Akhir Tahun","deck":"Pedagang melaporkan kenaikan pembeli.","channel":"Ekonomi","body":"Paragraf satu.\n\nParagraf dua.","published_at":"2026-11-21T08:00:00Z","tags":["pasar"],"hero_image":""},
  {"slug":"cms-teknologi","title":"Pelatihan Literasi AI untuk Guru Kediri","deck":"Guru belajar AI etis.","channel":"Teknologi","body":"Isi.\n\nDua.","published_at":"2026-11-21T07:00:00Z","tags":["ai"],"hero_image":""},
@@ -35,8 +37,9 @@ def cek(br, jalur):
     p = ctx.new_page()
     galat = []
     p.on("pageerror", lambda e: galat.append(str(e)))
-    p.route("**/api/newsroom/public-list", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps(CMS)))
-    p.goto(B + jalur, wait_until="networkidle"); p.wait_for_timeout(1200)
+    if PAKAI_CMS_TIRUAN:
+        p.route("**/api/newsroom/public-list", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps(CMS)))
+    p.goto(B + jalur, wait_until="domcontentloaded"); p.wait_for_timeout(2500)
     d = {
       "chips": p.eval_on_selector_all("#topicChips button", "e=>e.map(x=>x.textContent.replace(/\\s+/g,' ').trim()+(x.classList.contains('active')?'‹AKTIF›':''))") if p.query_selector("#topicChips") else [],
       "kartu": p.eval_on_selector_all("#list .art-card", "e=>e.map(x=>x.querySelector('h3').textContent)") if p.query_selector("#list") else [],
@@ -71,7 +74,8 @@ with sync_playwright() as pw:
             kelas.append(nama)
     # uji interaksi: klik chip, klik kartu, tombol hapus filter, pencarian
     ctx = br.new_context(viewport={"width": 1280, "height": 900}); p = ctx.new_page()
-    p.route("**/api/newsroom/public-list", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps(CMS)))
+    if PAKAI_CMS_TIRUAN:
+        p.route("**/api/newsroom/public-list", lambda r: r.fulfill(status=200, content_type="application/json", body=json.dumps(CMS)))
     print("\n== INTERAKSI ==")
     p.goto(B + "/berita.html", wait_until="networkidle"); p.wait_for_timeout(1000)
     p.click("#topicChips button[data-rubrik=ekonomi]"); p.wait_for_timeout(500)

@@ -47,7 +47,19 @@ di seluruh situs (daftar berita, halaman rubrik, pencarian, kiriman warga, servi
 - Halaman: `berita.html`, `rubrik.html`, `index.html`, `kontributor.html`, `live.html`, `watch.html` — **tanpa galat JS**.
 - Konfirmasi kiriman warga: "✅ … Berita Anda akan tampil di rubrik BUDAYA / wilayah KEDIRI setelah disetujui."
 
-## 4. Catatan untuk tim IT
+## 4. Hasil uji produksi (21/11/2026, `https://mbcindonesia-tv.vercel.app`, deploy `dpl_B1SpiWa77TNfAhgJUSjzikvz7uY1`, commit `0efe63e`)
+
+- Versi `/api/health` = **1.5.1**, `db:true`.
+- URL keluhan: chip `Semua 8 | Daerah 6‹AKTIF› | Nasional 1 | Internasional 2 | Budaya 1 | Teknologi 1 | Ekonomi 3 | Pendidikan 1 | Lingkungan 1`, kartu 6, artikel dibaca BMKG. **Sesuai konteks.**
+- 9/9 skenario URL lulus (rubrik, wilayah, `?topik=` lama, tanpa filter); tidak ada galat JS.
+- Interaksi: klik chip Budaya → 1 kartu + artikel budaya; pil ✕ → kembali 8 berita; pencarian "kopi" → 1 hasil.
+- `rubrik.html`: 8 berita / 8 rubrik, wilayah Kediri 5, Jawa Timur 6, Bojonegoro/Surabaya/Malang "belum ada".
+- Service worker aktif: `caches` = `mbc-tv-v5` (cache lama terhapus otomatis).
+- `/api/newsroom/public-list` mengembalikan field `wilayah` (2 artikel tayang).
+- Halaman lain tanpa galat JS: `/`, `/berita.html`, `/rubrik.html`, `/live.html`, `/watch.html`, `/kontributor.html`, `/masuk.html`, `/daftar.html`, `/akun/`.
+- Catatan: saat verifikasi, pooler Supabase menolak koneksi ±3 menit ("max clients reached in session mode") lalu pulih sendiri; bukan akibat rilis ini.
+
+## 5. Catatan untuk tim IT
 
 1. Kalau ingin wilayah CMS benar-benar tersimpan (bukan ditebak), jalankan migrasi kolom:
    `ALTER TABLE articles ADD COLUMN IF NOT EXISTS wilayah TEXT;`
