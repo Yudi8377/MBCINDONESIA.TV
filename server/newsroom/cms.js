@@ -1115,12 +1115,14 @@ async function viewPengguna(root) {
   const saya = d.saya || {};
   const migrasi = d.migrasi || {};
   const adaStatus = !!migrasi.status;
+  const jumlahStaf = (d.pengguna || []).filter(u => !u.anggota_publik).length;
+  const jumlahPublik = (d.pengguna || []).length - jumlahStaf;
 
   const peranPil = (p, aktif) => `<span class="pg-peran ${esc(p)}">${esc(aktif)}</span>`;
 
   root.innerHTML = `
   <div class="cms-panel">
-    <h3>Pengguna &amp; Peran <span class="cms-sub">${d.total} akun staf</span></h3>
+    <h3>Pengguna &amp; Peran <span class="cms-sub">${jumlahStaf} akun staf${jumlahPublik ? ` · ${jumlahPublik} anggota publik disembunyikan` : ''}</span></h3>
     <p class="cms-sub" style="margin-bottom:.6rem">
       Kelola akun karyawan di sini. <b>Anggota publik</b> (pendaftar dari halaman masuk) tidak perlu diberi peran internal —
       mereka otomatis tercatat sebagai Anggota Publik dan tidak bisa masuk Newsroom.
@@ -1131,7 +1133,9 @@ async function viewPengguna(root) {
     <div class="cms-bar">
       <input id="pgCari" placeholder="Cari nama / email…" style="flex:1;min-width:180px;padding:.45rem .55rem;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.04);color:var(--text)">
       <button class="cms-btn primary" id="pgBaru">+ Akun staf baru</button>
-      <span class="cms-sub" id="pgInfo"></span>
+      <label style="display:flex;align-items:center;gap:.4rem;font-size:.76rem;color:var(--muted);cursor:pointer">
+        <input type="checkbox" id="pgPublik"> tampilkan anggota publik${jumlahPublik ? ` (${jumlahPublik})` : ''}
+      </label>
     </div>
     <div id="pgTabel"></div>
   </div>
@@ -1153,7 +1157,9 @@ async function viewPengguna(root) {
 
   function render() {
     const cari = ($('#pgCari').value || '').toLowerCase().trim();
-    const baris = daftar.filter(u => !cari || u.nama.toLowerCase().includes(cari) || u.email.toLowerCase().includes(cari) || (u.jabatan || '').toLowerCase().includes(cari));
+    const lihatPublik = $('#pgPublik') && $('#pgPublik').checked;
+    const baris = daftar.filter(u => (lihatPublik || !u.anggota_publik) &&
+      (!cari || u.nama.toLowerCase().includes(cari) || u.email.toLowerCase().includes(cari) || (u.jabatan || '').toLowerCase().includes(cari)));
     $('#pgTabel').innerHTML = baris.length ? `<div style="overflow-x:auto"><table class="pg-tabel">
       <thead><tr><th>Nama</th><th>Email</th><th>Peran</th><th>Jabatan</th><th>Status</th><th></th></tr></thead>
       <tbody>${baris.map(u => `<tr class="${u.status === 'nonaktif' ? 'pg-nonaktif' : ''}">
@@ -1169,10 +1175,13 @@ async function viewPengguna(root) {
           ${adaStatus ? `<button class="cms-btn ghost" data-status="${u.id}" data-nilai="${u.status === 'nonaktif' ? 'aktif' : 'nonaktif'}">${u.status === 'nonaktif' ? 'Aktifkan' : 'Nonaktifkan'}</button>` : ''}
         </td>
       </tr>`).join('')}</tbody></table></div>`
-      : `<div class="cms-empty">Tidak ada akun yang cocok dengan “${esc(cari)}”.</div>`;
+      : `<div class="cms-empty">${cari
+          ? `Tidak ada akun yang cocok dengan “${esc(cari)}”${lihatPublik ? '' : ' di antara akun staf — coba centang “tampilkan anggota publik”'}.`
+          : 'Belum ada akun staf. Tambahkan lewat “+ Akun staf baru”.'}</div>`;
   }
   render();
   $('#pgCari').addEventListener('input', render);
+  if ($('#pgPublik')) $('#pgPublik').addEventListener('change', render);
 
   /* peran: pilih langsung di kolom (tanpa mengetik kode peran) */
   $('#pgTabel').addEventListener('change', async e => {
