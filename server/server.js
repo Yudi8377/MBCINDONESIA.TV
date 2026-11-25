@@ -623,6 +623,8 @@ require('./newsroom-api')(app, {
 require('./newsroom-agen')(app, { pool, requireAuth, audit });
 /* Panel administrator: kelola pengguna & peran (khusus peran admin). */
 require('./newsroom-pengguna')(app, { pool, requireAuth, audit });
+/* Registri dokumen 19 modul (1.6.2): CRUD + alur status + cetak, generik dari server/skema-modul.js */
+require('./newsroom-modul')(app, { pool, requireAuth, audit });
 
 /* ================= PINTU INTERNAL (NEWSROOM) =================
    Newsroom adalah dapur produksi: tidak boleh diakses anonim dan tidak diindeks.
@@ -679,7 +681,7 @@ app.use('/newsroom', (req, res, next) => {
       /* RBAC tingkat halaman: modul editorial hanya untuk editorial & direksi.
          Peran lain (keuangan, penjualan) diarahkan ke ruang kerjanya di /workspace/. */
       /* Setelah token sah: sajikan berkas CMS dari server/newsroom (bukan dari folder statis) */
-      const berkasCms = { '/index.html': 'index.html', '/cms.js': 'cms.js' }[p];
+      const berkasCms = { '/index.html': 'index.html', '/cms.js': 'cms.js', '/cms-modul.js': 'cms-modul.js' }[p];
       if (berkasCms) {
         res.setHeader('Cache-Control', 'no-store');
         res.setHeader('X-Robots-Tag', 'noindex, nofollow');
