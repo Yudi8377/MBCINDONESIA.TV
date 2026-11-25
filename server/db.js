@@ -24,9 +24,23 @@ const isSupabasePooler = /pooler\.supabase\.com/.test(connectionString);
    koneksi menganggur cepat ditutup. Transaction pooler (:6543) tidak butuh
    penyesuaian ini, tetapi nilainya tetap aman untuknya. */
 const SERVERLESS = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.FUNCTION_TARGET);
+/* Port menentukan mode Supavisor:
+   5432 = session mode (jatah 15 klien per proyek, dihitung per koneksi terbuka)
+   6543 = transaction mode (koneksi dipinjam per transaksi, aman untuk serverless)
+   Selama host masih pooler dan port masih 5432, seburuk apa pun kode ini,
+   trafik nyata bisa menghabiskan 15 jatah itu dan memunculkan
+   "(EMAXCONNSESSION) max clients reached in session mode". */
+let modePooler = 'lain';
+try {
+  if (isSupabasePooler) modePooler = new URL(connectionString).port === '6543' ? 'transaction' : 'sesi';
+} catch (_) { /* biarkan 'lain' */ }
+if (isSupabasePooler && modePooler === 'sesi' && SERVERLESS) {
+  console.warn('[pg] PERINGATAN: serverless memakai session pooler (:5432, jatah 15 klien). ' +
+    'Ganti port SUPABASE_DB_URL ke 6543 (transaction pooler) agar login tidak gagal saat trafik naik.');
+}
 const batasKlien = Number(
   process.env.PG_POOL_MAX ||
-  (SERVERLESS ? (isSupabasePooler ? 1 : 2) : (isSupabasePooler ? 5 : 10))
+  (isSupabasePooler ? (modePooler === 'sesi' ? 1 : (SERVERLESS ? 3 : 5)) : (SERVERLESS ? 2 : 10))
 );
 
 const pool = new Pool({
@@ -67,10 +81,10 @@ pool.query = async function (...args) {
 const dbInfo = (() => {
   try {
     const u = new URL(connectionString);
-    return { host: u.hostname, database: u.pathname.slice(1) || 'postgres', user: u.username,
+    return { host: u.hostname, port: u.port || '5432', database: u.pathname.slice(1) || 'postgres', user: u.username,
       provider: /supabase/.test(u.hostname) ? 'supabase' : /neon/.test(u.hostname) ? 'neon' : 'lokal',
-      pooler: isSupabasePooler, ssl: isRemote };
-  } catch (_) { return { host: '?', database: '?', provider: '?', pooler: false, ssl: isRemote }; }
+      pooler: isSupabasePooler, pooler_mode: modePooler, ssl: isRemote };
+  } catch (_) { return { host: '?', port: '?', database: '?', provider: '?', pooler: false, pooler_mode: 'lain', ssl: isRemote }; }
 })();
 
 module.exports = { pool, dbInfo: { ...dbInfo, max_clients: batasKlien, serverless: SERVERLESS } };
