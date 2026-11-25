@@ -67,6 +67,11 @@ const mdPill = (t, c) => `<span style="display:inline-block;font-size:.64rem;fon
   .md-2{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}
   .md-3{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem}
   @media(max-width:720px){.md-2,.md-3{grid-template-columns:1fr}}
+  .md-bagian{border:1px solid var(--line);border-radius:11px;padding:.7rem .8rem .3rem;margin-bottom:.75rem;background:rgba(255,255,255,.017)}
+  .md-bagian legend{font-size:.7rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--red2);padding:0 .4rem}
+  .md-grid{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}
+  .md-grid > .md-f[data-lebar="full"]{grid-column:1 / -1}
+  @media(max-width:720px){.md-grid{grid-template-columns:1fr}}
   .md-cek{display:flex;gap:.45rem;align-items:flex-start;font-size:.76rem;color:#dbe2f0}
   .md-cek input{width:auto;margin-top:.15rem}
   .md-galat{background:rgba(255,82,69,.12);border:1px solid rgba(255,82,69,.45);border-radius:8px;padding:.45rem .55rem;font-size:.73rem;color:#ffd9d5;margin-bottom:.6rem;line-height:1.5}
@@ -136,11 +141,24 @@ function mdFieldHtml(f, v) {
     inp = `<input id="${id}" data-kunci="${f.kunci}" type="${tipe}"${step}${ph} value="${mdEsc(f.jenis === 'uang' || f.jenis === 'angka' ? (v == null ? '' : v) : (v || ''))}"${f.pola ? ' data-pola="' + mdEsc(f.pola) + '"' : ''}>`;
   }
   const bentuk = f.jenis === 'centang' ? '' : `<label for="${id}">${mdEsc(f.label)}${f.wajib ? ' <b>*</b>' : ''}</label>`;
-  return `<div class="md-f" data-f="${f.kunci}">${bentuk}${inp}${bantu}${acuan}</div>`;
+  return `<div class="md-f" data-f="${f.kunci}" data-lebar="${f.lebar === 'full' || f.jenis === 'textarea' ? 'full' : 'half'}">${bentuk}${inp}${bantu}${acuan}</div>`;
 }
 
 function mdFormHtml(skema, data) {
   const d = data || {};
+  /* 1.6.3 — bila field punya 'bagian', form dirender bersection (judul + grid) */
+  if ((skema.field || []).some(f => f.bagian)) {
+    const peta = new Map();
+    skema.field.forEach(f => {
+      const b = f.bagian || 'Lainnya';
+      if (!peta.has(b)) peta.set(b, []);
+      peta.get(b).push(f);
+    });
+    return Array.from(peta.entries()).map(([judul, daftar]) => {
+      const isiBagian = daftar.map(f => mdFieldHtml(f, d[f.kunci])).join('');
+      return `<fieldset class="md-bagian"><legend>${mdEsc(judul)}</legend><div class="md-grid">${isiBagian}</div></fieldset>`;
+    }).join('');
+  }
   const kel = [];
   let buf = [];
   skema.field.forEach((f) => {
@@ -229,15 +247,17 @@ function mdCetakTabel(modulId) {
 }
 
 /* ---------- panel utama ---------- */
-let MD_STATUS = { draf: 'Draf' };
 let MD_ALUR = { draf: ['diperiksa'], diperiksa: ['disetujui'], disetujui: ['final'], final: ['arsip'] };
+let MD_STATUS = { draf: 'Draf' };
+/* status puncak = butuh wewenang penyetuju; dipakai untuk mewarnai tombol */
+const mdPuncak = (s) => ['tayang', 'final', 'menang', 'aktif', 'berlaku', 'diterbitkan', 'disetujui', 'selesai', 'dipakai', 'tampil'].includes(s);
 
 function modulPanel(modulId) {
   const st = mdState(modulId);
   return `<section class="md-panel" id="mdPanel" data-modul="${mdEsc(modulId)}">
     <div class="md-head">
       <div>
-        <h3><span>🗂 Modul ${mdEsc(modulId)}</span><span id="mdJumlah" style="font-size:.68rem;font-weight:600;color:var(--muted)"></span></h3>
+        <h3><span id="mdJudul">🗂 Modul ${mdEsc(modulId)}</span><span id="mdJumlah" style="font-size:.68rem;font-weight:600;color:var(--muted)"></span></h3>
         <div class="md-note" id="mdNote">Memuat modul…</div>
       </div>
       <div style="display:flex;gap:.3rem;flex-wrap:wrap">
@@ -261,11 +281,16 @@ function modulPasang(root, modulId) {
     const isi = p.querySelector('#mdIsi');
     if (pertama) isi.innerHTML = '<div class="md-kosong">Memuat modul…</div>';
     try {
-      const [sk, daftar] = await Promise.all([
-        st.skema ? Promise.resolve({ skema: st.skema, alur: MD_ALUR, status_label: MD_STATUS }) : mdApi.get(`/modul/${modulId}/skema`),
+      let sk;
+      const [hasilSkema, daftar] = await Promise.all([
+        mdApi.get(`/modul/${modulId}/skema`),
         mdApi.get(`/modul/${modulId}?limit=25&page=${st.page}` + (st.cari ? `&cari=${encodeURIComponent(st.cari)}` : '') + (st.status ? `&status=${st.status}` : ''))
       ]);
-      st.skema = sk.skema; MD_ALUR = sk.alur || MD_ALUR; MD_STATUS = sk.status_label || MD_STATUS;
+      sk = hasilSkema;
+      st.skema = sk.skema;
+      st.alur = sk.alur || MD_ALUR;
+      st.label = sk.status_label || MD_STATUS;
+      MD_ALUR = st.alur; MD_STATUS = st.label;
       st.data = daftar; st.muat = true; st.galat = null;
     } catch (e) {
       st.muat = true; st.galat = e.message;
@@ -274,7 +299,12 @@ function modulPasang(root, modulId) {
       return;
     }
     const skema = st.skema;
-    p.querySelector('#mdNote').innerHTML = `${mdEsc(skema.deskripsi || '')} <span style="color:#8ab4ff">Prefiks nomor: <b>${mdEsc(skema.prefiks)}</b></span>`;
+    const judulEl = p.querySelector('#mdJudul');
+    if (judulEl) judulEl.textContent = '🗂 ' + (skema.judul || modulId);
+    MD_ALUR = st.alur || MD_ALUR;
+    MD_STATUS = st.label || MD_STATUS;
+    p.querySelector('#mdNote').innerHTML = `${mdEsc(skema.deskripsi || '')} <span style="color:#8ab4ff">Prefiks nomor: <b>${mdEsc(skema.prefiks)}</b></span>
+      <span style="color:var(--muted)"> · Alur menu ini: <b>${Object.keys(MD_ALUR).filter(x => x !== 'arsip').map(x => mdEsc(MD_STATUS[x] || x)).join(' → ')}</b></span>`;
     render();
   };
 
@@ -300,11 +330,16 @@ function modulPasang(root, modulId) {
   const render = () => {
     const d = st.data || { dokumen: [], total: 0, status: {} };
     const skema = st.skema;
+    if (st.alur) MD_ALUR = st.alur;
+    if (st.label) MD_STATUS = st.label;
     const jumlah = d.total;
-    const tab = ['', ...Object.keys(MD_ALUR)].map(t => {
+    /* urutan tab = urutan siklus menu ini; status akhir (arsip) ditaruh paling kanan */
+    const urut = Object.keys(MD_ALUR).filter(x => x !== 'arsip');
+    const tab = ['', ...urut, 'arsip'].map(t => {
       const n = t ? (d.status?.[t] || 0) : jumlah;
       const lab = t ? (MD_STATUS[t] || t) : 'Semua';
-      return `<button class="md-btn md-tab ${st.status === t ? 'on' : ''}" data-tab="${t}">${mdEsc(lab)}${n ? ' ' + n : ''}</button>`;
+      const kunciTab = t === 'arsip' ? 'arsip' : t;
+      return `<button class="md-btn md-tab ${st.status === kunciTab ? 'on' : ''}" data-tab="${kunciTab}" title="${t ? 'Tahap ' + mdEsc(lab) : 'Semua tahap'}">${mdEsc(lab)}${n ? ' ' + n : ''}</button>`;
     }).join('');
     const halaman = Math.max(1, Math.ceil(jumlah / 25));
     p.querySelector('#mdIsi').innerHTML = `
@@ -390,6 +425,8 @@ function modulPasang(root, modulId) {
     try { r = await mdApi.get(`/modul/${modulId}/${id}`); }
     catch (e) { wadah.innerHTML = `<div class="md-info">${mdEsc(e.message)}</div>`; return; }
     const d = r.dokumen, skema = st.skema;
+    if (st.alur) MD_ALUR = st.alur;
+    if (st.label) MD_STATUS = st.label;
     const lanjut = (MD_ALUR[d.status] || []);
     const nilai = skema.field.filter(f => d.data[f.kunci] !== undefined && d.data[f.kunci] !== null && d.data[f.kunci] !== '').map(f => {
       let v = d.data[f.kunci];
@@ -406,7 +443,7 @@ function modulPasang(root, modulId) {
             <div class="md-note"><span class="md-nomor">${mdEsc(d.nomor || '')}</span> · ${mdPill(MD_STATUS[d.status] || d.status, MD_COLOR[d.status] || '#8ab4ff')} · dibuat ${mdEsc(d.dibuat_oleh || '—')}, ${mdTgl(d.dibuat_at)}</div></div>
           <div class="md-aksi">
             <button class="md-btn" data-act="ubah" ${['final', 'arsip'].includes(d.status) ? 'disabled' : ''}>✎ Ubah</button>
-            ${lanjut.map(s => `<button class="md-btn ${['disetujui', 'final'].includes(s) ? 'go' : s === 'dibatalkan' ? 'danger' : 'warn'}" data-status="${s}">→ ${mdEsc(MD_STATUS[s] || s)}</button>`).join('')}
+            ${lanjut.map(s => `<button class="md-btn ${mdPuncak(s) ? 'go' : (s === 'dibatalkan' || s === 'tarik' || s === 'batal' || s === 'ditolak' || s === 'kalah') ? 'danger' : 'warn'}" data-status="${s}">→ ${mdEsc(MD_STATUS[s] || s)}</button>`).join('')}
             <button class="md-btn" data-act="riwayat">🕘 Riwayat</button>
             <button class="md-btn" data-act="cetak">🖨 Cetak dokumen</button>
             <button class="md-btn danger" data-act="hapus">🗑 Arsipkan</button>
