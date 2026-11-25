@@ -751,4 +751,25 @@ Object.values(modul).forEach(m => {
   if (f) f.opsi = m.jenisDokumen;
 });
 
-module.exports = { ALUR, STATUS_LABEL, modul, layak, ambil, semua };
+/* ---------- lapisan 1.6.3: siklus hidup per menu + form enterprise ---------- */
+require('./skema-1.6.3')(modul, STATUS_LABEL);
+
+/* Modul tanpa siklus sendiri mewarisi alur baku supaya tidak pernah undefined. */
+Object.values(modul).forEach(m => {
+  if (!m.siklus) m.siklus = ALUR;
+  if (!m.labelStatus) m.labelStatus = STATUS_LABEL;
+  if (!m.statusAwal) m.statusAwal = Object.keys(m.siklus)[0];
+});
+
+/* ---------- aksesoris siklus (dipakai rute & UI) ---------- */
+const siklusModul = (k) => (layak(k) && modul[k].siklus) || ALUR;
+const labelModul = (k) => (layak(k) && modul[k].labelStatus) || STATUS_LABEL;
+const statusAwal = (k) => (layak(k) && modul[k].statusAwal) || 'draf';
+/* status yang butuh wewenang penyetuju (admin/direksi/pemred) */
+const butuhSetuju = (k, status) => {
+  const m = layak(k) ? modul[k] : null;
+  const daftar = (m && m.butuhSetuju) || ['disetujui', 'final'];
+  return daftar.includes(status);
+};
+
+module.exports = { ALUR, STATUS_LABEL, modul, layak, ambil, semua, siklusModul, labelModul, statusAwal, butuhSetuju };
