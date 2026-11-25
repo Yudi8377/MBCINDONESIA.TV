@@ -92,10 +92,13 @@ module.exports = function pasangAkun(app, ctx) {
      supaya pesan ke pengguna jujur dan log tidak menyesatkan. */
   function galatDb(e) {
     const m = String((e && (e.code || e.message)) || '');
-    return /ECONNREFUSED|ETIMEDOUT|ENOTFOUND|ECONNRESET|EPIPE|timeout|too many clients|sorry, too many|terminating connection|connection terminated/i.test(m);
+    /* EMAXCONNSESSION / 53300 = jatah klien pooler Supabase habis (bukan salah
+       pengguna). Ini gangguan kapasitas, harus tampil sebagai "coba lagi",
+       bukan 500 yang menakutkan. */
+    return /ECONNREFUSED|ETIMEDOUT|ENOTFOUND|ECONNRESET|EPIPE|timeout|too many clients|sorry, too many|terminating connection|connection terminated|EMAXCONNSESSION|53300|57P0[123]|08\d{3}/i.test(m);
   }
   function balasGalat(res, e, label) {
-    console.error('[akun] ' + label + ':', e.message);
+    console.error('[akun] ' + label + ':', (e && (e.code ? e.code + ' — ' : '')) + (e && e.message));
     if (galatDb(e)) {
       return res.status(503).json({
         error: 'Layanan sedang sibuk. Coba lagi dalam beberapa detik.',
@@ -181,27 +184,47 @@ module.exports = function pasangAkun(app, ctx) {
     };
   };
 
-  /* Sesi: daftar sid aktif per akun (batas 8 perangkat). */
+  /* Sesi: daftar sid aktif per akun (batas 8 perangkat).
+     PENTING: baca-ubah-tulis harus BERURUTAN per akun. Tanpa kunci ini, dua
+     login bersamaan (atau klik ganda) sama-sama membaca daftar lama lalu
+     masing-masing menulis barisnya sendiri → catatan sesi berduplikat dan
+     jumlah perangkat membengkak. */
+  const kunciSesi = new Map();
+  function berurutan(kunci, tugas) {
+    const sebelumnya = kunciSesi.get(kunci) || Promise.resolve();
+    const berikutnya = sebelumnya.catch(() => {}).then(tugas);
+    kunciSesi.set(kunci, berikutnya);
+    /* Bersihkan entri bila sudah selesai agar Map tidak tumbuh tanpa batas. */
+    berikutnya.finally(() => { if (kunciSesi.get(kunci) === berikutnya) kunciSesi.delete(kunci); });
+    return berikutnya;
+  }
+
   async function sesiDaftar(uid) {
     const c = await bacaCatatan('sesi', String(uid));
     const d = (c && c.daftar) || [];
     const kini = Date.now();
-    return d.filter((x) => x.exp > kini);
+    /* dedupe berdasarkan sid: pertahanan terhadap data lama yang sudah kembar */
+    const terlihat = new Set();
+    return d.filter((x) => x && x.sid && x.exp > kini && !terlihat.has(x.sid) && terlihat.add(x.sid));
   }
-  async function sesiTambah(uid, sid, req, info) {
-    const d = await sesiDaftar(uid);
-    d.unshift({
-      sid, exp: Date.now() + TTL_JAM * 3600e3,
-      ip: ip(req), ua: ua(req), waktu: new Date().toISOString(),
-      perangkat: info || 'peramban',
+  function sesiTambah(uid, sid, req, info) {
+    return berurutan('sesi:' + uid, async () => {
+      const d = await sesiDaftar(uid);
+      d.unshift({
+        sid, exp: Date.now() + TTL_JAM * 3600e3,
+        ip: ip(req), ua: ua(req), waktu: new Date().toISOString(),
+        perangkat: info || 'peramban',
+      });
+      await hapusCatatan('sesi', String(uid));
+      await simpanCatatan('sesi', String(uid), { daftar: d.slice(0, 8) });
     });
-    await hapusCatatan('sesi', String(uid));
-    await simpanCatatan('sesi', String(uid), { daftar: d.slice(0, 8) });
   }
-  async function sesiHapus(uid, sid) {
-    const d = (await sesiDaftar(uid)).filter((x) => x.sid !== sid);
-    await hapusCatatan('sesi', String(uid));
-    if (d.length) await simpanCatatan('sesi', String(uid), { daftar: d });
+  function sesiHapus(uid, sid) {
+    return berurutan('sesi:' + uid, async () => {
+      const d = (await sesiDaftar(uid)).filter((x) => x.sid !== sid);
+      await hapusCatatan('sesi', String(uid));
+      if (d.length) await simpanCatatan('sesi', String(uid), { daftar: d });
+    });
   }
   async function sesiValid(uid, sid) {
     if (!uid) return false;
