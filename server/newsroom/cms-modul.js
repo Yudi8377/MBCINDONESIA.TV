@@ -65,6 +65,43 @@ const mdPill = (t, c) => `<span style="display:inline-block;font-size:.64rem;fon
   .md-f .md-acuan{font-size:.62rem;color:#f2c14e;margin-top:.16rem;line-height:1.4}
   .md-f.md-err input,.md-f.md-err select,.md-f.md-err textarea{border-color:#ff5245}
   .md-2{display:grid;grid-template-columns:1fr 1fr;gap:.55rem}
+  /* ===== 1.6.4 — mode LANDSCAPE untuk formulir panjang =====
+     Formulir dokumen resmi (mis. Artikel: 49 kolom dalam 8 bagian) tidak nyaman
+     diisi di kotak 460px. Saat tombol "Dokumen baru"/"Ubah" ditekan, modal diberi
+     kelas .md-lebar: melebar sampai 1240px, isi dibagi 2–3 kolom, tiap bagian
+     bisa dilipat, dan tombol simpan menempel di bawah supaya selalu terjangkau. */
+  .modal.md-lebar{width:min(1240px,96vw);max-width:none;padding:0;overflow:hidden;
+    display:flex;flex-direction:column;max-height:92vh}
+  .modal.md-lebar > .md-lwa{display:flex;flex-direction:column;min-height:0;max-height:92vh}
+  .md-lw-head{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;
+    padding:.7rem 1rem;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2}
+  .md-lw-head h3{margin:0;font-size:1rem;flex:1 1 auto;min-width:200px}
+  .md-lw-aksi{display:flex;gap:.35rem;flex-wrap:wrap}
+  .md-lw-note{padding:.45rem 1rem;font-size:.68rem;color:var(--muted);border-bottom:1px solid var(--line);line-height:1.45}
+  .md-lebar .md-form{max-height:none;overflow:auto;padding:.85rem 1rem;flex:1 1 auto;min-height:0}
+  .md-lebar .md-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem .8rem}
+  .md-lebar .md-grid > .md-f[data-lebar="full"]{grid-column:1 / -1}
+  .md-lebar .md-f textarea{min-height:120px}
+  .md-lebar .md-f textarea[data-kunci="isi"],.md-lebar .md-f textarea[data-kunci="ringkasan"]{min-height:190px}
+  .md-lw-kaki{position:sticky;bottom:0;display:flex;gap:.4rem;justify-content:flex-end;flex-wrap:wrap;
+    padding:.6rem 1rem;border-top:1px solid var(--line);background:var(--panel);z-index:2}
+  .md-lw-kaki .md-info-kecil{flex:1 1 auto;font-size:.66rem;color:var(--muted);align-self:center}
+  /* bagian yang bisa dilipat */
+  .md-bagian > legend{cursor:pointer;user-select:none}
+  .md-bagian > legend::after{content:" ▾";font-size:.6rem;opacity:.6}
+  .md-bagian.lipat > legend::after{content:" ▸"}
+  .md-bagian.lipat > *:not(legend){display:none}
+  /* penunjuk: X bagian belum diisi */
+  .md-bagian > legend .md-lw-isi{font-weight:600;font-size:.6rem;color:var(--muted);
+    text-transform:none;letter-spacing:0;margin-left:.35rem}
+  .md-bagian.lipat > legend .md-lw-isi{color:#f2c14e}
+  /* 2 kolom bila layar sedang, 1 kolom bila ponsel */
+  @media(max-width:1080px){.md-lebar .md-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(max-width:720px){
+    .modal.md-lebar{width:100%;max-height:96dvh;border-radius:14px 14px 0 0}
+    .md-lebar .md-grid{grid-template-columns:1fr}
+    .md-lebar .md-form{padding:.6rem .7rem}
+  }
   .md-3{display:grid;grid-template-columns:repeat(3,1fr);gap:.55rem}
   @media(max-width:720px){.md-2,.md-3{grid-template-columns:1fr}}
   .md-bagian{border:1px solid var(--line);border-radius:11px;padding:.7rem .8rem .3rem;margin-bottom:.75rem;background:rgba(255,255,255,.017)}
@@ -142,6 +179,93 @@ function mdFieldHtml(f, v) {
   }
   const bentuk = f.jenis === 'centang' ? '' : `<label for="${id}">${mdEsc(f.label)}${f.wajib ? ' <b>*</b>' : ''}</label>`;
   return `<div class="md-f" data-f="${f.kunci}" data-lebar="${f.lebar === 'full' || f.jenis === 'textarea' ? 'full' : 'half'}">${bentuk}${inp}${bantu}${acuan}</div>`;
+}
+
+/* ---------- 1.6.4: mode LANDSCAPE untuk formulir panjang ---------- */
+/* Modal standar hanya 460px. Formulir dokumen resmi butuh ruang: saat form
+   dibuka, #modalBox diberi kelas .md-lebar (sampai 1240px, 3 kolom).
+   Kelas dilepas saat modal ditutup, supaya modal lain tetap berukuran normal. */
+function mdKotakModal() {
+  const ov = document.getElementById('modalOverlay');
+  return document.getElementById('modalBox') || (ov && ov.firstElementChild) || null;
+}
+function mdLebar(aktif) {
+  const box = mdKotakModal();
+  if (box) box.classList.toggle('md-lebar', !!aktif);
+}
+/* Penjaga sekali-pasang. Tiga jalur penutupan harus tetap melepas mode lebar:
+   1) Esc  → tutup formulir (dan semua cara tutup lain tetap aman),
+   2) klik latar overlay,
+   3) apa pun yang memanggil closeModal() — dipantau lewat MutationObserver,
+      sebab closeModal hanya menambah kelas .hidden pada overlay. */
+(function mdLebarPasang() {
+  if (typeof document === 'undefined' || window.__mdLebarPasang) return;
+  window.__mdLebarPasang = true;
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !document.getElementById('mdForm')) return;
+    e.stopPropagation();
+    if (typeof closeModal === 'function') closeModal();
+    mdLebar(false);
+  }, true);
+
+  document.addEventListener('click', (e) => {
+    const ov = document.getElementById('modalOverlay');
+    if (ov && e.target === ov) mdLebar(false);
+  }, true);
+
+  const pantau = () => {
+    const ov = document.getElementById('modalOverlay');
+    if (!ov || ov.__mdPantau) return;
+    ov.__mdPantau = true;
+    new MutationObserver(() => {
+      if (ov.classList.contains('hidden')) mdLebar(false);
+    }).observe(ov, { attributes: true, attributeFilter: ['class'] });
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', pantau);
+  else pantau();
+})();
+
+/* beri tahu berapa kolom wajib yang sudah/belum terisi + tandai bagian yang kosong */
+function mdHitungTerisi() {
+  const form = document.getElementById('mdForm');
+  if (!form) return;
+  const isiDari = (f) => {
+    const el = f.querySelector('[data-kunci]');
+    if (!el) return false;
+    if (el.type === 'checkbox') return el.checked;
+    return String(el.value == null ? '' : el.value).trim() !== '';
+  };
+  const wajib = [...form.querySelectorAll('.md-f')].filter(f => f.querySelector('label b'));
+  const terisi = wajib.filter(isiDari).length;
+  const info = document.getElementById('mdLwHitung');
+  if (info) {
+    info.textContent = wajib.length
+      ? `Kolom wajib terisi: ${terisi}/${wajib.length}`
+      : 'Tidak ada kolom wajib di menu ini.';
+    info.style.color = (wajib.length && terisi === wajib.length) ? '#2fd27a' : '';
+  }
+  form.querySelectorAll('.md-bagian').forEach(bag => {
+    const w = [...bag.querySelectorAll('.md-f')].filter(f => f.querySelector('label b'));
+    const kurang = w.filter(f => !isiDari(f)).length;
+    let tag = bag.querySelector('.md-lw-isi');
+    if (!tag) { tag = document.createElement('span'); tag.className = 'md-lw-isi'; const lg = bag.querySelector('legend'); if (lg) lg.appendChild(tag); }
+    tag.textContent = kurang ? `· ${kurang} wajib belum diisi` : (w.length ? '· lengkap' : '');
+  });
+}
+
+/* bagian formulir bisa dilipat supaya form 8 bagian tidak melelahkan di mata */
+function mdPasangLipat() {
+  const form = document.getElementById('mdForm');
+  if (!form) return;
+  form.querySelectorAll('.md-bagian > legend').forEach(lg => {
+    lg.addEventListener('click', () => {
+      const bag = lg.parentElement;
+      bag.classList.toggle('lipat');
+    });
+  });
+  form.addEventListener('input', mdHitungTerisi);
+  form.addEventListener('change', mdHitungTerisi);
 }
 
 function mdFormHtml(skema, data) {
@@ -254,7 +378,11 @@ const mdPuncak = (s) => ['tayang', 'final', 'menang', 'aktif', 'berlaku', 'diter
 
 function modulPanel(modulId) {
   const st = mdState(modulId);
-  return `<section class="md-panel" id="mdPanel" data-modul="${mdEsc(modulId)}">
+  /* data-tabmilik="modul" menandai bahwa tombol tab ini milik panel modul.
+     Tanpa penanda ini, handler klik milik view lain (mis. Master Data) yang
+     dipasang pada elemen induk ikut menangkap klik tab dan menggambar ulang
+     view-nya sendiri — akibatnya tab terlihat "tidak berfungsi". */
+  return `<section class="md-panel" id="mdPanel" data-modul="${mdEsc(modulId)}" data-tabmilik="modul">
     <div class="md-head">
       <div>
         <h3><span id="mdJudul">🗂 Modul ${mdEsc(modulId)}</span><span id="mdJumlah" style="font-size:.68rem;font-weight:600;color:var(--muted)"></span></h3>
@@ -361,9 +489,17 @@ function modulPasang(root, modulId) {
       if (e.key !== 'Enter') return;
       st.cari = e.target.value.trim(); st.page = 1; muat();
     });
-    p.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => {
+    /* Tab status: ditangani di fase CAPTURE dan propagasinya dihentikan.
+       Dulu klik tab juga sampai ke handler klik milik view lain (Master Data)
+       yang terpasang pada elemen induk, sehingga view berganti dan tab tampak
+       "tidak berfungsi". Dengan capture + stopPropagation, hanya modul ini
+       yang bereaksi. */
+    p.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      if (b.dataset.tab === st.status) return;      /* tab yang sama: tidak perlu muat ulang */
       st.status = b.dataset.tab; st.page = 1; muat();
-    }));
+    }, true));
     p.querySelectorAll('[data-buka]').forEach(el => el.addEventListener('click', () => mdDetail(Number(el.dataset.buka))));
     p.querySelectorAll('#mdPrev,#mdNext').forEach(b => b.addEventListener('click', () => {
       st.page += b.id === 'mdNext' ? 1 : -1; muat();
@@ -376,18 +512,38 @@ function modulPasang(root, modulId) {
     if (st.pilih) mdDetail(st.pilih, true);
   };
 
-  /* formulir tambah/ubah di modal */
+  /* formulir tambah/ubah di modal — 1.6.4: mode LANDSCAPE (melebar) */
   const mdForm = async (rekam) => {
     const skema = st.skema;
     const data = rekam ? rekam.data : {};
-    openModal(`<h3 style="margin-bottom:.2rem">${rekam ? 'Ubah' : 'Baru'} — ${mdEsc(skema.judul)}</h3>
-      <div class="md-note" style="margin-bottom:.6rem">Nomor urut otomatis (${mdEsc(skema.prefiks)}). Kolom bertanda <b style="color:#ff5245">*</b> wajib. Baris ⚖ = dasar hukum field tersebut.</div>
-      <div id="mdGalat"></div>
+    mdLebar(true);
+    openModal(`<div class="md-lwa">
+      <div class="md-lw-head">
+        <h3>${rekam ? 'Ubah' : 'Dokumen baru'} — ${mdEsc(skema.judul)}</h3>
+        <span class="md-lw-aksi">
+          <button class="md-btn" id="mdLipatSemua" type="button" title="Lipat/buka semua bagian">⤢ Lipat semua</button>
+          <button class="md-btn" id="mdTutupX" type="button" title="Tutup (Esc)">✕</button>
+        </span>
+      </div>
+      <div class="md-lw-note">Nomor urut otomatis (${mdEsc(skema.prefiks)}) · kolom bertanda <b style="color:#ff5245">*</b> wajib ·
+        ⚖ = dasar hukum kolom · <b>Esc</b> menutup · bagian bisa dilipat dengan mengeklik judulnya.</div>
+      <div id="mdGalat" style="padding:0 1rem"></div>
       <form id="mdForm" class="md-form" onsubmit="return false">${mdFormHtml(skema, data)}</form>
-      <div style="display:flex;gap:.4rem;justify-content:flex-end;margin-top:.7rem;flex-wrap:wrap">
-        <button class="md-btn" id="mdBatal">Batal</button>
-        <button class="md-btn primary" id="mdSimpan">${rekam ? 'Simpan perubahan' : 'Simpan sebagai draf'}</button>
-      </div>`);
+      <div class="md-lw-kaki">
+        <span class="md-info-kecil" id="mdLwHitung"></span>
+        <button class="md-btn" id="mdBatal" type="button">Batal</button>
+        <button class="md-btn primary" id="mdSimpan" type="button">${rekam ? 'Simpan perubahan' : 'Simpan sebagai draf'}</button>
+      </div>
+    </div>`);
+    mdPasangLipat();
+    mdHitungTerisi();
+    document.getElementById('mdTutupX').addEventListener('click', closeModal);
+    document.getElementById('mdLipatSemua').addEventListener('click', (ev) => {
+      const bag = [...document.querySelectorAll('#mdForm .md-bagian')];
+      const adaLipat = bag.some(b => b.classList.contains('lipat'));
+      bag.forEach(b => b.classList.toggle('lipat', !adaLipat));
+      ev.currentTarget.textContent = adaLipat ? '⤢ Lipat semua' : '⤡ Buka semua';
+    });
     document.getElementById('mdBatal').addEventListener('click', closeModal);
     document.getElementById('mdSimpan').addEventListener('click', async (ev) => {
       const btn = ev.currentTarget;
@@ -402,7 +558,7 @@ function modulPasang(root, modulId) {
           const out = await mdApi.post(`/modul/${modulId}`, isi);
           toast('Dokumen dibuat: ' + out.dokumen.nomor);
         }
-        closeModal();
+        closeModal(); mdLebar(false);
         st.page = 1; st.pilih = null;
         await muat();
         audit(`Modul ${modulId}: ${rekam ? 'ubah' : 'dokumen baru'} oleh ${(session() || {}).name || 'operator'}`);
