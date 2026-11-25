@@ -35,6 +35,9 @@ module.exports = function mountNewsroom(app, ctx) {
      editorial & direksi — ditegakkan di server, bukan hanya disembunyikan di UI. */
   app.use('/api/newsroom', (req, res, next) => {
     if (req.path === '/gate' || req.path.startsWith('/public/') || req.path === '/public-list') return next();
+    /* Registri dokumen 19 modul: izinnya per modul (RBAC.boleh) di server/newsroom-modul.js,
+       jadi peran finance/sales tetap bisa memakai modul keuangan/komersialnya sendiri. */
+    if (req.path === '/modul' || req.path.startsWith('/modul/')) return next();
     return requireAuth(req, res, () => {
       if (req.user && req.user.status && String(req.user.status).toLowerCase() === 'nonaktif') {
         return res.status(403).json({ error: 'Akun Anda dinonaktifkan. Hubungi administrator.' });
