@@ -302,7 +302,7 @@ input,select,textarea{font-size:16px}   /* iOS: cegah zoom otomatis */
     <div class="topbar">
       <button class="btn btn-ghost btn-sm" id="menuToggle" aria-label="Menu">☰</button>
       <div><div class="crumb">MBC Indonesia Group / Newsroom</div><h1 id="viewTitle">Dasbor Direksi</h1></div>
-      <div class="topbar-right"><span class="env-pill" id="connPill" style="color:var(--gold);border-color:rgba(242,193,78,.4);background:rgba(242,193,78,.12)">MEMERIKSA…</span><span class="env-pill">PRODUKSI · ID</span><a class="btn btn-ghost btn-sm hide-sm" href="../index.html" target="_blank" rel="noopener">Lihat Situs Publik ↗</a></div>
+      <div class="topbar-right"><span class="env-pill" id="connPill" style="color:var(--gold);border-color:rgba(242,193,78,.4);background:rgba(242,193,78,.12)">MEMERIKSA…</span><span class="env-pill" id="verPill" title="Versi aplikasi yang dilayani server">VERSI …</span><a class="btn btn-ghost btn-sm hide-sm" href="../index.html" target="_blank" rel="noopener">Lihat Situs Publik ↗</a></div>
     </div>
     <main class="content" id="viewRoot"></main>
   </div>
@@ -359,11 +359,30 @@ const api = {
     return data;
   },
   async probe() {
-    try { const r = await fetch('/api/health'); this.online = !!(r && r.ok); } catch (_) { this.online = false; }
+    try {
+      const r = await fetch('/api/health');
+      this.online = !!(r && r.ok);
+      const d = await r.json().catch(() => null);
+      this.version = (d && d.version) || null;
+      /* penanda versi: supaya jelas apakah halaman ini memuat kode baru atau belum */
+      this.modulSiap = typeof window.modulTanam === 'function';
+    } catch (_) { this.online = false; }
     updateConnPill();
   }
 };
 function updateConnPill() {
+  const vp = document.getElementById('verPill');
+  if (vp) {
+    const v = api.version || '?';
+    const baru = api.modulSiap;
+    vp.textContent = 'v' + v + (baru ? ' · MODUL AKTIF' : ' · MODUL BELUM ADA');
+    vp.title = baru
+      ? 'Halaman ini memuat kerangka modul 1.6.2 (toolbar CRUD di 19 menu).'
+      : 'Server masih menyajikan versi lama: berkas 1.6.2 belum terpasang di produksi.';
+    vp.style.color = baru ? '#2fd27a' : '#f2c14e';
+    vp.style.borderColor = baru ? 'rgba(47,210,122,.4)' : 'rgba(242,193,78,.4)';
+    vp.style.background = baru ? 'rgba(47,210,122,.12)' : 'rgba(242,193,78,.12)';
+  }
   const el = document.getElementById('connPill'); if (!el) return;
   const small = window.innerWidth <= 480;
   if (api.online) {
@@ -677,6 +696,8 @@ function viewDashboard(root){
       <div class="alert-item"><span>✅</span><div><b>Gerbang Fase 3 → 4</b>: Direksi menyetujui peluncuran ERP (akuntansi + payroll) target Januari 2027. Lihat roadmap 18 bulan (Blueprint §10).</div></div>
     </div>
   </div>`;
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "dashboard");
 }
 
 /* ---- CRM & Pipeline (kanban + drag&drop) ---- */
@@ -756,6 +777,8 @@ function viewCrm(root){
       };
     }
   };
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "crm");
 }
 
 /* ---- Iklan & Sponsorship ---- */
@@ -799,6 +822,8 @@ function viewAds(root){
       else toast('Kontrak sudah terpenuhi 100%.');
     })();
   };
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "ads");
 }
 
 /* ---- Produksi & Studio ---- */
@@ -852,6 +877,8 @@ function viewProduksi(root){
       };
     }
   };
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "produksi");
 }
 
 /* ---- Keuangan ---- */
@@ -913,6 +940,8 @@ function viewKeuangan(root){
       audit('Ekspor CSV piutang diunduh'); toast('CSV piutang diunduh.');
     }
   };
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "keuangan");
 }
 
 /* ---- Master Data ---- */
@@ -956,6 +985,8 @@ function viewMaster(root){
     const d=masterData(); d[masterTab].rows.unshift(vals); saveMaster(d);
     audit(`Master Data (${masterTab}): “${vals[0]}” ditambahkan`); viewMaster(root); toast('Data tersimpan & tercatat.');
   });
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "master");
 }
 
 /* ---- Laporan & BI ---- */
@@ -996,6 +1027,8 @@ function viewLaporan(root){
     const csv='Area,Indikator,Nilai,Tren\n'+kpiRows.map(r=>r.slice(0,4).join(',')).join('\n');
     const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='kpi-mbcindonesia.csv'; a.click(); URL.revokeObjectURL(a.href); audit('Ekspor CSV KPI diunduh'); toast('CSV KPI diunduh (lokal).');
   });
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "laporan");
 }
 
 /* ---- Audit Trail ---- */
@@ -1007,6 +1040,8 @@ function viewAudit(root){
   <div class="panel"><h3>Audit Trail <span class="pill ${online?'pill-green':'pill-gold'}" style="margin-left:.4rem">${online?'Server · PostgreSQL':'Lokal · offline'}</span> <span class="muted" style="font-size:.68rem;font-weight:400">siapa · kapan · apa — append-only, 150 entri terakhir</span></h3>
     ${log.length===0?'<p class="muted">Belum ada aktivitas tercatat.</p>':log.map(l=>`<div class="audit-item"><time>${esc(l.at)}</time><div><b>${esc(l.t)}</b><br><span class="muted" style="font-size:.66rem">oleh ${esc(l.who)}</span></div></div>`).join('')}
   </div>`;
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "audit");
 }
 
 /* ---- Pengaturan ---- */
@@ -1061,6 +1096,8 @@ function viewPengaturan(root){
     ['mbc_crm','mbc_produksi','mbc_campaigns','mbc_approvals','mbc_master','mbc_audit','mbc_newsletter','mbc_chat_log'].forEach(k=>localStorage.removeItem(k));
     audit('Data demo di-reset'); toast('Data demo dikembalikan ke kondisi awal.'); setTimeout(()=>location.reload(),700);
   });
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "pengaturan");
 }
 
 /* ---------- AI Assistant (rule-based demo) ---------- */
@@ -1092,6 +1129,7 @@ $('#aiForm').addEventListener('submit',e=>{
 if (document.readyState === 'complete') boot();
 else window.addEventListener('load', boot);
 </script>
+<script src="cms-modul.js"></script>
 <script src="cms.js"></script>
 </body>
 </html>
