@@ -108,12 +108,32 @@ function validasi(skema, data) {
 }
 
 /* ringkasan satu baris untuk kolom 'judul' */
+/* Ringkasan satu baris untuk kolom 'judul'.
+   1.6.4 — dulu daftar kolom ditulis tetap dan TIDAK memuat 'judul_artikel',
+   sehingga dokumen artikel yang disimpan berjudul "Berita (straight news)"
+   (label jenis), bukan judul naskahnya. Sekarang: nama kolom yang lazim,
+   lalu kolom mana pun yang labelnya bernuansa judul, lalu teks terpanjang. */
 function judulDari(skema, data) {
-  const calon = ['uraian', 'judul_perkara', 'agenda', 'pokok', 'proyek', 'perusahaan', 'pengiklan', 'nama', 'objek', 'maksud', 'judul_dok', 'komentar', 'staf', 'temuan'];
+  const calon = ['judul_artikel', 'judul', 'uraian', 'perihal', 'agenda', 'judul_perkara',
+    'pokok', 'proyek', 'perusahaan', 'pengiklan', 'nama', 'objek', 'maksud',
+    'judul_dok', 'komentar', 'staf', 'temuan'];
   for (const k of calon) {
     const v = bersih(data[k]);
     if (v) return v.slice(0, 180);
   }
+  /* cadangan 1: kolom yang labelnya menyiratkan judul (mis. "Judul Artikel") */
+  for (const f of (skema.field || [])) {
+    if (/judul|nama|perihal|uraian|agenda|pokok|ringkas/i.test(f.label || '')) {
+      const v = bersih(data[f.kunci]);
+      if (v) return v.slice(0, 180);
+    }
+  }
+  /* cadangan 2: isian teks terpanjang — hampir selalu judul/uraian */
+  const teks = (skema.field || [])
+    .filter(f => f.jenis === 'teks' || f.jenis === 'textarea')
+    .map(f => bersih(data[f.kunci])).filter(Boolean)
+    .sort((a, b) => b.length - a.length);
+  if (teks.length) return teks[0].slice(0, 180);
   const jenis = (skema.jenisDokumen.find(j => j.nilai === data.jenis) || {}).label;
   return jenis || 'Dokumen tanpa uraian';
 }
@@ -180,6 +200,17 @@ module.exports = function mountModul(app, ctx) {
     next();
   }
 
+  /* Penjaga id: /modul/kalender/abc sebelumnya menghasilkan
+     `invalid input syntax for type bigint: "NaN"` → HTTP 500 seolah server
+     rusak. Id yang bukan angka harus dijawab 400, bukan 500. */
+  function idSah(req, res, next) {
+    const v = String(req.params.id || '');
+    if (!/^[0-9]{1,18}$/.test(v)) {
+      return res.status(400).json({ error: 'Id dokumen harus berupa angka' });
+    }
+    next();
+  }
+
   /* ---------- daftar dokumen ---------- */
   app.get('/api/newsroom/modul/:modul', requireAuth, (req, res, next) => gerbang(req.params.modul)(req, res, next), async (req, res) => {
     try {
@@ -213,11 +244,20 @@ module.exports = function mountModul(app, ctx) {
       const { salah, data } = validasi(skema, req.body || {});
       if (salah.length) return res.status(400).json({ error: salah[0], rincian: salah });
       const judul = judulDari(skema, data);
+      /* Nomor urut resmi. 1.6.4: bila nomor hasil counter ternyata sudah terpakai
+         (pernah terjadi setelah data disalin dari CMS lama), ambil nomor berikutnya
+         alih-alih menyimpan nomor kembar. Nomor kembar pada dokumen resmi =
+         masalah hukum, jadi ini dijaga di sisi server, bukan hanya di UI. */
       let nomor = null;
       try {
-        const r = await q('SELECT modul_nomor_berikut($1,$2) AS nomor', [modul, skema.prefiks]);
-        nomor = r.rows[0].nomor;
-      } catch (_) { nomor = `${skema.prefiks}/${Date.now().toString().slice(-6)}/${new Date().getFullYear()}`; }
+        for (let coba = 0; coba < 50 && !nomor; coba++) {
+          const r = await q('SELECT modul_nomor_berikut($1,$2) AS nomor', [modul, skema.prefiks]);
+          const calon = r.rows[0].nomor;
+          const pakai = await q('SELECT 1 FROM modul_rekam WHERE modul=$1 AND nomor=$2 LIMIT 1', [modul, calon]);
+          if (!pakai.rows.length) nomor = calon;
+        }
+      } catch (_) { nomor = null; }
+      if (!nomor) nomor = `${skema.prefiks}/${Date.now().toString().slice(-6)}/${new Date().getFullYear()}`;
       const awal = SKEMA.statusAwal(modul);
       const { rows } = await q(`INSERT INTO modul_rekam (modul, nomor, judul, status, data, dibuat_oleh)
         VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, nomor, judul, status, data, dibuat_at`,
@@ -230,7 +270,7 @@ module.exports = function mountModul(app, ctx) {
   });
 
   /* ---------- baca satu ---------- */
-  app.get('/api/newsroom/modul/:modul/:id', requireAuth, (req, res, next) => gerbang(req.params.modul)(req, res, next), async (req, res) => {
+  app.get('/api/newsroom/modul/:modul/:id', requireAuth, (req, res, next) => gerbang(req.params.modul)(req, res, next), idSah, async (req, res) => {
     try {
       if (!(await cekTabel())) return pesanMigrasi(res);
       const { rows } = await q('SELECT * FROM modul_rekam WHERE id=$1 AND modul=$2', [Number(req.params.id), req.params.modul]);
@@ -240,7 +280,7 @@ module.exports = function mountModul(app, ctx) {
   });
 
   /* ---------- ubah isian ---------- */
-  app.patch('/api/newsroom/modul/:modul/:id', requireAuth, (req, res, next) => gerbang(req.params.modul, 'tulis')(req, res, next), async (req, res) => {
+  app.patch('/api/newsroom/modul/:modul/:id', requireAuth, (req, res, next) => gerbang(req.params.modul, 'tulis')(req, res, next), idSah, async (req, res) => {
     try {
       if (!(await cekTabel())) return pesanMigrasi(res);
       const modul = req.params.modul, id = Number(req.params.id);
@@ -267,7 +307,7 @@ module.exports = function mountModul(app, ctx) {
   });
 
   /* ---------- ubah status ---------- */
-  app.post('/api/newsroom/modul/:modul/:id/status', requireAuth, (req, res, next) => gerbang(req.params.modul)(req, res, next), async (req, res) => {
+  app.post('/api/newsroom/modul/:modul/:id/status', requireAuth, (req, res, next) => gerbang(req.params.modul)(req, res, next), idSah, async (req, res) => {
     try {
       if (!(await cekTabel())) return pesanMigrasi(res);
       const modul = req.params.modul, id = Number(req.params.id);
@@ -296,7 +336,7 @@ module.exports = function mountModul(app, ctx) {
   });
 
   /* ---------- arsipkan (tidak menghapus) ---------- */
-  app.delete('/api/newsroom/modul/:modul/:id', requireAuth, (req, res, next) => gerbang(req.params.modul)(req, res, next), async (req, res) => {
+  app.delete('/api/newsroom/modul/:modul/:id', requireAuth, (req, res, next) => gerbang(req.params.modul)(req, res, next), idSah, async (req, res) => {
     try {
       if (!(await cekTabel())) return pesanMigrasi(res);
       const modul = req.params.modul, id = Number(req.params.id);
@@ -314,7 +354,7 @@ module.exports = function mountModul(app, ctx) {
   });
 
   /* ---------- riwayat ---------- */
-  app.get('/api/newsroom/modul/:modul/:id/riwayat', requireAuth, (req, res, next) => gerbang(req.params.modul)(req, res, next), async (req, res) => {
+  app.get('/api/newsroom/modul/:modul/:id/riwayat', requireAuth, (req, res, next) => gerbang(req.params.modul)(req, res, next), idSah, async (req, res) => {
     try {
       if (!(await cekTabel())) return pesanMigrasi(res);
       const { rows } = await q(`SELECT aksi, status_lama, status_baru, perubahan, oleh, at
@@ -324,7 +364,7 @@ module.exports = function mountModul(app, ctx) {
   });
 
   /* ---------- data cetak (dokumen resmi) ---------- */
-  app.get('/api/newsroom/modul/:modul/:id/cetak', requireAuth, (req, res, next) => gerbang(req.params.modul)(req, res, next), async (req, res) => {
+  app.get('/api/newsroom/modul/:modul/:id/cetak', requireAuth, (req, res, next) => gerbang(req.params.modul)(req, res, next), idSah, async (req, res) => {
     try {
       if (!(await cekTabel())) return pesanMigrasi(res);
       const modul = req.params.modul;
