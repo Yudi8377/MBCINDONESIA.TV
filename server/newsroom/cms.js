@@ -200,6 +200,8 @@ async function viewArticles(root) {
     const q2 = e.target.closest('[data-quickai]');
     if (q2) { runAgentQuick(q2.dataset.quickai, q2.dataset.agent); }
   });
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "articles");
 }
 
 function aiChip(n) {
@@ -621,6 +623,8 @@ async function viewDesk(root) {
     if (g) navTo(g.dataset.goto);
     if (e.target.id === 'quickTask') openTaskModal();
   }, { once: false });
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "desk");
 }
 
 async function openTaskModal() {
@@ -677,6 +681,8 @@ async function viewCalendar(root) {
       <div class="cms-sub">Tayang ${dt(a.scheduled_at)} · ${esc(a.author_name || '')}</div></div>`).join('') || '<div class="cms-empty">Belum ada artikel terjadwal.</div>'}</div>
   </div>`;
   $('#addTask2').addEventListener('click', openTaskModal);
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "calendar");
 }
 
 /* ══════════════ 5. TEMUAN AI (inbox) ══════════════ */
@@ -708,6 +714,8 @@ async function viewFindings(root) {
     if (b) { await NR.patch('/ai/findings/' + b.dataset.id, { status: b.dataset.fstatus }); toast('Temuan diperbarui'); reload(); return; }
     const o = e.target.closest('[data-openart]'); if (o) openEditor(o.dataset.openart);
   });
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "findings");
 }
 function renderFindings(fs) {
   if (!fs.length) return `<div class="cms-empty">Tidak ada temuan pada filter ini. Jalankan AI Sweep dari menu Artikel.</div>`;
@@ -756,6 +764,8 @@ async function viewMedia(root) {
     const b = e.target.closest('[data-copy]'); if (!b) return;
     try { await navigator.clipboard.writeText(b.dataset.copy); toast('Path disalin: ' + b.dataset.copy); } catch { toast(b.dataset.copy); }
   });
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "media");
 }
 
 /* ══════════════ 7. MODERASI KOMENTAR ══════════════ */
@@ -791,6 +801,8 @@ async function viewModeration(root) {
     try { await NR.post('/moderation/' + b.dataset.id, { status: b.dataset.mod }); toast('Komentar → ' + b.dataset.mod); navTo('moderation'); }
     catch (err) { toast(err.message); }
   });
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "moderation");
 }
 
 
@@ -861,6 +873,8 @@ async function viewAntrean(root) {
     try { await NR.post('/antrean/' + b.dataset.id, { status: b.dataset.act }); toast('Antrean → ' + b.dataset.act); navTo('antrean'); }
     catch (err) { toast(err.message); }
   });
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "antrean");
 }
 
 /* ══════════════ 8. ANALITIK KONTEN ══════════════ */
@@ -895,6 +909,8 @@ async function viewContentAnalytics(root) {
     ${d.top_articles.map(a => `<tr><td>${esc(a.title)}</td><td>${a.views}</td><td>${a.completion || 0}%</td><td>${a.avg_scroll || 0}%</td></tr>`).join('')}
     </tbody></table>
   </div>`;
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "content-analytics");
 }
 
 /* ══════════════ 9. STUDIO MULTI-AGEN AI (6 agen spesialis) ══════════════
@@ -1052,6 +1068,8 @@ async function viewAIStudio(root) {
   });
   root.addEventListener('click', e => { const g = e.target.closest('[data-goto]'); if (g) navTo(g.dataset.goto); });
   if (AG_STATE.hasil) renderHasil(AG_STATE.hasil, null);
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "ai-studio");
 }
 
 /* render hasil 6 agen menjadi kartu yang bisa dibaca & disimpan */
@@ -1261,6 +1279,8 @@ async function viewPengguna(root) {
       alert(`Akun dibuat.\n\nSandi sementara: ${r.sandi_sementara}\n\nSandi ini hanya tampil sekali. Sampaikan lewat kanal aman dan minta pengguna segera menggantinya.`);
     } catch (err) { toast(err.message); }
   });
+  /* modul dokumen (1.6.2): toolbar CRUD + alur status + cetak untuk menu ini */
+  if (typeof modulTanam === "function") modulTanam(root, "pengguna");
 }
 
 /* ---------- ekspos modul ke window (dipakai router newsroom/index.html) ---------- */
