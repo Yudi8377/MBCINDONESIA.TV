@@ -63,9 +63,13 @@ function bacaCms() {
   try {
     const dir = path.join(__dirname, '..', 'server', 'newsroom');
     const html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8');
-    let js = '';
-    try { js = fs.readFileSync(path.join(dir, 'cms.js'), 'utf8'); } catch (_) {}
-    _cmsCache = js ? html.replace(/<script src="cms\.js"><\/script>/g, '<script>\n' + js + '\n</script>') : html;
+    const baca = (f) => { try { return fs.readFileSync(path.join(dir, f), 'utf8'); } catch (_) { return ''; } };
+    const modulJs = baca('cms-modul.js');
+    const js = baca('cms.js');
+    let keluaran = html;
+    if (modulJs) keluaran = keluaran.replace(/<script src="cms-modul\.js"><\/script>/g, '<script>\n' + modulJs + '\n</script>');
+    if (js) keluaran = keluaran.replace(/<script src="cms\.js"><\/script>/g, '<script>\n' + js + '\n</script>');
+    _cmsCache = keluaran;
   } catch (e) {
     _cmsCache = null;
   }
