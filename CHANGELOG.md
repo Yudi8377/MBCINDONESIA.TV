@@ -1,3 +1,59 @@
+## [1.6.2] — 2026-11-21 — KERANGKA MODUL SERAGAM (19 MENU, TERSIMPAN DI DATABASE)
+
+### Masalah yang diselesaikan
+Sebelumnya 19 menu sidebar hanya menampilkan tampilan baca-saja: `viewAudit` 0 tombol,
+`viewDashboard`/`viewLaporan` tanpa CRUD, modul bisnis hanya punya beberapa endpoint
+(`crm/deals`, `ads/proof`, `keuangan/approvals`, `master/:kind`) dan tidak ada form lengkap.
+Kritik "bukan semacam tampilan papan pengumuman" benar. Sekarang **setiap** menu punya modul
+dokumen yang sama lengkapnya.
+
+### Satu komponen, sembilan belas menu
+`server/newsroom/cms-modul.js` (30 KB) memasang `modulTanam(root, id)` di akhir setiap view
+(`viewDashboard`, `viewCrm`, `viewAds`, `viewProduksi`, `viewKeuangan`, `viewMaster`,
+`viewLaporan`, `viewAudit`, `viewPengaturan`, `viewArticles`, `viewDesk`, `viewCalendar`,
+`viewFindings`, `viewMedia`, `viewModeration`, `viewAntrean`, `viewContentAnalytics`,
+`viewAIStudio`, `viewPengguna`). Panel ditanam **di atas** konten lama — tampilan lama tidak dihapus.
+
+Toolbar tiap menu: **＋ Baru**, **✎ Ubah**, **→ ubah status** (draf → diperiksa → disetujui → final),
+**🕘 Riwayat**, **🗑 Arsipkan**, **🖨 Cetak dokumen**, **🖨 Cetak daftar (tabel)**, **⬇ Ekspor CSV**,
+tab filter status berangka, pencarian, dan paging 25 baris.
+
+### Form lengkap sesuai standar penyiaran & pajak
+`server/skema-modul.js` mendefinisikan 19 modul, **197 field**, masing-masing menyebut dasar hukumnya
+(baris ⚖ di form dan blok "Dasar hukum" di hasil cetak): UU Penyiaran 32/2002 (Pasal 20, 21, 46–48),
+P3SPS & EPI, UU Pers 40/1999 + KEJ, UU PDP 27/2022, UU Hak Cipta 28/2014 (Pasal 43), UU KUP,
+UU PPN & PPh, PMK 131/2024, PER-04/PJ/2020, SAK, UU 1/1970 (K3), NIB/OSS.
+Contoh modul Keuangan & Pajak: 10 jenis dokumen (e-Faktur, bukti potong PPh 23/21/4(2), bukti
+pengeluaran, jurnal umum, SPT Masa PPN, SPT Tahunan PPh Badan, laba rugi, neraca), 20 field,
+PPh 23 dihitung otomatis, NPWP divalidasi pola `99.999.999.9-999.999`.
+
+### Tersimpan sungguhan di PostgreSQL, bukan localStorage
+`server/newsroom-modul.js` menyediakan API generik: daftar (cari/filter/paging), buat, baca, ubah,
+ubah status, riwayat, cetak, arsip. Penomoran otomatis berurut per modul per tahun lewat
+`modul_nomor_berikut()` (`KEU/0001/2026`, `IKL/0007/2026`, …). Setiap perubahan masuk
+`modul_riwayat` **dan** `audit_log`. Dokumen `final` terkunci; "hapus" = **arsip**, bukan hapus permanen
+(masa simpan 10 tahun, UU KUP Pasal 28).
+
+### Aturan yang ditegakkan server, bukan hanya UI
+- Izin dua tingkat: pemilik modul mengisi (finance → keuangan, sales → komersial, dst.),
+  penyetuju (admin/direksi/pemred) boleh membaca & menyetujui walau bukan pemilik modulnya.
+- Perpindahan status yang melompat ditolak 409; persetujuan/finalisasi oleh non-penyetuju ditolak 403.
+- Validasi wajib, pola NPWP/NIB, batas angka, dan perhitungan pajak dilakukan sebelum simpan.
+- `Cache-Control: no-store` untuk semua dokumen modul (dokumen pajak tidak boleh di-cache).
+
+### Migrasi wajib sekali jalan
+`docs/MIGRASI-1.6.2.sql` membuat `modul_rekam`, `modul_nomor` (+fungsi penomoran), `modul_riwayat`,
+`modul_lampiran`, beserta `GRANT` dan kebijakan RLS `mbc_app_all` (pola yang sama dengan tabel
+`invoices`/`master_items`). Peran aplikasi `mbc_app` tidak berhak `CREATE`, jadi migrasi dijalankan
+dari Supabase SQL Editor. Selama belum dijalankan, rute menjawab **501 + petunjuk migrasi** dan panel
+menampilkan langkahnya — tidak pernah diam-diam menyimpan ke browser.
+
+### Bukti uji
+`ops/uji-modul-db.js` **22/22** dan `ops/uji-modul-ui.js` **18/18**, keduanya dijalankan terhadap
+PostgreSQL asli (PGlite) memakai migrasi apa adanya: nomor berurut, validasi, alur status, kunci
+dokumen final, riwayat, cetak, arsip, RBAC antar modul, penyimpanan dokumen di seluruh 19 modul,
+serta UI (toolbar, form dari skema, modal, cetak dua format, ekspor CSV).
+
 ## [1.6.1] — 2026-11-21 — PERAN LENGKAP (RBAC) + PANEL ADMINISTRATOR
 
 ### Delapan peran dengan matriks izin terdokumentasi
