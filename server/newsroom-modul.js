@@ -45,6 +45,7 @@ const IZIN_MODUL = {
   pengaturan: 'cms'
 };
 
+const labelDari = (modul, status) => (SKEMA.labelModul(modul) || {})[status] || status;
 const bersih = (s) => String(s == null ? '' : s).trim();
 const angkaDari = (v) => {
   if (v === '' || v == null) return null;
@@ -163,13 +164,16 @@ module.exports = function mountModul(app, ctx) {
     const peran = req.user.role;
     const daftar = SKEMA.semua().map(m => ({
       ...m,
+      siklus: SKEMA.siklusModul(m.modul),
+      label_status: SKEMA.labelModul(m.modul),
       boleh: !IZIN_MODUL[m.modul] || RBAC.boleh(peran, IZIN_MODUL[m.modul])
     }));
     res.json({ modul: daftar, alur: SKEMA.ALUR, status_label: SKEMA.STATUS_LABEL, tabel_siap: adaTabel !== false });
   });
 
   app.get('/api/newsroom/modul/:modul/skema', requireAuth, gerbang2, (req, res) => {
-    res.json({ modul: req.params.modul, skema: SKEMA.ambil(req.params.modul), alur: SKEMA.ALUR, status_label: SKEMA.STATUS_LABEL });
+    const k = req.params.modul;
+    res.json({ modul: k, skema: SKEMA.ambil(k), alur: SKEMA.siklusModul(k), status_label: SKEMA.labelModul(k) });
   });
   function gerbang2(req, res, next) {
     if (!SKEMA.layak(req.params.modul)) return res.status(404).json({ error: 'Modul tidak dikenal' });
@@ -187,7 +191,7 @@ module.exports = function mountModul(app, ctx) {
       const halaman = Math.max(Number(req.query.page) || 1, 1);
       const where = ['modul=$1'];
       const args = [modul];
-      if (status && SKEMA.ALUR[status]) { args.push(status); where.push(`status=$${args.length}`); }
+      if (status && SKEMA.siklusModul(modul)[status]) { args.push(status); where.push(`status=$${args.length}`); }
       if (cari) { args.push(`%${cari.toLowerCase()}%`); where.push(`(lower(judul) LIKE $${args.length} OR coalesce(nomor,'') ILIKE $${args.length})`); }
       const klausa = where.join(' AND ');
       const total = (await q(`SELECT count(*)::int AS n FROM modul_rekam WHERE ${klausa}`, args)).rows[0].n;
@@ -214,11 +218,12 @@ module.exports = function mountModul(app, ctx) {
         const r = await q('SELECT modul_nomor_berikut($1,$2) AS nomor', [modul, skema.prefiks]);
         nomor = r.rows[0].nomor;
       } catch (_) { nomor = `${skema.prefiks}/${Date.now().toString().slice(-6)}/${new Date().getFullYear()}`; }
+      const awal = SKEMA.statusAwal(modul);
       const { rows } = await q(`INSERT INTO modul_rekam (modul, nomor, judul, status, data, dibuat_oleh)
-        VALUES ($1,$2,$3,'draf',$4,$5) RETURNING id, nomor, judul, status, data, dibuat_at`,
-        [modul, nomor, judul, data, pelaku(req)]);
-      await q(`INSERT INTO modul_riwayat (rekam_id, modul, aksi, status_baru, oleh) VALUES ($1,$2,'buat','draf',$3)`,
-        [rows[0].id, modul, pelaku(req)]).catch(() => {});
+        VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, nomor, judul, status, data, dibuat_at`,
+        [modul, nomor, judul, awal, data, pelaku(req)]);
+      await q(`INSERT INTO modul_riwayat (rekam_id, modul, aksi, status_baru, oleh) VALUES ($1,$2,'buat',$3,$4)`,
+        [rows[0].id, modul, awal, pelaku(req)]).catch(() => {});
       await audit(`Modul ${modul}: dokumen baru ${nomor} — ${judul.slice(0, 80)} oleh ${nama(req)}`, nama(req));
       res.status(201).json({ ok: true, dokumen: rows[0] });
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -242,7 +247,12 @@ module.exports = function mountModul(app, ctx) {
       const skema = SKEMA.ambil(modul);
       const { rows: ada } = await q('SELECT * FROM modul_rekam WHERE id=$1 AND modul=$2', [id, modul]);
       if (!ada.length) return res.status(404).json({ error: 'Dokumen tidak ditemukan' });
-      if (ada[0].status === 'final') return res.status(409).json({ error: 'Dokumen sudah final. Kembalikan ke “disetujui” dulu bila perlu perbaikan.' });
+      if (SKEMA.siklusModul(modul)[ada[0].status] && SKEMA.siklusModul(modul)[ada[0].status].length === 0) {
+        return res.status(409).json({ error: `Dokumen berstatus “${labelDari(modul, ada[0].status)}” sudah dikunci.` });
+      }
+      if (['final', 'tayang', 'menang', 'berlaku'].includes(ada[0].status)) {
+        return res.status(409).json({ error: `Dokumen berstatus “${labelDari(modul, ada[0].status)}” terkunci. Kembalikan satu langkah dulu bila perlu perbaikan.` });
+      }
       if (ada[0].status === 'arsip') return res.status(409).json({ error: 'Dokumen sudah diarsipkan dan tidak bisa diubah.' });
       const { salah, data } = validasi(skema, { ...ada[0].data, ...(req.body || {}) });
       if (salah.length) return res.status(400).json({ error: salah[0], rincian: salah });
@@ -265,20 +275,23 @@ module.exports = function mountModul(app, ctx) {
       const { rows } = await q('SELECT id, nomor, judul, status FROM modul_rekam WHERE id=$1 AND modul=$2', [id, modul]);
       if (!rows.length) return res.status(404).json({ error: 'Dokumen tidak ditemukan' });
       const dari = rows[0].status;
-      if (!SKEMA.ALUR[dari] || !SKEMA.ALUR[dari].includes(tujuan)) {
-        return res.status(409).json({ error: `Perpindahan ${SKEMA.STATUS_LABEL[dari]} → ${SKEMA.STATUS_LABEL[tujuan] || tujuan} tidak sah.` });
+      const alur = SKEMA.siklusModul(modul);
+      const lab = SKEMA.labelModul(modul);
+      if (!alur[dari] || !alur[dari].includes(tujuan)) {
+        const boleh = (alur[dari] || []).map(x => lab[x] || x).join(', ') || 'tidak ada';
+        return res.status(409).json({ error: `Perpindahan ${lab[dari] || dari} → ${lab[tujuan] || tujuan} tidak sah. Dari status ini hanya bisa ke: ${boleh}.` });
       }
-      /* wewenang: menyetujui/final hanya penyetuju (admin/direksi/pemred) */
-      if (['disetujui', 'final'].includes(tujuan) && !RBAC.boleh(req.user.role, 'setujui')) {
-        return res.status(403).json({ error: 'Hanya pemimpin redaksi/direksi/administrator yang boleh menyetujui atau memfinalkan.' });
+      /* wewenang: status puncak (tayang/final/menang/aktif/berlaku) hanya penyetuju */
+      if (SKEMA.butuhSetuju(modul, tujuan) && !RBAC.boleh(req.user.role, 'setujui')) {
+        return res.status(403).json({ error: `Status “${lab[tujuan] || tujuan}” hanya bisa diberikan oleh pemimpin redaksi/direksi/administrator.` });
       }
       const kolom = tujuan === 'diperiksa' ? ', diperiksa_oleh=$3' : tujuan === 'disetujui' ? ', disetujui_oleh=$3' : '';
       const args = kolom ? [tujuan, id, pelaku(req)] : [tujuan, id];
       await q(`UPDATE modul_rekam SET status=$1, diubah_at=now()${kolom} WHERE id=$2`, args);
       await q(`INSERT INTO modul_riwayat (rekam_id, modul, aksi, status_lama, status_baru, oleh)
         VALUES ($1,$2,'status',$3,$4,$5)`, [id, modul, dari, tujuan, pelaku(req)]).catch(() => {});
-      await audit(`Modul ${modul}: ${rows[0].nomor} → ${SKEMA.STATUS_LABEL[tujuan]} oleh ${nama(req)}`, nama(req));
-      res.json({ ok: true, id, status: tujuan, status_label: SKEMA.STATUS_LABEL[tujuan] });
+      await audit(`Modul ${modul}: ${rows[0].nomor} → ${SKEMA.labelModul(modul)[tujuan] || tujuan} oleh ${nama(req)}`, nama(req));
+      res.json({ ok: true, id, status: tujuan, status_label: SKEMA.labelModul(modul)[tujuan] || tujuan });
     } catch (e) { res.status(500).json({ error: e.message }); }
   });
 
@@ -289,7 +302,7 @@ module.exports = function mountModul(app, ctx) {
       const modul = req.params.modul, id = Number(req.params.id);
       const { rows } = await q('SELECT id, nomor, status FROM modul_rekam WHERE id=$1 AND modul=$2', [id, modul]);
       if (!rows.length) return res.status(404).json({ error: 'Dokumen tidak ditemukan' });
-      if (rows[0].status === 'final' && !RBAC.boleh(req.user.role, 'setujui')) {
+      if (['final', 'tayang', 'menang', 'berlaku'].includes(rows[0].status) && !RBAC.boleh(req.user.role, 'setujui')) {
         return res.status(403).json({ error: 'Dokumen final hanya bisa diarsipkan oleh penyetuju.' });
       }
       await q(`UPDATE modul_rekam SET status='arsip', diubah_at=now() WHERE id=$1`, [id]);
@@ -330,7 +343,7 @@ module.exports = function mountModul(app, ctx) {
       const acuan = [...new Set(skema.field.map(f => f.acuan).filter(Boolean))];
       await q(`INSERT INTO modul_riwayat (rekam_id, modul, aksi, oleh) VALUES ($1,$2,'cetak',$3)`, [d.id, modul, pelaku(req)]).catch(() => {});
       res.json({
-        dokumen: { id: d.id, nomor: d.nomor, judul: d.judul, status: d.status, status_label: SKEMA.STATUS_LABEL[d.status],
+        dokumen: { id: d.id, nomor: d.nomor, judul: d.judul, status: d.status, status_label: (SKEMA.labelModul(modul)[d.status] || d.status),
           dibuat_oleh: d.dibuat_oleh, dibuat_at: d.dibuat_at, diperiksa_oleh: d.diperiksa_oleh, disetujui_oleh: d.disetujui_oleh },
         modul: { kunci: modul, judul: skema.judul, prefiks: skema.prefiks },
         field: nilai, acuan,
