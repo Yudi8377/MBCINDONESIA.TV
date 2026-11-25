@@ -153,3 +153,32 @@ label versi; fitur tidak bergantung pada nilai itu.
   stylesheet `@page A4` sehingga sudah rapi, tetapi bukan PDF tersimpan.
 - **Verifikasi di produksi** menunggu terbit + migrasi dijalankan (keduanya butuh token/akses
   pemilik). Semua klaim di atas dibuktikan di PostgreSQL lokal, bukan di produksi.
+
+---
+
+## 8. Verifikasi produksi (25 Nov 2026, setelah terbit)
+
+Dijalankan langsung terhadap https://mbcindonesia-tv.vercel.app
+
+| Pemeriksaan | Hasil |
+|---|---|
+| `/api/health` | `db=true`, **`version=1.6.2`**, latensi 224 ms |
+| `GET /api/newsroom/modul` (token admin) | **200**, 19 modul, `tabel_siap=true` |
+| Modul keuangan/crm/ads/produksi/master/laporan/audit/pengaturan/desk/articles | **200 semua** |
+| `GET /api/newsroom/modul` tanpa token | **401** (gerbang tetap) |
+| Tabel Supabase | `modul_rekam`, `modul_nomor`, `modul_riwayat`, `modul_lampiran` |
+| Hak `mbc_app` | INSERT/UPDATE = true (GRANT + RLS berhasil) |
+| HTML `/newsroom` (200 KB) | komponen `modulTanam`, badge `verPill`, CSS `.md-panel`, `@page A4` — semua ada |
+| `ops/uji-produksi-modul.js` | **14/14 lulus** |
+| Uji UI → API produksi (jsdom) | 10/12; 2 kegagalan artefak harness, dibuktikan manual: arsip `{"status":"arsip"}` dan baris DB `arsip` |
+
+Rantai penuh terbukti di produksi: buat `KEU/0001/2026` → PPN dihitung → cari → baca →
+ubah (PPN 1,1 jt → 2,2 jt) → lompat status ditolak 409 → diperiksa → disetujui →
+riwayat `buat,ubah,status,status` → data cetak 20 field + 9 acuan hukum → arsip.
+
+Catatan data: seluruh dokumen uji sudah dihapus dari `modul_rekam`/`modul_riwayat` dan
+penomoran direset, sehingga dokumen asli pertama pemilik akan mulai dari `KEU/0001/2026`.
+
+Catatan konfigurasi: `APP_VERSION` di Vercel dinaikkan ke `1.6.2` lalu dideploy ulang
+(deploy `dpl_6DpiGEcWkQQKC1uBFTaskDqxofKV`), karena `/api/health` membaca env itu —
+bukan `package.json`.
