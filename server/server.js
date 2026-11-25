@@ -229,7 +229,8 @@ app.get('/api/health', async (req, res) => {
       ok: true, db: true, time: new Date().toISOString(), latency_ms: Date.now() - t0,
       /* provider & host ditampilkan agar operator tahu ke mana aplikasi menyambung */
       provider: dbInfo.provider, db_host: dbInfo.host, db_name: dbInfo.database,
-      tls: dbInfo.ssl, pooler: dbInfo.pooler, version: process.env.APP_VERSION || VERSI
+      tls: dbInfo.ssl, pooler: dbInfo.pooler, pooler_mode: dbInfo.pooler_mode, db_port: dbInfo.port,
+      version: process.env.APP_VERSION || VERSI
     });
   } catch (e) {
     res.status(503).json({ ok: false, db: false, provider: dbInfo.provider, db_host: dbInfo.host, error: 'Database tidak terjangkau' });
