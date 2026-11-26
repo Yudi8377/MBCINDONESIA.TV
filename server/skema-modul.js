@@ -428,6 +428,133 @@ modul.desk = {
 };
 
 /* ══════════════════════════════════════════════════════════════
+   5b. EDITORIAL — DEWAN REDAKSI & TAJUK/OPINI (1.6.4)
+
+   Dua menu baru, terpisah tegas dari berita. Alasannya jurnalistik:
+   tajuk adalah SIKAP RESMI LEMBAGA — tidak boleh ditandatangani reporter,
+   wajib lewat rapat dewan redaksi, dan wajib disetujui pemred. Kalau
+   dicampur ke menu Artikel, pembaca & audit tidak bisa membedakannya.
+   ══════════════════════════════════════════════════════════════ */
+modul.dewan = {
+  judul: 'Dewan Redaksi',
+  prefiks: 'DWR',
+  deskripsi: 'Rapat & keputusan dewan redaksi: usulan topik, penugasan liputan, evaluasi terbitan, dan sikap redaksi atas isu.',
+  jenisDokumen: [
+    { nilai: 'rapat-harian', label: 'Rapat harian (budget meeting)' },
+    { nilai: 'rapat-mingguan', label: 'Rapat mingguan (evaluasi)' },
+    { nilai: 'usulan-topik', label: 'Usulan topik / angle' },
+    { nilai: 'penugasan', label: 'Penugasan liputan' },
+    { nilai: 'sikap-redaksi', label: 'Sikap redaksi atas isu' },
+    { nilai: 'evaluasi-terbit', label: 'Evaluasi terbitan' }
+  ],
+  kolom: [
+    { kunci: 'nomor', label: 'Nomor', lebar: '13%' },
+    { kunci: 'judul', label: 'Agenda / keputusan', lebar: '35%' },
+    { kunci: 'data.jenis', label: 'Jenis', lebar: '15%' },
+    { kunci: 'data.tanggal', label: 'Tanggal', lebar: '11%' },
+    { kunci: 'data.pemimpin', label: 'Pemimpin', lebar: '14%' },
+    { kunci: 'status', label: 'Status', lebar: '12%' }
+  ],
+  field: [
+    { kunci: 'jenis', label: 'Jenis', jenis: 'pilih', wajib: true, bagian: '1. Identitas rapat' },
+    { kunci: 'agenda', label: 'Agenda / pokok bahasan', jenis: 'text', wajib: true, bagian: '1. Identitas rapat',
+      bantuan: 'Satu kalimat: apa yang diputuskan hari ini.' },
+    { kunci: 'tanggal', label: 'Tanggal', jenis: 'tanggal', wajib: true, bagian: '1. Identitas rapat' },
+    { kunci: 'pemimpin', label: 'Pemimpin rapat', jenis: 'text', wajib: true, bagian: '1. Identitas rapat' },
+    { kunci: 'peserta', label: 'Peserta', jenis: 'textarea', bagian: '1. Identitas rapat',
+      bantuan: 'Nama & jabatan, satu per baris.' },
+
+    { kunci: 'pembahasan', label: 'Pokok pembahasan', jenis: 'textarea', wajib: true, bagian: '2. Pembahasan' },
+    { kunci: 'usulan_topik', label: 'Usulan topik & angle', jenis: 'textarea', bagian: '2. Pembahasan',
+      bantuan: 'Topik yang diusulkan beserta alasan kenapa layak diberitakan.' },
+    { kunci: 'sumber_usulan', label: 'Pengusul', jenis: 'text', bagian: '2. Pembahasan' },
+    { kunci: 'rujukan', label: 'Rujukan data / dokumen', jenis: 'textarea', bagian: '2. Pembahasan' },
+
+    { kunci: 'keputusan', label: 'Keputusan rapat', jenis: 'textarea', bagian: '3. Keputusan & penugasan',
+      bantuan: 'Tulis tegas: disetujui / ditunda / ditolak, beserta alasannya.' },
+    { kunci: 'penugasan', label: 'Penugasan', jenis: 'textarea', bagian: '3. Keputusan & penugasan',
+      bantuan: 'Siapa mengerjakan apa, tenggat kapan.' },
+    { kunci: 'tenggat', label: 'Tenggat', jenis: 'tanggal', bagian: '3. Keputusan & penugasan' },
+    { kunci: 'penanggung_jawab', label: 'Penanggung jawab', jenis: 'text', bagian: '3. Keputusan & penugasan' },
+
+    { kunci: 'sikap', label: 'Sikap redaksi (bila menyangkut isu)', jenis: 'textarea', bagian: '4. Etika & risiko',
+      acuan: 'P3SPS 2012 — kewajiban menyajikan sikap secara berimbang' },
+    { kunci: 'risiko', label: 'Risiko & pertimbangan', jenis: 'textarea', bagian: '4. Etika & risiko',
+      bantuan: 'Potensi gugatan, sensitivitas politik/SARA, hak jawab yang perlu disiapkan.' },
+    { kunci: 'tautan_tajuk', label: 'Nomor tajuk terkait', jenis: 'text', bagian: '4. Etika & risiko',
+      bantuan: 'Isi bila rapat ini menghasilkan tajuk, mis. TJK/0003/2026.' },
+    { kunci: 'catatan', label: 'Catatan tambahan', jenis: 'textarea', bagian: '4. Etika & risiko' }
+  ]
+};
+
+modul.tajuk = {
+  judul: 'Tajuk & Opini',
+  prefiks: 'TJK',
+  deskripsi: 'Naskah sikap resmi lembaga: tajuk rencana, opini, dan kolom. Wajib lewat dewan redaksi dan disetujui pemred — tidak ditandatangani reporter.',
+  jenisDokumen: [
+    { nilai: 'tajuk', label: 'Tajuk rencana (sikap lembaga, tanpa nama penulis)' },
+    { nilai: 'opini', label: 'Opini (tanda tangan penulis, di luar redaksi)' },
+    { nilai: 'kolom', label: 'Kolom (penulis tetap)' },
+    { nilai: 'surat-terbuka', label: 'Surat terbuka / pernyataan resmi' },
+    { nilai: 'catatan-redaksi', label: 'Catatan redaksi (klarifikasi sikap)' }
+  ],
+  kolom: [
+    { kunci: 'nomor', label: 'Nomor', lebar: '13%' },
+    { kunci: 'judul', label: 'Judul', lebar: '37%' },
+    { kunci: 'data.jenis', label: 'Jenis', lebar: '14%' },
+    { kunci: 'data.penulis', label: 'Penulis', lebar: '16%' },
+    { kunci: 'data.tayang', label: 'Terbit', lebar: '10%' },
+    { kunci: 'status', label: 'Status', lebar: '10%' }
+  ],
+  field: [
+    { kunci: 'jenis', label: 'Jenis naskah', jenis: 'pilih', wajib: true, bagian: '1. Identitas naskah' },
+    { kunci: 'judul_naskah', label: 'Judul', jenis: 'text', wajib: true, bagian: '1. Identitas naskah' },
+    { kunci: 'topik', label: 'Topik / isu', jenis: 'text', wajib: true, bagian: '1. Identitas naskah' },
+    { kunci: 'sudut_pandang', label: 'Sudut pandang (angle)', jenis: 'textarea', bagian: '1. Identitas naskah',
+      bantuan: 'Satu paragraf: apa yang ingin ditegaskan naskah ini.' },
+    { kunci: 'nomor_rapat', label: 'Nomor rapat dewan redaksi', jenis: 'text', bagian: '1. Identitas naskah',
+      wajib: true, bantuan: 'Tajuk wajib berasal dari rapat. Isi nomor DWR-nya, mis. DWR/0002/2026.',
+      acuan: 'Kebijakan internal: tajuk = sikap lembaga, harus kolektif' },
+
+    { kunci: 'isi', label: 'Isi naskah', jenis: 'textarea', wajib: true, bagian: '2. Naskah' },
+    { kunci: 'ringkasan', label: 'Ringkasan / dek', jenis: 'textarea', bagian: '2. Naskah' },
+    { kunci: 'penutup', label: 'Penegasan penutup', jenis: 'textarea', bagian: '2. Naskah',
+      bantuan: 'Satu kalimat yang diingat pembaca.' },
+
+    { kunci: 'penulis', label: 'Penulis', jenis: 'text', wajib: true, bagian: '3. Penulis & persetujuan',
+      bantuan: 'Untuk TAJUK: isi "Redaksi" (tanpa nama). Untuk OPINI/KOLOM: nama penulis sebenarnya.' },
+    { kunci: 'jabatan', label: 'Jabatan / afiliasi penulis', jenis: 'text', bagian: '3. Penulis & persetujuan' },
+    { kunci: 'redaktur', label: 'Redaktur penyunting', jenis: 'text', bagian: '3. Penulis & persetujuan' },
+    { kunci: 'pemred', label: 'Pemred penyetuju', jenis: 'text', bagian: '3. Penulis & persetujuan' },
+
+    { kunci: 'label_terbit', label: 'Label yang tampil ke pembaca', jenis: 'pilih', wajib: true, bagian: '4. Etika & penerbitan',
+      opsi: [
+        { nilai: 'tajuk', label: 'TAJUK RENCANA — sikap resmi redaksi' },
+        { nilai: 'opini', label: 'OPINI — pandangan penulis, bukan sikap redaksi' },
+        { nilai: 'kolom', label: 'KOLOM — pandangan penulis tetap' },
+        { nilai: 'pernyataan', label: 'PERNYATAAN RESMI' }
+      ],
+      bantuan: 'Wajib dipasang agar pembaca tidak mencampur sikap lembaga dengan pandangan pribadi.',
+      acuan: 'P3SPS 2012 Pasal 1 & Pedoman Penulisan Opini' },
+    { kunci: 'benturan', label: 'Benturan kepentingan penulis', jenis: 'textarea', bagian: '4. Etika & penerbitan',
+      bantuan: 'Nyatakan bila penulis punya kepentingan pada isu ini.' },
+    { kunci: 'hak_jawab', label: 'Pihak yang perlu diberi hak jawab', jenis: 'textarea', bagian: '4. Etika & penerbitan',
+      acuan: 'UU 40/1999 Pers Pasal 5 — hak jawab & hak koreksi' },
+    { kunci: 'koreksi', label: 'Koreksi / catatan sikap', jenis: 'textarea', bagian: '4. Etika & penerbitan' },
+
+    { kunci: 'tayang', label: 'Tanggal terbit', jenis: 'tanggal', bagian: '5. Jadwal & distribusi' },
+    { kunci: 'jam_tayang', label: 'Jam terbit', jenis: 'text', bagian: '5. Jadwal & distribusi' },
+    { kunci: 'distribusi', label: 'Kanal distribusi', jenis: 'multi', bagian: '5. Jadwal & distribusi',
+      opsi: [
+        { nilai: 'web', label: 'Situs web' }, { nilai: 'tv', label: 'Siaran TV' },
+        { nilai: 'radio', label: 'Radio' }, { nilai: 'newsletter', label: 'Surat kabar digital' },
+        { nilai: 'facebook', label: 'Facebook' }, { nilai: 'x', label: 'X / Twitter' }
+      ] },
+    { kunci: 'tautan_rapat', label: 'Nomor rapat terkait', jenis: 'text', bagian: '5. Jadwal & distribusi' }
+  ]
+};
+
+/* ══════════════════════════════════════════════════════════════
    6. MEDIA, MODERASI, ANALITIK
    ══════════════════════════════════════════════════════════════ */
 modul.media = {
@@ -745,14 +872,18 @@ const layak = (k) => Object.prototype.hasOwnProperty.call(modul, k);
 const ambil = (k) => (layak(k) ? modul[k] : null);
 const semua = () => Object.keys(modul).map(k => ({ modul: k, judul: modul[k].judul, prefiks: modul[k].prefiks, deskripsi: modul[k].deskripsi }));
 
-/* jenis dokumen mengisi opsi field 'jenis' — satu sumber, tanpa duplikasi */
-Object.values(modul).forEach(m => {
-  const f = (m.field || []).find(x => x.kunci === 'jenis');
-  if (f) f.opsi = m.jenisDokumen;
-});
-
 /* ---------- lapisan 1.6.3: siklus hidup per menu + form enterprise ---------- */
 require('./skema-1.6.3')(modul, STATUS_LABEL);
+
+/* 1.6.4 — PENTING: tautkan jenisDokumen ke opsi field 'jenis' SETELAH lapisan
+   1.6.3 dijalankan. Lapisan itu MENGGANTI seluruh array `field` beberapa modul
+   (artikel, kalender, agenda rapat, dll), sehingga tautan yang dipasang
+   sebelumnya hilang. Akibatnya dropdown "Jenis dokumen/agenda" kosong dan
+   formulir tidak bisa disimpan (server menolak: "… wajib diisi"). */
+Object.values(modul).forEach(m => {
+  const f = (m.field || []).find(x => x.kunci === 'jenis');
+  if (f && (!f.opsi || !f.opsi.length) && Array.isArray(m.jenisDokumen) && m.jenisDokumen.length) f.opsi = m.jenisDokumen;
+});
 
 /* Modul tanpa siklus sendiri mewarisi alur baku supaya tidak pernah undefined. */
 Object.values(modul).forEach(m => {
