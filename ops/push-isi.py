@@ -60,6 +60,8 @@ BERKAS = [
     ('docs/PATCH-1.6.4-nomor-unik.sql', 'docs/PATCH-1.6.4-nomor-unik.sql'),
     ('ops/cek-repo.js', 'ops/cek-repo.js'),
     ('ops/push-isi.py', 'ops/push-isi.py'),
+    ('ops/sinkron-artikel.js', 'ops/sinkron-artikel.js'),
+    ('ops/ganti-sandi.js', 'ops/ganti-sandi.js'),
 ]
 
 
