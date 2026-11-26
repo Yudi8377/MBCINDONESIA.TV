@@ -670,7 +670,12 @@ app.post('/api/newsroom/gate', (req, res) => {
 });
 app.use('/newsroom', (req, res, next) => {
   const p = req.path === '/' || req.path === '' ? '/index.html' : req.path;
-  if (!/^\/(index\.html|cms\.js)$/.test(p)) return next();   // aset bersama dilayani static di bawah
+  /* 1.6.4 — dulu daftar ini hanya (index.html|cms.js), sehingga permintaan
+     /newsroom/cms-modul.js jatuh ke static/CDN dan berakhir 404. Akibatnya
+     modulTanam/modulPanel tidak pernah dimuat: panel 19 menu tidak muncul
+     dan menu baru (Dewan Redaksi, Tajuk & Opini) error "is not defined".
+     Sekarang ketiga berkas CMS dijaga middleware yang sama. */
+  if (!/^\/(index\.html|cms\.js|cms-modul\.js)$/.test(p)) return next();   // aset bersama dilayani static di bawah
   const cookieToken = (req.headers.cookie || '').split(';').map(c => c.trim()).find(c => c.startsWith('mbc_gate='));
   const authHeader = req.headers.authorization || '';
   const qt = (req.query && typeof req.query.t === 'string') ? req.query.t : '';
