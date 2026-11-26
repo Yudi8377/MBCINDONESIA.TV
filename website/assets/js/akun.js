@@ -52,6 +52,11 @@
       e.preventDefault();
       var p = form.querySelector('[data-pesan]');
       var selesai = tombolSibuk(form.querySelector('button[type=submit]'), 'Memeriksa…');
+      /* Buang sesi lama lebih dulu. Tanpa ini, token basi di localStorage ikut
+         terkirim sebagai Authorization; bila token itu sudah kedaluwarsa,
+         server bisa menolak (401) padahal email & sandi barunya benar.
+         Ini yang membuat orang bilang "kadang tidak bisa masuk". */
+      hapus();
       minta('/api/akun/masuk', { method: 'POST', body: {
         email: form.elements.email.value, sandi: form.elements.sandi.value
       } }).then(function (r) {
