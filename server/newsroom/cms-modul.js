@@ -27,6 +27,7 @@ const mdPill = (t, c) => `<span style="display:inline-block;font-size:.64rem;fon
   st.id = 'mdCss';
   st.textContent = `
   .md-panel{background:var(--panel,var(--card));border:1px solid var(--line);border-radius:12px;padding:.8rem .9rem;margin-bottom:1rem}
+  .md-panel.md-pengantar{border-color:rgba(255,82,69,.28);background:linear-gradient(180deg,rgba(255,82,69,.055),transparent)}
   .md-head{display:flex;justify-content:space-between;gap:.6rem;align-items:flex-start;flex-wrap:wrap;margin-bottom:.55rem}
   .md-head h3{font-size:.9rem;margin:0;color:#fff;display:flex;align-items:center;gap:.45rem}
   .md-head .md-note{font-size:.68rem;color:var(--muted);margin-top:.15rem;line-height:1.4;max-width:60ch}
@@ -41,6 +42,14 @@ const mdPill = (t, c) => `<span style="display:inline-block;font-size:.64rem;fon
   .md-btn:disabled{opacity:.42;cursor:not-allowed}
   .md-btn.on{background:rgba(255,82,69,.16);border-color:rgba(255,82,69,.5);color:#fff}
   .md-tab{font-size:.7rem;padding:.24rem .5rem}
+  /* tahap yang belum berisi dokumen: tetap bisa diklik, hanya diredupkan */
+  .md-tab.kosong{opacity:.55}
+  .md-tab.kosong::after{content:'·';margin-left:.28rem;opacity:.7}
+  .md-tab.kosong:hover{opacity:.85}
+  .md-tab.on.kosong{opacity:1}
+  /* pilihan tahap awal pada formulir dokumen baru */
+  .md-tahap-awal{display:inline-flex;align-items:center;gap:.35rem;font-size:.7rem;color:var(--muted);margin-right:auto}
+  .md-tahap-awal select{background:#0a1020;border:1px solid var(--line2);color:var(--text);border-radius:8px;padding:.25rem .4rem;font-size:.72rem}
   .md-table{width:100%;border-collapse:collapse;font-size:.76rem}
   .md-table th{text-align:left;color:var(--muted);font-weight:700;font-size:.64rem;text-transform:uppercase;letter-spacing:.05em;padding:.4rem .45rem;border-bottom:1px solid var(--line);white-space:nowrap}
   .md-table td{padding:.45rem;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:top}
@@ -58,6 +67,7 @@ const mdPill = (t, c) => `<span style="display:inline-block;font-size:.64rem;fon
   .md-f{margin-bottom:.55rem}
   .md-f label{display:block;font-size:.65rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:.2rem}
   .md-f label b{color:#ff5245}
+  .md-f label b.md-wajib{color:#ff5245}
   .md-f input,.md-f select,.md-f textarea{width:100%;background:#0a1120;border:1px solid var(--line);border-radius:7px;padding:.42rem .55rem;color:#fff;font-size:.8rem;font-family:inherit}
   .md-f input:focus,.md-f select:focus,.md-f textarea:focus{outline:2px solid rgba(255,82,69,.45);outline-offset:1px}
   .md-f textarea{min-height:76px;resize:vertical;line-height:1.5}
@@ -177,7 +187,7 @@ function mdFieldHtml(f, v) {
     const ph = f.jenis === 'npwp' ? ' placeholder="99.999.999.9-999.999"' : f.jenis === 'nib' ? ' placeholder="13 digit NIB"' : '';
     inp = `<input id="${id}" data-kunci="${f.kunci}" type="${tipe}"${step}${ph} value="${mdEsc(f.jenis === 'uang' || f.jenis === 'angka' ? (v == null ? '' : v) : (v || ''))}"${f.pola ? ' data-pola="' + mdEsc(f.pola) + '"' : ''}>`;
   }
-  const bentuk = f.jenis === 'centang' ? '' : `<label for="${id}">${mdEsc(f.label)}${f.wajib ? ' <b>*</b>' : ''}</label>`;
+  const bentuk = f.jenis === 'centang' ? '' : `<label for="${id}">${mdEsc(f.label)}${f.wajib ? ' <b class="md-wajib">*</b>' : ''}</label>`;
   return `<div class="md-f" data-f="${f.kunci}" data-lebar="${f.lebar === 'full' || f.jenis === 'textarea' ? 'full' : 'half'}">${bentuk}${inp}${bantu}${acuan}</div>`;
 }
 
@@ -236,7 +246,7 @@ function mdHitungTerisi() {
     if (el.type === 'checkbox') return el.checked;
     return String(el.value == null ? '' : el.value).trim() !== '';
   };
-  const wajib = [...form.querySelectorAll('.md-f')].filter(f => f.querySelector('label b'));
+  const wajib = [...form.querySelectorAll('.md-f')].filter(f => f.querySelector('label b.md-wajib'));
   const terisi = wajib.filter(isiDari).length;
   const info = document.getElementById('mdLwHitung');
   if (info) {
@@ -246,7 +256,7 @@ function mdHitungTerisi() {
     info.style.color = (wajib.length && terisi === wajib.length) ? '#2fd27a' : '';
   }
   form.querySelectorAll('.md-bagian').forEach(bag => {
-    const w = [...bag.querySelectorAll('.md-f')].filter(f => f.querySelector('label b'));
+    const w = [...bag.querySelectorAll('.md-f')].filter(f => f.querySelector('label b.md-wajib'));
     const kurang = w.filter(f => !isiDari(f)).length;
     let tag = bag.querySelector('.md-lw-isi');
     if (!tag) { tag = document.createElement('span'); tag.className = 'md-lw-isi'; const lg = bag.querySelector('legend'); if (lg) lg.appendChild(tag); }
@@ -455,19 +465,38 @@ function modulPasang(root, modulId) {
     return `<tr class="${sel ? 'on' : ''}" data-id="${b.id}">${tds}</tr>`;
   };
 
+  /* keterangan saat tabel kosong — dibedakan antara "belum ada dokumen sama
+     sekali" dan "tahap ini memang belum berisi". Tanpa pembedaan ini, tab yang
+     kosong terasa seperti tombol yang tidak bekerja. */
+  const mdKosongHtml = (skema, state) => {
+    const tahap = state.status ? (MD_STATUS[state.status] || state.status) : '';
+    const cari = state.cari ? ` untuk pencarian “${mdEsc(state.cari)}”` : '';
+    if (tahap) {
+      return `<div class="md-kosong"><b>Belum ada dokumen pada tahap “${mdEsc(tahap)}”${cari}.</b><br>
+        Dokumen berpindah ke tahap ini lewat tombol <b>Ubah status</b> di detail dokumen.
+        ${state.status === Object.keys(MD_ALUR)[0] ? '<br>Ingin langsung mencatat agenda di tahap ini? Klik <b>＋ Dokumen baru</b>.' : ''}
+        <br><button class="md-btn" id="mdLihatSemua" type="button">Lihat semua dokumen</button></div>`;
+    }
+    return `<div class="md-kosong">Belum ada dokumen di modul ini${cari}. Klik <b>＋ Dokumen baru</b> — nomor urut dibuat otomatis dengan prefiks <b>${mdEsc(skema.prefiks)}</b>.</div>`;
+  };
+
   const render = () => {
     const d = st.data || { dokumen: [], total: 0, status: {} };
     const skema = st.skema;
     if (st.alur) MD_ALUR = st.alur;
     if (st.label) MD_STATUS = st.label;
     const jumlah = d.total;
-    /* urutan tab = urutan siklus menu ini; status akhir (arsip) ditaruh paling kanan */
+    /* urutan tab = urutan siklus menu ini; status akhir (arsip) ditaruh paling kanan.
+       Tab yang jumlahnya 0 diberi kelas .kosong (redup) supaya jelas "memang belum
+       ada isinya", bukan tombol rusak. Tab tetap bisa diklik: setelah itu tabel
+       menampilkan keterangan kosong yang sesuai tahapnya. */
     const urut = Object.keys(MD_ALUR).filter(x => x !== 'arsip');
     const tab = ['', ...urut, 'arsip'].map(t => {
       const n = t ? (d.status?.[t] || 0) : jumlah;
       const lab = t ? (MD_STATUS[t] || t) : 'Semua';
       const kunciTab = t === 'arsip' ? 'arsip' : t;
-      return `<button class="md-btn md-tab ${st.status === kunciTab ? 'on' : ''}" data-tab="${kunciTab}" title="${t ? 'Tahap ' + mdEsc(lab) : 'Semua tahap'}">${mdEsc(lab)}${n ? ' ' + n : ''}</button>`;
+      const kelasKosong = (t && !n) ? ' kosong' : '';
+      return `<button class="md-btn md-tab${kelasKosong} ${st.status === kunciTab ? 'on' : ''}" data-tab="${kunciTab}" title="${t ? `Tahap ${mdEsc(lab)}${n ? ' · ' + n + ' dokumen' : ' · belum ada dokumen'}` : 'Semua tahap'}">${mdEsc(lab)}${n ? ' ' + n : ''}</button>`;
     }).join('');
     const halaman = Math.max(1, Math.ceil(jumlah / 25));
     p.querySelector('#mdIsi').innerHTML = `
@@ -478,11 +507,16 @@ function modulPasang(root, modulId) {
         <button class="md-btn" id="mdMuat">↻ Muat ulang</button>
       </div>
       ${d.dokumen.length ? `<div style="overflow:auto"><table class="md-table"><thead><tr>${skema.kolom.map(k => `<th style="width:${k.lebar || 'auto'}">${mdEsc(k.label)}</th>`).join('')}<th></th></tr></thead>
-        <tbody>${d.dokumen.map(b => barisHtml(b)).join('')}</tbody></table></div>` : `<div class="md-kosong">Belum ada dokumen di modul ini. Klik <b>＋ Dokumen baru</b> — nomor urut dibuat otomatis dengan prefiks <b>${mdEsc(skema.prefiks)}</b>.</div>`}
+        <tbody>${d.dokumen.map(b => barisHtml(b)).join('')}</tbody></table></div>` : mdKosongHtml(skema, st)}
       <div class="md-kaki"><span>Menampilkan ${d.dokumen.length} dari ${jumlah} rekaman · halaman ${st.page}/${halaman}</span>
         <span style="display:flex;gap:.3rem"><button class="md-btn" id="mdPrev" ${st.page <= 1 ? 'disabled' : ''}>‹ Sebelumnya</button><button class="md-btn" id="mdNext" ${st.page >= halaman ? 'disabled' : ''}>Berikutnya ›</button></span></div>
       <div id="mdDetail"></div>`;
     p.querySelector('#mdJumlah').textContent = jumlah ? `· ${jumlah} rekaman` : '';
+    /* 1.6.4 — dulu tombol "＋ Baru" di kepala panel dibiarkan disabled selamanya
+       (hanya tombol ＋ Dokumen baru di dalam tabel yang hidup), sehingga terasa
+       sebagai tombol mati. Sekarang diaktifkan begitu skema modul berhasil dimuat. */
+    const tombolBaru = p.querySelector('#mdBaru');
+    if (tombolBaru) tombolBaru.disabled = false;
     p.querySelector('#mdCetakTabel').disabled = !d.dokumen.length;
     p.querySelector('#mdCsv').disabled = !d.dokumen.length;
     p.querySelector('#mdCari').addEventListener('keydown', (e) => {
@@ -505,6 +539,8 @@ function modulPasang(root, modulId) {
       st.page += b.id === 'mdNext' ? 1 : -1; muat();
     }));
     p.querySelectorAll('#mdBaru,#mdBaru2').forEach(b => b.addEventListener('click', () => mdForm(null)));
+    const lihatSemua = p.querySelector('#mdLihatSemua');
+    if (lihatSemua) lihatSemua.addEventListener('click', () => { st.status = ''; st.page = 1; muat(); });
     p.querySelector('#mdMuat').addEventListener('click', () => muat());
     p.querySelector('#mdCari').addEventListener('change', (e) => { st.cari = e.target.value.trim(); st.page = 1; muat(); });
     p.querySelector('#mdCetakTabel').addEventListener('click', () => mdCetakTabel(modulId));
@@ -513,6 +549,18 @@ function modulPasang(root, modulId) {
   };
 
   /* formulir tambah/ubah di modal — 1.6.4: mode LANDSCAPE (melebar) */
+  /* Pilihan "tahap saat dokumen dibuat". Tanpa ini, semua dokumen baru selalu
+     masuk tahap pertama (Rencana/Draf/Ide) sehingga tab tahap berikutnya selalu
+     kosong dan terasa "tidak berfungsi". Pemindahan tahap berikutnya tetap wajib
+     lewat tombol Ubah status, jadi alur persetujuan tidak dilangkahi. */
+  const mdPilihTahap = (rekam) => {
+    if (rekam) return '';
+    const awal = Object.keys(MD_ALUR)[0];
+    const isi = Object.keys(MD_ALUR).map(k => `<option value="${mdEsc(k)}"${k === awal ? ' selected' : ''}>${mdEsc(MD_STATUS[k] || k)}</option>`).join('');
+    return `<label class="md-tahap-awal" title="Tahap dokumen saat disimpan">Tahap awal
+      <select id="mdTahapAwal">${isi}</select></label>`;
+  };
+
   const mdForm = async (rekam) => {
     const skema = st.skema;
     const data = rekam ? rekam.data : {};
@@ -531,6 +579,7 @@ function modulPasang(root, modulId) {
       <form id="mdForm" class="md-form" onsubmit="return false">${mdFormHtml(skema, data)}</form>
       <div class="md-lw-kaki">
         <span class="md-info-kecil" id="mdLwHitung"></span>
+        ${mdPilihTahap(rekam)}
         <button class="md-btn" id="mdBatal" type="button">Batal</button>
         <button class="md-btn primary" id="mdSimpan" type="button">${rekam ? 'Simpan perubahan' : 'Simpan sebagai draf'}</button>
       </div>
@@ -555,7 +604,9 @@ function modulPasang(root, modulId) {
           await mdApi.patch(`/modul/${modulId}/${rekam.id}`, isi);
           toast('Perubahan tersimpan.');
         } else {
-          const out = await mdApi.post(`/modul/${modulId}`, isi);
+          const pilih = document.getElementById('mdTahapAwal');
+          const isiAwal = pilih ? Object.assign({}, isi, { status_awal: pilih.value }) : isi;
+          const out = await mdApi.post(`/modul/${modulId}`, isiAwal);
           toast('Dokumen dibuat: ' + out.dokumen.nomor);
         }
         closeModal(); mdLebar(false);
@@ -665,6 +716,60 @@ function modulPasang(root, modulId) {
 function modulTanam(root, modulId) {
   const blok = document.createElement('div');
   blok.innerHTML = modulPanel(modulId);
-  root.insertBefore(blok.firstElementChild, root.firstChild);
+  /* 1.6.4 — panel modul ditaruh di BAWAH isi menu, bukan di atas.
+     Dulu ia disisipkan di paling atas dan memakai lebar penuh, sehingga
+     isi menu yang sebenarnya (kalender 7 hari, KPI, papan kanban) terdorong
+     jauh ke bawah dan tampak "hilang / tidak muncul". Menaruhnya di bawah
+     membuat halaman menu tampil normal, lalu modul dokumen jadi bagian
+     kerjanya di bawahnya. */
+  root.appendChild(blok.firstElementChild);
   modulPasang(root, modulId);
+}
+
+/* ============================================================
+   1.6.4 — VIEW EDITORIAL BARU: Dewan Redaksi & Tajuk/Opini
+   ------------------------------------------------------------
+   Keduanya memakai mesin modul yang sama (daftar, form, alur status,
+   cetak, CSV) tetapi diberi pengantar singkat yang menjelaskan ATURAN
+   jurnalistiknya, supaya staf tidak salah memperlakukan tajuk
+   seperti berita biasa.
+   ============================================================ */
+function mdViewEditorial(root, modulId, kepala) {
+  root.innerHTML = `<div class="md-panel md-pengantar">${kepala}</div>`;
+  modulTanam(root, modulId);
+}
+
+function viewModulDewan(root) {
+  mdViewEditorial(root, 'dewan', `
+    <div class="md-head"><h3>🪑 Dewan Redaksi</h3></div>
+    <div class="md-head" style="display:block">
+      <div class="md-note" style="max-width:80ch">
+        Ruang keputusan redaksi: <b>rapat harian</b>, <b>usulan topik</b>, <b>penugasan liputan</b>,
+        <b>evaluasi terbitan</b>, dan <b>sikap redaksi</b> atas suatu isu.
+        Satu dokumen = satu rapat/keputusan, dengan nomor <b>DWR</b>.
+        Tahap: <b>Usulan → Dibahas → Diputuskan → Berlaku</b>. Tahap "Berlaku" hanya bisa
+        dipasang oleh <b>pemred/direksi</b> — catatan rapat yang berlaku adalah dokumen resmi.
+        Bila rapat menghasilkan tajuk, tulis nomor tajuknya di kolom <i>Nomor tajuk terkait</i>.
+      </div>
+    </div>`);
+}
+
+function viewModulTajuk(root) {
+  mdViewEditorial(root, 'tajuk', `
+    <div class="md-head"><h3>🖋 Tajuk &amp; Opini</h3></div>
+    <div class="md-head" style="display:block">
+      <div class="md-note" style="max-width:80ch">
+        Naskah <b>sikap resmi lembaga</b> — berbeda tegas dari berita.
+        Tajuk <b>tidak ditandatangani</b> (tulis "Redaksi"), wajib berasal dari <b>rapat dewan redaksi</b>
+        (isi nomor <b>DWR</b>-nya), dan baru boleh terbit setelah <b>disetujui pemred</b>.
+        Opini/kolom adalah pandangan <b>penulis</b>, bukan sikap redaksi — karena itu kolom
+        <i>Label yang tampil ke pembaca</i> wajib dipilih.
+        Tahap: <b>Ide → Dibahas dewan → Penulisan → Review pemred → Siap terbit → Tayang</b>.
+      </div>
+      <div class="md-info" style="margin-top:.5rem;max-width:80ch">
+        ⚖ <b>Catatan hukum:</b> tajuk adalah sikap lembaga, sehingga tanggung jawabnya ada pada
+        pemimpin redaksi (UU 40/1999 Pers Pasal 12). Siapkan <b>hak jawab</b> bagi pihak yang
+        disebut sebelum naskah naik ke "Siap terbit".
+      </div>
+    </div>`);
 }
