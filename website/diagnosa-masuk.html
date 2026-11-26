@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagnosa Masuk — MBC Indonesia TV</title>
+<style>
+:root{--bg:#070b14;--panel:#0e1526;--line:#22304d;--muted:#8798b8;--ok:#2fd27a;--bad:#ff5245;--warn:#f2c14e;--red2:#ff7a6e}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:#e8eefc;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:1.4rem;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:1.15rem;margin-bottom:.2rem}
+.sub{color:var(--muted);font-size:.8rem;margin-bottom:1.2rem}
+.kartu{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:1rem 1.1rem;margin-bottom:1rem}
+label{display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:.25rem;font-weight:700}
+input,select{width:100%;background:#0a1120;border:1px solid var(--line);border-radius:9px;padding:.55rem .7rem;color:#fff;font-size:.9rem;font-family:inherit}
+input:focus,select:focus{outline:2px solid rgba(255,82,69,.45);outline-offset:1px}
+.baris{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+@media(max-width:560px){.baris{grid-template-columns:1fr}}
+button{font-size:.85rem;font-weight:700;border:1px solid var(--line);background:rgba(255,255,255,.06);color:#e8eefc;border-radius:9px;padding:.55rem .9rem;cursor:pointer}
+button.utama{background:rgba(255,82,69,.18);border-color:rgba(255,82,69,.55);color:#fff}
+button:disabled{opacity:.5;cursor:not-allowed}
+.hasil{margin-top:1rem}
+.langkah{display:flex;gap:.6rem;align-items:flex-start;padding:.5rem .6rem;border-radius:9px;margin-bottom:.4rem;font-size:.82rem;background:rgba(255,255,255,.03);border:1px solid transparent}
+.langkah.ok{border-color:rgba(47,210,122,.35);background:rgba(47,210,122,.07)}
+.langkah.bad{border-color:rgba(255,82,69,.4);background:rgba(255,82,69,.09)}
+.langkah.warn{border-color:rgba(242,193,78,.4);background:rgba(242,193,78,.08)}
+.ikon{font-weight:800;flex:0 0 1.2rem}
+.detail{color:var(--muted);font-size:.74rem;margin-top:.15rem;word-break:break-word}
+.kode{font-family:ui-monospace,Menlo,monospace;background:#0a1120;padding:.1rem .35rem;border-radius:5px;font-size:.76rem}
+.saran{margin-top:.7rem;padding:.7rem .85rem;border-radius:11px;font-size:.84rem;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+.saran b{color:#fff}
+.rahasia{display:flex;gap:.5rem;align-items:center;margin-top:.35rem}
+.rahasia input{font-family:ui-monospace,Menlo,monospace;font-size:.95rem;letter-spacing:.06em}
+kbd{background:#0a1120;border:1px solid var(--line);border-radius:5px;padding:.05rem .35rem;font-size:.75rem;font-family:ui-monospace,monospace}
+.catatan{font-size:.74rem;color:var(--muted);margin-top:.5rem}
+hr{border:0;border-top:1px solid var(--line);margin:1rem 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔍 Diagnosa Masuk</h1>
+  <div class="sub">Halaman ini memeriksa sendiri kenapa "Email atau kata sandi salah" muncul — tanpa perlu menebak.
+  Berjalan di peramban Anda; kata sandi <b>tidak disimpan</b> dan tidak dikirim ke mana pun selain server MBC.</div>
+
+  <div class="kartu">
+    <div class="baris">
+      <div>
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="username" placeholder="direktur@mbcindonesia.tv">
+      </div>
+      <div>
+        <label for="sandi">Kata sandi</label>
+        <input id="sandi" type="password" autocomplete="current-password" placeholder="kata sandi">
+      </div>
+    </div>
+    <div style="margin-top:.8rem;display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+      <button class="utama" id="periksa">Periksa sekarang</button>
+      <button id="tampil">Tampilkan sandi</button>
+      <span class="catatan" id="target"></span>
+    </div>
+  </div>
+
+  <div class="hasil" id="hasil"></div>
+
+  <div class="kartu">
+    <label>Bila hasilnya "sandi salah" — setel sandi baru yang mudah diketik</label>
+    <div class="rahasia">
+      <input id="sandiBaru" value="MbcKediri2027" spellcheck="false">
+      <button id="salin">Salin</button>
+    </div>
+    <div class="catatan">Tanpa simbol seperti <span class="kode">?</span> <span class="kode">#</span> yang sering salah ketik di ponsel.
+    Huruf besar-kecil tetap berpengaruh: <span class="kode">M</span> besar, sisanya kecil.</div>
+  </div>
+
+  <div class="kartu" style="border-color:rgba(242,193,78,.35)">
+    <b style="color:var(--warn)">Tiga jebakan yang paling sering terjadi</b>
+    <div class="catatan" style="margin-top:.5rem">
+      1. <b>Membuka alamat yang salah.</b> Alamat <span class="kode">…-icu71b78h-hobby-ed84.vercel.app</span> adalah pratinjau
+      yang <b>terkunci login Vercel</b> — bukan alamat resmi. Pakai
+      <span class="kode">mbcindonesia-tv.vercel.app</span>.<br>
+      2. <b>Sandi lama masih terisi otomatis</b> oleh peramban/pengelola sandi. Klik kolom sandi,
+      <kbd>Ctrl</kbd>+<kbd>A</kbd>, hapus, lalu ketik ulang.<br>
+      3. <b>Huruf besar/kecil.</b> <span class="kode">MbcKediri2027</span> benar;
+      <span class="kode">mbckediri2027</span> salah.
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  var el = function (id) { return document.getElementById(id); };
+  var dasar = location.origin;
+  el('target').textContent = 'Diperiksa di: ' + dasar;
+
+  el('tampil').onclick = function () {
+    var s = el('sandi');
+    s.type = s.type === 'password' ? 'text' : 'password';
+    el('tampil').textContent = s.type === 'password' ? 'Tampilkan sandi' : 'Sembunyikan sandi';
+  };
+  el('salin').onclick = function () {
+    var v = el('sandiBaru').value;
+    if (navigator.clipboard) navigator.clipboard.writeText(v);
+    el('salin').textContent = 'Tersalin ✓';
+    setTimeout(function () { el('salin').textContent = 'Salin'; }, 1500);
+  };
+
+  function baris(status, judul, detail) {
+    var ikon = status === 'ok' ? '✅' : status === 'bad' ? '❌' : '⚠️';
+    var kls = status === 'ok' ? 'ok' : status === 'bad' ? 'bad' : 'warn';
+    return '<div class="langkah ' + kls + '"><span class="ikon">' + ikon + '</span><div><b>' + judul + '</b>' +
+      (detail ? '<div class="detail">' + detail + '</div>' : '') + '</div></div>';
+  }
+
+  async function periksa() {
+    var email = el('email').value.trim();
+    var sandi = el('sandi').value;
+    var h = el('hasil');
+    h.innerHTML = '';
+    if (!email || !sandi) {
+      h.innerHTML = baris('warn', 'Isi email dan kata sandi dulu', 'Kedua kolom harus terisi.');
+      return;
+    }
+    el('periksa').disabled = true;
+    el('periksa').textContent = 'Memeriksa…';
+
+    /* 1. server hidup? */
+    try {
+      var hl = await fetch('/api/health', { cache: 'no-store' });
+      var hj = await hl.json();
+      h.innerHTML += baris('ok', 'Server hidup', 'Basis data: ' + (hj.db ? 'tersambung' : 'GAGAL') +
+        ' · pooler: ' + (hj.pooler ? 'ya' : 'tidak'));
+    } catch (e) {
+      h.innerHTML += baris('bad', 'Server tidak menjawab', 'Periksa koneksi internet Anda.');
+      selesai(); return;
+    }
+
+    /* 2. coba masuk ke pintu newsroom */
+    var gate = null;
+    try {
+      var g = await fetch('/api/newsroom/gate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: sandi })
+      });
+      gate = { status: g.status, data: await g.json().catch(function () { return {}; }) };
+    } catch (e) { gate = { status: 0, data: {} }; }
+
+    if (gate.status === 200) {
+      h.innerHTML += baris('ok', 'Sandi BENAR (pintu newsroom)', 'Akun dikenali: ' + ((gate.data.user || {}).name || '-'));
+    } else if (gate.status === 401) {
+      h.innerHTML += baris('bad', 'Sandi SALAH menurut server', 'Server menolak kombinasi email + sandi ini.');
+    } else if (gate.status === 429) {
+      h.innerHTML += baris('warn', 'Terlalu banyak percobaan', 'Tunggu ±10 menit, pembatas keamanan aktif.');
+    } else if (gate.status === 403) {
+      h.innerHTML += baris('warn', 'Akun tidak boleh masuk newsroom', (gate.data.error || '') + ' — coba pintu akun di bawah.');
+    } else {
+      h.innerHTML += baris('warn', 'Jawaban tak terduga', 'Kode ' + gate.status + ' · ' + JSON.stringify(gate.data).slice(0, 120));
+    }
+
+    /* 3. coba masuk ke pintu akun (halaman /masuk.html) */
+    if (gate.status !== 200) {
+      h.innerHTML += baris('warn', 'Mencoba pintu kedua (/masuk.html)…', ' ');
+      try {
+        var a = await fetch('/api/akun/masuk', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email, sandi: sandi })
+        });
+        var aj = await a.json().catch(function () { return {}; });
+        if (a.status === 200 && aj.token) {
+          h.innerHTML += baris('ok', 'Pintu akun menerima sandi ini', 'Coba masuk lewat /masuk.html, bukan /newsroom/.');
+        } else if (a.status === 401) {
+          h.innerHTML += baris('bad', 'Pintu akun juga menolak', 'Berarti sandi memang tidak cocok — setel sandi baru.');
+        } else {
+          h.innerHTML += baris('warn', 'Pintu akun menjawab ' + a.status, JSON.stringify(aj).slice(0, 140));
+        }
+      } catch (e) {}
+    }
+
+    /* 4. kesimpulan */
+    var salah = (gate.status === 401);
+    h.innerHTML += '<div class="saran">' + (salah
+      ? '<b>Kesimpulan: kata sandi tidak cocok.</b><br>Ini bukan kerusakan sistem — server menolak karena sandinya berbeda. ' +
+        'Yang perlu dilakukan: setel sandi baru (lihat kotak di bawah), lalu masuk memakai sandi itu. ' +
+        'Perhatikan huruf besar/kecil dan pastikan peramban tidak mengisikan sandi lama secara otomatis ' +
+        '(<kbd>Ctrl</kbd>+<kbd>A</kbd> lalu hapus sebelum mengetik).'
+      : gate.status === 200
+        ? '<b>Kesimpulan: email & sandi BENAR.</b><br>Kalau halaman masuk masih menolak, itu masalah peramban: ' +
+          'sandi lama terisi otomatis, atau Anda membuka alamat pratinjau yang terkunci Vercel.'
+        : '<b>Kesimpulan: lihat baris ⚠️ di atas.</b>') + '</div>';
+
+    selesai();
+    function selesai() {
+      el('periksa').disabled = false;
+      el('periksa').textContent = 'Periksa sekarang';
+    }
+  }
+
+  el('periksa').onclick = periksa;
+  el('sandi').addEventListener('keydown', function (e) { if (e.key === 'Enter') periksa(); });
+})();
+</script>
+</body>
+</html>
