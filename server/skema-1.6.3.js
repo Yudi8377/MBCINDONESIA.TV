@@ -44,6 +44,31 @@ function siklus(urutan, opsi) {
 }
 
 /* ---------- siklus tiap menu sesuai pekerjaan nyata ---------- */
+/* 1.6.4 — DEWAN REDAKSI: jalan seperti rapat (usulan -> dibahas -> diputuskan).
+   Keputusan dan notulen berlaku sebagai catatan resmi, jadi butuh pengesahan. */
+/* CATATAN PENTING (1.6.4): nilai status disimpan di kolom `status` yang dijaga
+   CHECK constraint di PostgreSQL. Karena itu alur editorial baru memakai
+   kosakata yang SUDAH diizinkan — bukan karena malas, tapi supaya tidak butuh
+   ALTER TABLE (akun aplikasi bukan pemilik tabel). Tahapnya tetap berbeda:
+     dewan : ide(Usulan) -> review(Dibahas) -> diperiksa(Diputuskan) -> berlaku
+     tajuk : ide -> review(Dibahas dewan) -> penulisan -> siap(Review pemred)
+             -> tayang.  ("review" di tajuk = meja pemred, lihat label di UI) */
+modul.dewan.siklus = siklus(['ide', 'review', 'diperiksa', 'berlaku'], { batal: 'dibatalkan' });
+modul.dewan.labelStatus = { ide: 'Usulan', review: 'Dibahas', diperiksa: 'Diputuskan', berlaku: 'Berlaku', dibatalkan: 'Dibatalkan', arsip: 'Arsip' };
+modul.dewan.butuhSetuju = ['berlaku'];
+
+/* 1.6.4 — TAJUK & OPINI: jalur ketat.
+   ide -> review (W A J I B: meja pemred / dibahas dewan) -> penulisan -> siap
+   -> tayang. Yang boleh menekan "siap"/"tayang" hanya pemegang izin setujui
+   (pemred & direksi) — dijaga server lewat SKEMA.butuhSetuju().
+   Urutan ini SENGAJA menaruh meja pemred SEBELUM penulisan: sikap lembaga
+   diputuskan lebih dulu, baru ditulis — bukan ditulis dulu lalu dicari restu. */
+modul.tajuk.siklus = siklus(['ide', 'review', 'penulisan', 'siap', 'tayang'], { batal: 'tarik' });
+modul.tajuk.labelStatus = { ide: 'Ide', review: 'Dibahas dewan', penulisan: 'Penulisan', siap: 'Siap terbit (pemred)', tayang: 'Tayang', tarik: 'Ditarik', arsip: 'Arsip' };
+modul.tajuk.butuhSetuju = ['siap', 'tayang'];
+modul.tajuk.deskripsi = 'Naskah sikap resmi lembaga (tajuk, opini, kolom). Wajib melalui dewan redaksi dan persetujuan pemred sebelum terbit.';
+
+
 modul.articles.siklus = siklus(['ide', 'riset', 'penulisan', 'review', 'siap', 'tayang'], { batal: 'tarik' });
 modul.articles.labelStatus = { ide: 'Ide', riset: 'Riset', penulisan: 'Penulisan', review: 'Review redaktur', siap: 'Siap terbit', tayang: 'Tayang', tarik: 'Ditarik', arsip: 'Arsip' };
 modul.articles.butuhSetuju = ['siap', 'tayang'];
