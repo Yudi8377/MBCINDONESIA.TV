@@ -21,18 +21,19 @@ const bcrypt = require('bcryptjs');
 
 const pool = new Pool({ connectionString: process.env.SUPABASE_DB_URL, ssl: { rejectUnauthorized: false }, max: 2 });
 
-/* sandi kuat yang masih bisa diketik ulang tanpa salah:
-   4 kelompok kata Indonesia + 4 angka + 1 tanda. 15 karakter, mudah dibaca. */
+/* ATURAN PEMILIK PROYEK (26 Nov 2026): sandi TIDAK BOLEH memakai simbol dan
+   tidak boleh rumit. Sandi dibuat dari 2 kata + tahun: "KataKota2027".
+   Tetap kuat (14+ karakter, ada huruf besar & angka), tetapi bisa diketik di
+   ponsel tanpa salah. Jangan kembalikan tanda baca ke dalam sandi. */
 const KATA = ['Kopi', 'Brantas', 'Kediri', 'Siaran', 'Redaksi', 'Kelud', 'Wilwatikta', 'Tembakau',
   'Gedeg', 'Pare', 'Ngadiluwih', 'Kertosono', 'Wilis', 'Semeru', 'Jagung', 'Tebu'];
 
-function sandiAcak() {
+function sandiAcak(tahun) {
   const ambil = () => KATA[crypto.randomInt(KATA.length)];
   const kata = new Set();
-  while (kata.size < 3) kata.add(ambil());
-  const angka = String(crypto.randomInt(1000, 9999));
-  const tanda = '!#$%&*?@'[crypto.randomInt(9)];
-  return [...kata].join('-') + angka + tanda;
+  while (kata.size < 2) kata.add(ambil());
+  /* tanpa tanda baca — hanya huruf dan angka */
+  return [...kata].join('') + (tahun || (new Date().getFullYear() + 1));
 }
 
 (async () => {
@@ -52,7 +53,7 @@ function sandiAcak() {
     }
 
     const baris = hasil.map(u => `${u.name} | ${u.email} | ${u.role} | ${u.sandi || '(tetap)'} | ${u.catatan}`);
-    console.log('\n=== DAFTAR SANDI STAF ===');
+    console.log('\n=== DAFTAR SANDI STAF (tanpa simbol) ===');
     console.log(baris.join('\n'));
     const belum = hasil.filter(u => u.sandi).length;
     console.log(`\nTotal akun: ${hasil.length}; masih memakai demo123: ${belum}; mode: ${terapkan ? 'DITERAPKAN' : 'contoh (belum diubah di DB)'}`);
