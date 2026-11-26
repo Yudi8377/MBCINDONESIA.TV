@@ -39,6 +39,9 @@ const IZIN_MODUL = {
   produksi: 'produksi',
   desk: 'cms', articles: 'cms', calendar: 'cms', findings: 'cms',
   antrean: 'cms', moderation: 'cms', media: 'cms', 'content-analytics': 'cms',
+  /* 1.6.4 — menu editorial baru: baca untuk semua peran redaksi,
+     persetujuan terbit dijaga SKEMA.butuhSetuju (pemred & direksi). */
+  dewan: 'cms', tajuk: 'cms',
   'ai-studio': 'cms',
   dashboard: 'metrik',
   pengguna: 'kelola_pengguna',
@@ -67,6 +70,16 @@ function hitungNilai(field, data) {
     else if (f.hitung === 'jumlah') out[f.kunci] = bulat((ambil('dpp') || 0) + (ambil('ppn') || 0) - (ambil('pph23') || 0));
   }
   return out;
+}
+
+/* Status awal untuk dokumen baru. `status_awal` dari formulir hanya diterima
+   bila memang tahap pertama pada siklus modul ini; selain itu kembali ke awal. */
+function statusAwalDiminta(SKEMA, modul, diminta) {
+  const awal = SKEMA.statusAwal(modul);
+  const s = String(diminta == null ? '' : diminta).trim();
+  if (!s) return awal;
+  const siklus = SKEMA.siklusModul(modul) || {};
+  return Object.prototype.hasOwnProperty.call(siklus, s) ? s : awal;
 }
 
 function validasi(skema, data) {
@@ -258,7 +271,12 @@ module.exports = function mountModul(app, ctx) {
         }
       } catch (_) { nomor = null; }
       if (!nomor) nomor = `${skema.prefiks}/${Date.now().toString().slice(-6)}/${new Date().getFullYear()}`;
-      const awal = SKEMA.statusAwal(modul);
+      /* 1.6.4 — status awal boleh ditentukan dari formulir. Tanpa ini, semua
+         dokumen baru selalu lahir sebagai "Rencana"/"Draf"/"Ide", sehingga tab
+         tahap lain (Terjadwal, Berjalan, Selesai, Dibatalkan) terlihat kosong
+         dan dianggap "tidak berfungsi". Nilainya tetap divalidasi: hanya status
+         yang memang ada di siklus modul yang diterima. */
+      const awal = statusAwalDiminta(SKEMA, modul, (req.body || {}).status_awal);
       const { rows } = await q(`INSERT INTO modul_rekam (modul, nomor, judul, status, data, dibuat_oleh)
         VALUES ($1,$2,$3,$4,$5,$6) RETURNING id, nomor, judul, status, data, dibuat_at`,
         [modul, nomor, judul, awal, data, pelaku(req)]);
